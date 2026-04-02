@@ -216,7 +216,9 @@ func findObjectMember(obj *hujson.Object, key string) int {
 // A leading newline is included so Format() places the comment on its own line.
 func formatComment(s string) hujson.Extra {
 	if strings.Contains(s, "\n") {
-		return hujson.Extra("\n/* " + s + " */\n")
+		// Escape */ inside the comment to prevent premature block comment close.
+		escaped := strings.ReplaceAll(s, "*/", "*\\/")
+		return hujson.Extra("\n/* " + escaped + " */\n")
 	}
 	return hujson.Extra("\n// " + s + "\n")
 }

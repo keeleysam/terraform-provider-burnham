@@ -234,6 +234,25 @@ output "plist_encode_binary_b64" {
   }, { format = "binary" })
 }
 
+# ─── plistencode with XML comments ────────────────────────────────
+
+output "plist_with_comments" {
+  description = "Plist XML with <!-- comments -->"
+  value = provider::burnham::plistencode(
+    {
+      PayloadDisplayName = "WiFi - Corporate"
+      PayloadIdentifier  = "com.example.wifi"
+      PayloadVersion     = 1
+    },
+    {
+      comments = {
+        PayloadDisplayName = "Human-readable profile name"
+        PayloadIdentifier  = "Unique reverse-DNS identifier"
+      }
+    }
+  )
+}
+
 # ─── plistdate ────────────────────────────────────────────────────
 # Creates a tagged date object for use in plistencode.
 

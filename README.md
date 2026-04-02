@@ -17,7 +17,7 @@ Burnham fixes this. It's a pure function provider — no resources, no data sour
 |--------|--------|--------|-------|
 | JSON (pretty-printed) | `jsonencode` | — | Terraform has `jsondecode` built-in |
 | HuJSON / JWCC | `hujsonencode` | `hujsondecode` | JSON with comments and trailing commas |
-| Apple Property List | `plistencode` | `plistdecode` | XML, binary, and OpenStep formats |
+| Apple Property List | `plistencode` | `plistdecode` | XML (with comments), binary, and OpenStep formats |
 | INI | `iniencode` | `inidecode` | Standard `[section]` / `key = value` files |
 | CSV | `csvencode` | — | Terraform has `csvdecode` built-in |
 | YAML | `yamlencode` | — | Block style, literal scalars, comments. Terraform has `yamldecode` built-in |
@@ -147,7 +147,7 @@ provider::burnham::plistencode(value, options?) → string
 | Parameter | Type | Required | Description |
 |---|---|---|---|
 | `value` | `dynamic` | Yes | The value to encode. Tagged objects from `plistdate()` and `plistdata()` are converted to native `<date>` and `<data>` elements. |
-| `options` | `object` | No | Options object. Supported keys: `format` (string) — `"xml"` (default), `"binary"`, or `"openstep"`. |
+| `options` | `object` | No | Options object. Supported keys: `format` (string) — `"xml"` (default), `"binary"`, or `"openstep"`. `comments` (object) — mirrored structure where string values become `<!-- comment -->` in the XML output (XML format only). |
 
 **Returns:** A plist `string`. When format is `"binary"`, the output is base64-encoded (since Terraform strings are UTF-8). Numbers with no fractional part become `<integer>`, otherwise `<real>`.
 
@@ -452,6 +452,35 @@ locals {
   modified = provider::burnham::plistencode(merge(local.original, {
     PayloadDisplayName = "Updated Name"
   }))
+}
+```
+
+### Plist with XML comments
+
+```hcl
+locals {
+  commented_plist = provider::burnham::plistencode(
+    {
+      PayloadDisplayName = "WiFi - Corporate"
+      PayloadIdentifier  = "com.example.wifi"
+      PayloadVersion     = 1
+    },
+    {
+      comments = {
+        PayloadDisplayName = "Human-readable profile name"
+        PayloadIdentifier  = "Unique reverse-DNS identifier"
+      }
+    }
+  )
+  # <?xml version="1.0" encoding="UTF-8"?>
+  # ...
+  # 	<!-- Human-readable profile name -->
+  # 	<key>PayloadDisplayName</key>
+  # 	<string>WiFi - Corporate</string>
+  # 	<!-- Unique reverse-DNS identifier -->
+  # 	<key>PayloadIdentifier</key>
+  # 	<string>com.example.wifi</string>
+  # ...
 }
 ```
 

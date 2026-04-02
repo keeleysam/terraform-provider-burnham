@@ -402,3 +402,26 @@ func TestHuJSONEncode_CommentsWithIndent(t *testing.T) {
 		t.Errorf("expected no tabs with 2-space indent:\n%s", result)
 	}
 }
+
+func TestHuJSONEncode_CommentEscapesBlockClose(t *testing.T) {
+	obj := types.ObjectValueMust(
+		map[string]attr.Type{"key": types.StringType},
+		map[string]attr.Value{"key": types.StringValue("val")},
+	)
+
+	// Multi-line comment containing */ which would break a /* */ block.
+	comments := types.ObjectValueMust(
+		map[string]attr.Type{"key": types.StringType},
+		map[string]attr.Value{"key": types.StringValue("line1\nend: */\nline3")},
+	)
+
+	result, err := runHuJSONEncode(t, obj, makeCommentsOpts(comments))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// The */ should be escaped so it doesn't break the block comment.
+	if strings.Contains(result, "end: */") && !strings.Contains(result, "end: *\\/") {
+		t.Errorf("expected */ to be escaped in block comment:\n%s", result)
+	}
+}

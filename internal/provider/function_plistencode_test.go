@@ -331,6 +331,151 @@ func TestPlistEncode_RoundTrip(t *testing.T) {
 	}
 }
 
+func runPlistEncodeWithOpts(t *testing.T, value attr.Value, opts ...attr.Value) (string, *function.FuncError) {
+	t.Helper()
+	f := &PlistEncodeFunction{}
+
+	optsElems := make([]attr.Value, len(opts))
+	optsTypes := make([]attr.Type, len(opts))
+	for i, o := range opts {
+		optsElems[i] = types.DynamicValue(o)
+		optsTypes[i] = types.DynamicType
+	}
+	variadicTuple := types.TupleValueMust(optsTypes, optsElems)
+
+	args := function.NewArgumentsData([]attr.Value{
+		types.DynamicValue(value),
+		variadicTuple,
+	})
+
+	req := function.RunRequest{Arguments: args}
+	resp := &function.RunResponse{Result: function.NewResultData(types.StringValue(""))}
+
+	f.Run(context.Background(), req, resp)
+
+	if resp.Error != nil {
+		return "", resp.Error
+	}
+
+	result, ok := resp.Result.Value().(types.String)
+	if !ok {
+		t.Fatalf("expected String result, got %T", resp.Result.Value())
+	}
+	return result.ValueString(), nil
+}
+
+func TestPlistEncode_WithComments(t *testing.T) {
+	obj := types.ObjectValueMust(
+		map[string]attr.Type{
+			"Name":    types.StringType,
+			"Version": types.NumberType,
+		},
+		map[string]attr.Value{
+			"Name":    types.StringValue("Test"),
+			"Version": types.NumberValue(big.NewFloat(1)),
+		},
+	)
+
+	comments := types.ObjectValueMust(
+		map[string]attr.Type{
+			"Name":    types.StringType,
+			"Version": types.StringType,
+		},
+		map[string]attr.Value{
+			"Name":    types.StringValue("Application name"),
+			"Version": types.StringValue("Current version number"),
+		},
+	)
+
+	opts := types.ObjectValueMust(
+		map[string]attr.Type{"comments": comments.Type(nil)},
+		map[string]attr.Value{"comments": comments},
+	)
+
+	result, err := runPlistEncodeWithOpts(t, obj, opts)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if !strings.Contains(result, "<!-- Application name -->") {
+		t.Errorf("expected comment for Name:\n%s", result)
+	}
+	if !strings.Contains(result, "<!-- Current version number -->") {
+		t.Errorf("expected comment for Version:\n%s", result)
+	}
+	// Comments should appear before their <key> lines.
+	commentIdx := strings.Index(result, "<!-- Application name -->")
+	keyIdx := strings.Index(result, "<key>Name</key>")
+	if commentIdx > keyIdx {
+		t.Errorf("comment should appear before <key>:\n%s", result)
+	}
+}
+
+func TestPlistEncode_CommentsOnlyXML(t *testing.T) {
+	// Comments should be silently ignored for non-XML formats.
+	obj := types.ObjectValueMust(
+		map[string]attr.Type{"Key": types.StringType},
+		map[string]attr.Value{"Key": types.StringValue("Val")},
+	)
+
+	comments := types.ObjectValueMust(
+		map[string]attr.Type{"Key": types.StringType},
+		map[string]attr.Value{"Key": types.StringValue("A comment")},
+	)
+
+	opts := types.ObjectValueMust(
+		map[string]attr.Type{
+			"format":   types.StringType,
+			"comments": comments.Type(nil),
+		},
+		map[string]attr.Value{
+			"format":   types.StringValue("openstep"),
+			"comments": comments,
+		},
+	)
+
+	result, err := runPlistEncodeWithOpts(t, obj, opts)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// OpenStep format should not have XML comments.
+	if strings.Contains(result, "<!--") {
+		t.Errorf("expected no XML comments in openstep format:\n%s", result)
+	}
+}
+
+func TestPlistEncode_CommentEscapesDoubleHyphen(t *testing.T) {
+	obj := types.ObjectValueMust(
+		map[string]attr.Type{"Key": types.StringType},
+		map[string]attr.Value{"Key": types.StringValue("Val")},
+	)
+
+	// Comment containing "--" which is illegal inside XML comments.
+	comments := types.ObjectValueMust(
+		map[string]attr.Type{"Key": types.StringType},
+		map[string]attr.Value{"Key": types.StringValue("This -- breaks XML")},
+	)
+
+	opts := types.ObjectValueMust(
+		map[string]attr.Type{"comments": comments.Type(nil)},
+		map[string]attr.Value{"comments": comments},
+	)
+
+	result, err := runPlistEncodeWithOpts(t, obj, opts)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// The "--" should be escaped.
+	if strings.Contains(result, "<!-- This -- breaks XML -->") {
+		t.Errorf("expected -- to be escaped in XML comment:\n%s", result)
+	}
+	if !strings.Contains(result, "<!--") {
+		t.Errorf("expected comment to still be present:\n%s", result)
+	}
+}
+
 func TestPlistEncode_TooManyFormatArgs(t *testing.T) {
 	obj := types.ObjectValueMust(
 		map[string]attr.Type{},
