@@ -52,5 +52,6 @@ func (p *BurnhamProvider) Functions(_ context.Context) []func() function.Functio
 		NewPlistRealFunction,
 		NewINIDecodeFunction,
 		NewINIEncodeFunction,
+		NewCSVEncodeFunction,
 	}
 }

@@ -15,6 +15,7 @@ Burnham fixes this. It's a pure function provider — no resources, no data sour
 | HuJSON / JWCC | `hujsonencode` | `hujsondecode` | JSON with comments and trailing commas |
 | Apple Property List | `plistencode` | `plistdecode` | XML, binary, and OpenStep formats |
 | INI | `iniencode` | `inidecode` | Standard `[section]` / `key = value` files |
+| CSV | `csvencode` | — | Terraform has `csvdecode` built-in |
 | TOML | — | — | Use [Tobotimus/toml](https://registry.terraform.io/providers/Tobotimus/toml) instead |
 
 Your configuration profiles, ACL policies, and structured documents become first-class citizens in your Terraform plans, not opaque blobs passed through `file()` and hoped for the best.
@@ -196,6 +197,32 @@ provider::burnham::iniencode(value) → string
 | `value` | `dynamic` | Yes | An object of `{ section_name = { key = value } }`. The `""` key renders as global keys before any section header. All values are converted to strings. |
 
 **Returns:** An INI `string` with `[section]` headers and `key = value` pairs. Sections are sorted alphabetically, with global keys first.
+
+---
+
+### `csvencode`
+
+Encode a list of objects as a CSV string. Each object becomes a row, and object keys become columns. Terraform has `csvdecode` built-in but no `csvencode` — this fills that gap.
+
+```
+provider::burnham::csvencode(rows, options?) → string
+```
+
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| `rows` | `dynamic` | Yes | A list of objects to encode as CSV rows. |
+| `options` | `dynamic` | No | An options object (see below). Pass at most one. |
+
+**Options object:**
+
+| Key | Type | Default | Description |
+|---|---|---|---|
+| `columns` | `list(string)` | auto-detect (sorted) | Column names in the desired output order. Columns not in a row produce empty cells. |
+| `no_header` | `bool` | `false` | If `true`, omit the header row. |
+
+**Returns:** A CSV `string`. Values are converted to strings: numbers render as their string representation, bools as `"true"`/`"false"`, nulls as empty strings. Nested values (lists, objects) are not supported and will error.
+
+**Note on types:** CSV has no type system. All values are flattened to strings during encoding. If you round-trip through `csvencode` → Terraform's `csvdecode`, numbers and bools will come back as strings (e.g. `42` → `"42"`, `true` → `"true"`). This is inherent to the CSV format.
 
 ## Installation
 
@@ -389,6 +416,38 @@ locals {
   })
 }
 ```
+
+### CSV encoding
+
+```hcl
+locals {
+  # Auto-detect headers (sorted alphabetically)
+  users_csv = provider::burnham::csvencode([
+    { name = "alice", email = "alice@example.com", role = "admin" },
+    { name = "bob", email = "bob@example.com", role = "user" },
+  ])
+  # email,name,role
+  # alice@example.com,alice,admin
+  # bob@example.com,bob,user
+
+  # Explicit column order
+  users_ordered = provider::burnham::csvencode(
+    [{ name = "alice", email = "alice@example.com" }],
+    { columns = ["name", "email"] }
+  )
+  # name,email
+  # alice,alice@example.com
+
+  # Data only (no header row)
+  users_data = provider::burnham::csvencode(
+    [{ name = "alice", count = 42, active = true }],
+    { columns = ["name", "count", "active"], no_header = true }
+  )
+  # alice,42,true
+}
+```
+
+Numbers, bools, and nulls are converted to strings automatically. Commas, quotes, and newlines in values are escaped per RFC 4180.
 
 See [`examples/main.tf`](examples/main.tf) for a complete working example of all functions.
 

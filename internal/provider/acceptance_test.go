@@ -392,6 +392,68 @@ func TestAcc_INIEncode_Basic(t *testing.T) {
 	})
 }
 
+// ─── csvencode ───────────────────────────────────────────────────
+
+func TestAcc_CSVEncode_Basic(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		TerraformVersionChecks:   testAccTerraformVersionChecks,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{{
+			Config: `
+				output "test" {
+					value = provider::burnham::csvencode([
+						{ name = "alice", email = "alice@example.com" },
+						{ name = "bob", email = "bob@example.com" },
+					])
+				}
+			`,
+			ConfigStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("email,name\nalice@example.com,alice\nbob@example.com,bob\n")),
+			},
+		}},
+	})
+}
+
+func TestAcc_CSVEncode_WithOptions(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		TerraformVersionChecks:   testAccTerraformVersionChecks,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{{
+			Config: `
+				output "test" {
+					value = provider::burnham::csvencode(
+						[{ name = "alice", role = "admin" }],
+						{ columns = ["name", "role"], no_header = true }
+					)
+				}
+			`,
+			ConfigStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("alice,admin\n")),
+			},
+		}},
+	})
+}
+
+func TestAcc_CSVEncode_TypeCoercion(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		TerraformVersionChecks:   testAccTerraformVersionChecks,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{{
+			Config: `
+				output "test" {
+					value = provider::burnham::csvencode(
+						[{ name = "alice", count = 42, active = true }],
+						{ columns = ["name", "count", "active"] }
+					)
+				}
+			`,
+			ConfigStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("name,count,active\nalice,42,true\n")),
+			},
+		}},
+	})
+}
+
 // ─── Round-trips ─────────────────────────────────────────────────
 
 func TestAcc_INIRoundTrip(t *testing.T) {

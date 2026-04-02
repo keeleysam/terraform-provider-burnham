@@ -343,6 +343,44 @@ output "ini_roundtrip" {
   value       = provider::burnham::iniencode(local.decoded_ini)
 }
 
+# ─── csvencode ────────────────────────────────────────────────────
+# Encodes a list of objects as CSV. Terraform has csvdecode but no csvencode.
+
+output "csv_auto_headers" {
+  description = "CSV with auto-detected headers (sorted alphabetically)"
+  value = provider::burnham::csvencode([
+    { name = "alice", email = "alice@example.com", role = "admin" },
+    { name = "bob", email = "bob@example.com", role = "user" },
+  ])
+}
+
+output "csv_explicit_columns" {
+  description = "CSV with explicit column order"
+  value = provider::burnham::csvencode(
+    [
+      { name = "alice", email = "alice@example.com", role = "admin" },
+      { name = "bob", email = "bob@example.com", role = "user" },
+    ],
+    { columns = ["name", "email", "role"] }
+  )
+}
+
+output "csv_no_header" {
+  description = "CSV data only, no header row"
+  value = provider::burnham::csvencode(
+    [{ name = "alice", count = 42, active = true }],
+    { columns = ["name", "count", "active"], no_header = true }
+  )
+}
+
+output "csv_type_coercion" {
+  description = "Numbers, bools, and nulls are converted to strings (CSV has no type system)"
+  value = provider::burnham::csvencode([
+    { name = "alice", count = 42, ratio = 3.14, active = true },
+    { name = "bob", count = 0, ratio = 1.0, active = false },
+  ])
+}
+
 # ─── Round-trip: decode → modify → re-encode ─────────────────────
 # All types (dates, data, integer vs real) are preserved automatically.
 
