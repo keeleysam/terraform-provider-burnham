@@ -26,8 +26,8 @@ func TestMetadata(t *testing.T) {
 func TestFunctions(t *testing.T) {
 	p := New().(*BurnhamProvider)
 	funcs := p.Functions(context.Background())
-	if len(funcs) != 8 {
-		t.Errorf("expected 8 functions, got %d", len(funcs))
+	if len(funcs) != 10 {
+		t.Errorf("expected 10 functions, got %d", len(funcs))
 	}
 }
 

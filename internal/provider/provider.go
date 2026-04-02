@@ -50,5 +50,7 @@ func (p *BurnhamProvider) Functions(_ context.Context) []func() function.Functio
 		NewPlistDateFunction,
 		NewPlistDataFunction,
 		NewPlistRealFunction,
+		NewINIDecodeFunction,
+		NewINIEncodeFunction,
 	}
 }

@@ -7,6 +7,7 @@ require (
 	github.com/hashicorp/terraform-plugin-go v0.31.0
 	github.com/hashicorp/terraform-plugin-testing v1.15.0
 	github.com/tailscale/hujson v0.0.0-20260302212456-ecc657c15afd
+	gopkg.in/ini.v1 v1.67.1
 	howett.net/plist v1.0.1
 )
 

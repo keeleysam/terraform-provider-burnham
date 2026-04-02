@@ -253,6 +253,96 @@ output "plist_with_real" {
   })
 }
 
+# ─── Nested plists ────────────────────────────────────────────────
+# macOS configuration profiles commonly nest plists inside <data> blocks.
+# Build the inner plist, base64-encode it, and wrap with plistdata().
+
+output "nested_plist" {
+  description = "A configuration profile with a nested plist payload inside a <data> block"
+  value = provider::burnham::plistencode({
+    PayloadDisplayName = "WiFi (Nested)"
+    PayloadIdentifier  = "com.example.wifi"
+    PayloadType        = "Configuration"
+    PayloadVersion     = 1
+    PayloadContent = [
+      {
+        PayloadType       = "com.apple.wifi.managed"
+        PayloadIdentifier = "com.example.wifi.payload"
+        PayloadVersion    = 1
+        # The inner plist is encoded and wrapped as binary data
+        PayloadContent = provider::burnham::plistdata(base64encode(
+          provider::burnham::plistencode({
+            AutoJoin           = true
+            HIDDEN_NETWORK     = false
+            SSID_STR           = "CorpNet"
+            EncryptionType     = "WPA2"
+            ProxyType          = "None"
+          })
+        ))
+      },
+    ]
+  })
+}
+
+# ─── inidecode ────────────────────────────────────────────────────
+# Parses INI files. All values are strings. Global keys go under "".
+
+locals {
+  ini_input = <<-EOT
+    app_name = My Application
+
+    [database]
+    host = localhost
+    port = 5432
+    name = mydb
+
+    [cache]
+    enabled = true
+    ttl = 3600
+  EOT
+
+  decoded_ini = provider::burnham::inidecode(local.ini_input)
+}
+
+output "ini_app_name" {
+  description = "Global key from decoded INI"
+  value       = local.decoded_ini[""].app_name
+}
+
+output "ini_db_host" {
+  description = "Section key from decoded INI"
+  value       = local.decoded_ini.database.host
+}
+
+output "ini_db_port_as_number" {
+  description = "INI values are strings — convert with tonumber() if needed"
+  value       = tonumber(local.decoded_ini.database.port)
+}
+
+# ─── iniencode ────────────────────────────────────────────────────
+# Encodes a Terraform object as an INI file.
+
+output "ini_encoded" {
+  description = "Encode an INI file from a Terraform object"
+  value = provider::burnham::iniencode({
+    database = {
+      host = "db.example.com"
+      port = "5432"
+      name = "production"
+    }
+    cache = {
+      enabled = "true"
+      ttl     = "3600"
+    }
+  })
+}
+
+# INI round-trip
+output "ini_roundtrip" {
+  description = "Decode an INI, re-encode — structure is preserved"
+  value       = provider::burnham::iniencode(local.decoded_ini)
+}
+
 # ─── Round-trip: decode → modify → re-encode ─────────────────────
 # All types (dates, data, integer vs real) are preserved automatically.
 

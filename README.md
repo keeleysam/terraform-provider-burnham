@@ -7,7 +7,17 @@ In 1909, Daniel Burnham published the [Plan of Chicago](https://en.wikipedia.org
 
 Terraform plans deserve the same treatment. But today, when your Terraform needs to work with structured data formats like property lists, human-edited JSON, or pretty-printed configuration files, you're stuck with workarounds — shelling out to external tools, embedding raw strings, or losing type fidelity in translation. The plan becomes cluttered and fragile.
 
-Burnham fixes this. It's a pure function provider — no resources, no data sources, no API calls — that gives Terraform native fluency with the data formats it can't handle cleanly on its own: pretty-printed JSON, HuJSON (JSON with comments and trailing commas), and Apple property lists. Your configuration profiles, ACL policies, and structured documents become first-class citizens in your Terraform plans, not opaque blobs passed through `file()` and hoped for the best.
+Burnham fixes this. It's a pure function provider — no resources, no data sources, no API calls — that gives Terraform native fluency with the data formats it can't handle cleanly on its own.
+
+| Format | Encode | Decode | Notes |
+|--------|--------|--------|-------|
+| JSON (pretty-printed) | `jsonencode` | — | Terraform has `jsondecode` built-in |
+| HuJSON / JWCC | `hujsonencode` | `hujsondecode` | JSON with comments and trailing commas |
+| Apple Property List | `plistencode` | `plistdecode` | XML, binary, and OpenStep formats |
+| INI | `iniencode` | `inidecode` | Standard `[section]` / `key = value` files |
+| TOML | — | — | Use [Tobotimus/toml](https://registry.terraform.io/providers/Tobotimus/toml) instead |
+
+Your configuration profiles, ACL policies, and structured documents become first-class citizens in your Terraform plans, not opaque blobs passed through `file()` and hoped for the best.
 
 The result is Terraform code that reads like a blueprint — clear, logical, and built to last.
 
@@ -155,6 +165,38 @@ provider::burnham::plistreal(value) → dynamic
 
 **Returns:** A `dynamic` object: `{ __plist_type = "real", value = "2" }`. Pass this to `plistencode` to produce a `<real>` element. When `plistdecode` encounters a whole-number `<real>` (e.g. `<real>2</real>`), it returns the same tagged format, so round-trips preserve the integer/real distinction.
 
+---
+
+### `inidecode`
+
+Parse an INI file into a Terraform value. The result is a map of section names to maps of key-value string pairs.
+
+```
+provider::burnham::inidecode(input) → dynamic
+```
+
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| `input` | `string` | Yes | An INI string to parse. |
+
+**Returns:** A `dynamic` object of `{ section_name = { key = "value" } }`. Keys outside any `[section]` header (global keys) are placed under the `""` key. All values are strings — INI has no native type system. Comments (`;` and `#`) are stripped.
+
+---
+
+### `iniencode`
+
+Encode a Terraform object as an INI file.
+
+```
+provider::burnham::iniencode(value) → string
+```
+
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| `value` | `dynamic` | Yes | An object of `{ section_name = { key = value } }`. The `""` key renders as global keys before any section header. All values are converted to strings. |
+
+**Returns:** An INI `string` with `[section]` headers and `key = value` pairs. Sections are sorted alphabetically, with global keys first.
+
 ## Installation
 
 ```hcl
@@ -283,6 +325,68 @@ Binary plists aren't valid UTF-8, so use `filebase64()` — Burnham auto-detects
 ```hcl
 locals {
   binary = provider::burnham::plistdecode(filebase64("${path.module}/binary.plist"))
+}
+```
+
+### Nested plists
+
+macOS configuration profiles commonly nest plists inside `<data>` blocks — the outer profile wraps an inner payload as base64-encoded plist data. Build the inner plist with `plistencode`, base64-encode it with Terraform's built-in `base64encode`, and wrap it with `plistdata()`:
+
+```hcl
+locals {
+  profile = provider::burnham::plistencode({
+    PayloadDisplayName = "WiFi"
+    PayloadType        = "Configuration"
+    PayloadVersion     = 1
+    PayloadContent = [
+      {
+        PayloadType    = "com.apple.wifi.managed"
+        PayloadVersion = 1
+        PayloadContent = provider::burnham::plistdata(base64encode(
+          provider::burnham::plistencode({
+            AutoJoin       = true
+            SSID_STR       = "CorpNet"
+            EncryptionType = "WPA2"
+          })
+        ))
+      },
+    ]
+  })
+}
+```
+
+To decode a nested plist, chain `plistdecode` calls — the inner plist is in the tagged data object's `.value`:
+
+```hcl
+locals {
+  outer = provider::burnham::plistdecode(file("profile.mobileconfig"))
+  inner = provider::burnham::plistdecode(local.outer.PayloadContent[0].PayloadContent.value)
+  ssid  = local.inner.SSID_STR
+}
+```
+
+### INI files
+
+```hcl
+locals {
+  # Decode an INI file
+  config = provider::burnham::inidecode(file("${path.module}/config.ini"))
+  # => { "" = { ... }, "database" = { "host" = "localhost", "port" = "5432" }, ... }
+
+  db_host = local.config.database.host
+  db_port = tonumber(local.config.database.port) # values are always strings
+
+  # Encode an INI file
+  new_config = provider::burnham::iniencode({
+    database = {
+      host = "db.example.com"
+      port = "5432"
+    }
+    cache = {
+      enabled = "true"
+      ttl     = "3600"
+    }
+  })
 }
 ```
 

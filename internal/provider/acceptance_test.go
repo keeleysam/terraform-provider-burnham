@@ -349,6 +349,71 @@ func TestAcc_PlistRoundTrip_PreservesTypes(t *testing.T) {
 	})
 }
 
+// ─── inidecode ───────────────────────────────────────────────────
+
+func TestAcc_INIDecode_Basic(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		TerraformVersionChecks:   testAccTerraformVersionChecks,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{{
+			Config: `
+				locals {
+					ini = provider::burnham::inidecode("[database]\nhost = localhost\nport = 5432\n")
+				}
+				output "host" { value = local.ini.database.host }
+				output "port" { value = local.ini.database.port }
+			`,
+			ConfigStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownOutputValue("host", knownvalue.StringExact("localhost")),
+				statecheck.ExpectKnownOutputValue("port", knownvalue.StringExact("5432")),
+			},
+		}},
+	})
+}
+
+// ─── iniencode ───────────────────────────────────────────────────
+
+func TestAcc_INIEncode_Basic(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		TerraformVersionChecks:   testAccTerraformVersionChecks,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{{
+			Config: `
+				output "test" {
+					value = provider::burnham::iniencode({
+						database = { host = "localhost", port = "5432" }
+					})
+				}
+			`,
+			ConfigStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownOutputValue("test", knownvalue.NotNull()),
+			},
+		}},
+	})
+}
+
+// ─── Round-trips ─────────────────────────────────────────────────
+
+func TestAcc_INIRoundTrip(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		TerraformVersionChecks:   testAccTerraformVersionChecks,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{{
+			Config: `
+				locals {
+					input   = "[db]\nhost = localhost\nport = 5432\n"
+					decoded = provider::burnham::inidecode(local.input)
+					encoded = provider::burnham::iniencode(local.decoded)
+				}
+				output "host" { value = local.decoded.db.host }
+			`,
+			ConfigStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownOutputValue("host", knownvalue.StringExact("localhost")),
+			},
+		}},
+	})
+}
+
 func TestAcc_HuJSONRoundTrip(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		TerraformVersionChecks:   testAccTerraformVersionChecks,
