@@ -21,7 +21,7 @@ Burnham fixes this. It's a pure function provider — no resources, no data sour
 | INI | `iniencode` | `inidecode` | Standard `[section]` / `key = value` files |
 | CSV | `csvencode` | — | Terraform has `csvdecode` built-in |
 | YAML | `yamlencode` | — | Block style, literal scalars, comments. Terraform has `yamldecode` built-in |
-| Windows .reg | `regencode` | `regdecode` | Registry Editor export format with typed values |
+| Windows .reg | `regencode` | `regdecode` | Registry Editor export format with typed values and comments |
 | TOML | — | — | Use [Tobotimus/toml](https://registry.terraform.io/providers/Tobotimus/toml) instead |
 
 Your configuration profiles, ACL policies, and structured documents become first-class citizens in your Terraform plans, not opaque blobs passed through `file()` and hoped for the best.
@@ -311,6 +311,7 @@ provider::burnham::regdecode(input) → dynamic
 | `REG_BINARY` | `{ __reg_type = "binary", value = "48656c6c6f" }` (hex) |
 | `REG_MULTI_SZ` | `{ __reg_type = "multi_sz", value = ["str1", "str2"] }` |
 | `REG_EXPAND_SZ` | `{ __reg_type = "expand_sz", value = "%SystemRoot%\\system32" }` |
+| `REG_NONE` | `{ __reg_type = "none", value = "hex..." }` |
 | Default value (`@`) | key name is `"@"` |
 
 ---
@@ -320,12 +321,13 @@ provider::burnham::regdecode(input) → dynamic
 Encode a Terraform object as a Windows .reg file (Version 5).
 
 ```
-provider::burnham::regencode(value) → string
+provider::burnham::regencode(value, options?) → string
 ```
 
 | Parameter | Type | Required | Description |
 |---|---|---|---|
 | `value` | `dynamic` | Yes | An object of `{ "HKEY_...\\Path" = { "ValueName" = value } }`. Plain strings become REG_SZ. Use helper functions for other types. |
+| `options` | `object` | No | Options object. Supported keys: `comments` (object) — mirrored structure where string values become `; comment` lines above the matching key path or value name. |
 
 **Returns:** A .reg file `string` with the `Windows Registry Editor Version 5.00` header.
 
@@ -634,17 +636,27 @@ locals {
 locals {
   # Decode a .reg file
   reg = provider::burnham::regdecode(file("${path.module}/settings.reg"))
-  app_name = local.reg["HKEY_LOCAL_MACHINE\\SOFTWARE\\MyApp"].Name
+  app_name = local.reg["HKEY_LOCAL_MACHINE\\SOFTWARE\\MyApp"].DisplayName
 
-  # Build a .reg file
-  new_reg = provider::burnham::regencode({
-    "HKEY_LOCAL_MACHINE\\SOFTWARE\\MyApp" = {
-      "DisplayName" = "My Application"
-      "Version"     = provider::burnham::regdword(2)
-      "InstallPath" = provider::burnham::regexpandsz("%ProgramFiles%\\MyApp")
-      "Features"    = provider::burnham::regmulti(["core", "plugins", "updates"])
+  # Build a .reg file with comments
+  new_reg = provider::burnham::regencode(
+    {
+      "HKEY_LOCAL_MACHINE\\SOFTWARE\\MyApp" = {
+        "DisplayName" = "My Application"
+        "Version"     = provider::burnham::regdword(2)
+        "InstallPath" = provider::burnham::regexpandsz("%ProgramFiles%\\MyApp")
+        "Features"    = provider::burnham::regmulti(["core", "plugins", "updates"])
+      }
+    },
+    {
+      comments = {
+        "HKEY_LOCAL_MACHINE\\SOFTWARE\\MyApp" = {
+          "Version"     = "Incremented on each release"
+          "InstallPath" = "Uses %ProgramFiles% for standard location"
+        }
+      }
     }
-  })
+  )
 }
 ```
 

@@ -468,29 +468,74 @@ output "yaml_dedupe" {
 # ─── regdecode / regencode ────────────────────────────────────────
 # Parse and generate Windows .reg (Registry Editor export) files.
 
-output "reg_decode" {
-  description = "Decode a .reg file — REG_SZ becomes strings, other types use tagged objects"
-  value = provider::burnham::regdecode(<<-EOT
+locals {
+  reg_input = <<-EOT
     Windows Registry Editor Version 5.00
 
     [HKEY_LOCAL_MACHINE\SOFTWARE\MyApp]
     "DisplayName"="My Application"
     "Version"=dword:00000002
+    "Data"=hex:48,65,6c,6c,6f
     @="Default Value"
   EOT
-  )
+
+  decoded_reg = provider::burnham::regdecode(local.reg_input)
 }
 
-output "reg_encode" {
-  description = "Build a .reg file with typed values"
+output "reg_decoded" {
+  description = "Decode a .reg file — REG_SZ becomes strings, other types use tagged objects"
+  value       = local.decoded_reg
+}
+
+output "reg_string_value" {
+  description = "Accessing a REG_SZ string from decoded .reg"
+  value       = local.decoded_reg["HKEY_LOCAL_MACHINE\\SOFTWARE\\MyApp"].DisplayName
+}
+
+output "reg_dword_value" {
+  description = "Accessing a REG_DWORD value (tagged object)"
+  value       = local.decoded_reg["HKEY_LOCAL_MACHINE\\SOFTWARE\\MyApp"].Version
+  # => { __reg_type = "dword", value = "2" }
+}
+
+output "reg_default_value" {
+  description = "Accessing the default value (@)"
+  value       = local.decoded_reg["HKEY_LOCAL_MACHINE\\SOFTWARE\\MyApp"]["@"]
+}
+
+output "reg_encode_all_types" {
+  description = "Build a .reg file with all supported value types"
   value = provider::burnham::regencode({
     "HKEY_LOCAL_MACHINE\\SOFTWARE\\MyApp" = {
       "DisplayName" = "My Application"
       "Version"     = provider::burnham::regdword(2)
+      "BigNumber"   = provider::burnham::regqword(1099511627776)
+      "Data"        = provider::burnham::regbinary("48656c6c6f")
       "InstallPath" = provider::burnham::regexpandsz("%ProgramFiles%\\MyApp")
-      "Features"    = provider::burnham::regmulti(["core", "plugins"])
+      "Features"    = provider::burnham::regmulti(["core", "plugins", "updates"])
+      "@"           = "Default Value"
     }
   })
+}
+
+output "reg_encode_with_comments" {
+  description = "Build a .reg file with ; comments"
+  value = provider::burnham::regencode(
+    {
+      "HKEY_LOCAL_MACHINE\\SOFTWARE\\MyApp" = {
+        "DisplayName" = "My Application"
+        "Version"     = provider::burnham::regdword(2)
+      }
+    },
+    {
+      comments = {
+        "HKEY_LOCAL_MACHINE\\SOFTWARE\\MyApp" = {
+          "DisplayName" = "Human-readable application name"
+          "Version"     = "Incremented on each release"
+        }
+      }
+    }
+  )
 }
 
 # ─── Round-trip: decode → modify → re-encode ─────────────────────
