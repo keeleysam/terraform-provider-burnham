@@ -395,6 +395,76 @@ output "csv_type_coercion" {
   ])
 }
 
+# ─── yamlencode ───────────────────────────────────────────────────
+# Better YAML encoding: block style, literal block scalars, comments.
+
+output "yaml_k8s_configmap" {
+  description = "Kubernetes ConfigMap with multi-line script (the killer use case)"
+  value = provider::burnham::yamlencode({
+    apiVersion = "v1"
+    kind       = "ConfigMap"
+    metadata   = { name = "app-config", namespace = "production" }
+    data = {
+      "startup.sh" = "#!/bin/bash\nset -e\necho Starting...\n./run-app\n"
+      "config.yml" = "server:\n  port: 8080\n  host: 0.0.0.0\n"
+    }
+  })
+}
+
+output "yaml_with_comments" {
+  description = "YAML with comments"
+  value = provider::burnham::yamlencode(
+    {
+      apiVersion = "v1"
+      kind       = "Deployment"
+      metadata   = { name = "web", namespace = "production" }
+    },
+    {
+      comments = {
+        apiVersion = "Kubernetes API version"
+        kind       = "Resource type"
+        metadata = {
+          name      = "Deployment name"
+          namespace = "Target namespace"
+        }
+      }
+    }
+  )
+}
+
+output "yaml_with_options" {
+  description = "YAML with custom formatting options"
+  value = provider::burnham::yamlencode(
+    { name = "test", items = ["a", "b", "c"], enabled = true },
+    {
+      indent      = 4
+      quote_style = "double"
+      null_value  = "~"
+    }
+  )
+}
+
+output "yaml_dedupe" {
+  description = "Identical subtrees are deduped with YAML anchors and aliases"
+  value = provider::burnham::yamlencode(
+    {
+      development = {
+        database = { adapter = "postgres", host = "localhost", port = 5432 }
+        cache    = { adapter = "redis", host = "localhost", port = 6379 }
+      }
+      staging = {
+        database = { adapter = "postgres", host = "localhost", port = 5432 }
+        cache    = { adapter = "redis", host = "localhost", port = 6379 }
+      }
+      production = {
+        database = { adapter = "postgres", host = "db.prod.internal", port = 5432 }
+        cache    = { adapter = "redis", host = "cache.prod.internal", port = 6379 }
+      }
+    },
+    { dedupe = true }
+  )
+}
+
 # ─── Round-trip: decode → modify → re-encode ─────────────────────
 # All types (dates, data, integer vs real) are preserved automatically.
 

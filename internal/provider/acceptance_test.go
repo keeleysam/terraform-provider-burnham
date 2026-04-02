@@ -482,6 +482,68 @@ func TestAcc_CSVEncode_TypeCoercion(t *testing.T) {
 	})
 }
 
+// ─── yamlencode ──────────────────────────────────────────────────
+
+func TestAcc_YAMLEncode_BlockStyle(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		TerraformVersionChecks:   testAccTerraformVersionChecks,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{{
+			Config: `
+				output "test" {
+					value = provider::burnham::yamlencode({
+						apiVersion = "v1"
+						kind = "ConfigMap"
+						data = { key = "value" }
+					})
+				}
+			`,
+			ConfigStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownOutputValue("test", knownvalue.NotNull()),
+			},
+		}},
+	})
+}
+
+func TestAcc_YAMLEncode_WithComments(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		TerraformVersionChecks:   testAccTerraformVersionChecks,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{{
+			Config: `
+				output "test" {
+					value = provider::burnham::yamlencode(
+						{ apiVersion = "v1", kind = "ConfigMap" },
+						{ comments = { apiVersion = "K8s API version" } }
+					)
+				}
+			`,
+			ConfigStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownOutputValue("test", knownvalue.NotNull()),
+			},
+		}},
+	})
+}
+
+func TestAcc_YAMLEncode_MultilineScript(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		TerraformVersionChecks:   testAccTerraformVersionChecks,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{{
+			Config: `
+				output "test" {
+					value = provider::burnham::yamlencode({
+						data = { script = "#!/bin/bash\necho hello\n" }
+					})
+				}
+			`,
+			ConfigStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownOutputValue("test", knownvalue.NotNull()),
+			},
+		}},
+	})
+}
+
 // ─── Round-trips ─────────────────────────────────────────────────
 
 func TestAcc_INIRoundTrip(t *testing.T) {

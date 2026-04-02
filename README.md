@@ -20,6 +20,7 @@ Burnham fixes this. It's a pure function provider — no resources, no data sour
 | Apple Property List | `plistencode` | `plistdecode` | XML, binary, and OpenStep formats |
 | INI | `iniencode` | `inidecode` | Standard `[section]` / `key = value` files |
 | CSV | `csvencode` | — | Terraform has `csvdecode` built-in |
+| YAML | `yamlencode` | — | Block style, literal scalars, comments. Terraform has `yamldecode` built-in |
 | TOML | — | — | Use [Tobotimus/toml](https://registry.terraform.io/providers/Tobotimus/toml) instead |
 
 Your configuration profiles, ACL policies, and structured documents become first-class citizens in your Terraform plans, not opaque blobs passed through `file()` and hoped for the best.
@@ -255,6 +256,36 @@ provider::burnham::csvencode(rows, options?) → string
 
 **Note on types:** CSV has no type system. All values are flattened to strings during encoding. If you round-trip through `csvencode` → Terraform's `csvdecode`, numbers and bools will come back as strings (e.g. `42` → `"42"`, `true` → `"true"`). This is inherent to the CSV format.
 
+---
+
+### `yamlencode`
+
+Encode a value as YAML with full formatting control. Unlike Terraform's built-in `yamlencode`, this defaults to block style, uses literal block scalars (`|`) for multi-line strings, and supports comments.
+
+```
+provider::burnham::yamlencode(value, options?) → string
+```
+
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| `value` | `dynamic` | Yes | The value to encode as YAML. |
+| `options` | `object` | No | Options object (see below). |
+
+**Options:**
+
+| Key | Type | Default | Description |
+|---|---|---|---|
+| `indent` | `number` | `2` | Spaces per indentation level. |
+| `flow_level` | `number` | `0` | Nesting depth at which to switch to flow style. `0` = all block, `-1` = all flow. |
+| `multiline` | `string` | `"literal"` | Multi-line string style: `"literal"` (`\|`), `"folded"` (`>`), or `"quoted"`. |
+| `quote_style` | `string` | `"auto"` | String quoting: `"auto"`, `"double"`, or `"single"`. |
+| `null_value` | `string` | `"null"` | Null rendering: `"null"`, `"~"`, or `""`. |
+| `sort_keys` | `bool` | `true` | Sort map keys alphabetically. |
+| `dedupe` | `bool` | `false` | Deduplicate identical subtrees using YAML anchors (`&`) and aliases (`*`). |
+| `comments` | `object` | none | Mirrored structure for `#` comments (same pattern as `hujsonencode`). |
+
+**Returns:** A YAML `string` in block style by default. Multi-line strings use literal block scalars (`|`). Keys are sorted alphabetically unless `sort_keys = false`.
+
 ## Installation
 
 ```hcl
@@ -485,6 +516,64 @@ locals {
 ```
 
 Numbers, bools, and nulls are converted to strings automatically. Commas, quotes, and newlines in values are escaped per RFC 4180.
+
+### YAML (better than built-in)
+
+```hcl
+locals {
+  # Block style, literal block scalars for scripts — unlike Terraform's yamlencode
+  k8s_manifest = provider::burnham::yamlencode({
+    apiVersion = "v1"
+    kind       = "ConfigMap"
+    metadata   = { name = "app-config", namespace = "production" }
+    data = {
+      "startup.sh" = "#!/bin/bash\nset -e\necho Starting...\n./run-app\n"
+    }
+  })
+  # apiVersion: v1
+  # kind: ConfigMap
+  # metadata:
+  #   name: app-config
+  #   namespace: production
+  # data:
+  #   startup.sh: |
+  #     #!/bin/bash
+  #     set -e
+  #     echo Starting...
+  #     ./run-app
+
+  # With comments and options
+  annotated = provider::burnham::yamlencode(
+    { replicas = 3, image = "nginx:latest" },
+    {
+      indent = 4
+      comments = {
+        replicas = "Desired pod count"
+        image    = "Container image"
+      }
+    }
+  )
+  # # Desired pod count
+  # replicas: 3
+  # # Container image
+  # image: nginx:latest
+
+  # Deduplicate identical subtrees with YAML anchors
+  deduped = provider::burnham::yamlencode(
+    {
+      dev     = { db = { host = "localhost", port = 5432 } }
+      staging = { db = { host = "localhost", port = 5432 } }
+      prod    = { db = { host = "db.prod.internal", port = 5432 } }
+    },
+    { dedupe = true }
+  )
+  # dev: &_ref1
+  #   db: ...
+  # staging: *_ref1
+  # prod:
+  #   db: ...
+}
+```
 
 See [`examples/main.tf`](examples/main.tf) for a complete working example of all functions.
 

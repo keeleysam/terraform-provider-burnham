@@ -53,5 +53,6 @@ func (p *BurnhamProvider) Functions(_ context.Context) []func() function.Functio
 		NewINIDecodeFunction,
 		NewINIEncodeFunction,
 		NewCSVEncodeFunction,
+		NewYAMLEncodeFunction,
 	}
 }
