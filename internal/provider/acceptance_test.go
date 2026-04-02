@@ -484,6 +484,45 @@ func TestAcc_CSVEncode_TypeCoercion(t *testing.T) {
 
 // ─── yamlencode ──────────────────────────────────────────────────
 
+// ─── vdfdecode / vdfencode ───────────────────────────────────────
+
+func TestAcc_VDFDecode_Basic(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		TerraformVersionChecks:   testAccTerraformVersionChecks,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{{
+			Config: `
+				locals {
+					vdf = provider::burnham::vdfdecode("\"Config\"\n{\n\t\"key\"\t\t\"value\"\n}\n")
+				}
+				output "val" { value = local.vdf.Config.key }
+			`,
+			ConfigStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownOutputValue("val", knownvalue.StringExact("value")),
+			},
+		}},
+	})
+}
+
+func TestAcc_VDFEncode_Basic(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		TerraformVersionChecks:   testAccTerraformVersionChecks,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{{
+			Config: `
+				output "test" {
+					value = provider::burnham::vdfencode({
+						AppState = { appid = "730", name = "CS2" }
+					})
+				}
+			`,
+			ConfigStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownOutputValue("test", knownvalue.NotNull()),
+			},
+		}},
+	})
+}
+
 func TestAcc_YAMLEncode_BlockStyle(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		TerraformVersionChecks:   testAccTerraformVersionChecks,

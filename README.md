@@ -22,6 +22,7 @@ Burnham fixes this. It's a pure function provider — no resources, no data sour
 | CSV | `csvencode` | — | Terraform has `csvdecode` built-in |
 | YAML | `yamlencode` | — | Block style, literal scalars, comments. Terraform has `yamldecode` built-in |
 | Windows .reg | `regencode` | `regdecode` | Registry Editor export format with typed values and comments |
+| Valve VDF | `vdfencode` | `vdfdecode` | Steam/Source engine config format |
 | TOML | — | — | Use [Tobotimus/toml](https://registry.terraform.io/providers/Tobotimus/toml) instead |
 
 Your configuration profiles, ACL policies, and structured documents become first-class citizens in your Terraform plans, not opaque blobs passed through `file()` and hoped for the best.
@@ -340,6 +341,38 @@ provider::burnham::regencode(value, options?) → string
 | `regbinary(hex_string)` | REG_BINARY | `regbinary("48656c6c6f")` |
 | `regmulti(list)` | REG_MULTI_SZ | `regmulti(["path1", "path2"])` |
 | `regexpandsz(string)` | REG_EXPAND_SZ | `regexpandsz("%SystemRoot%\\system32")` |
+
+---
+
+### `vdfdecode`
+
+Parse a [Valve Data Format](https://developer.valvesoftware.com/wiki/KeyValues) (VDF) string into a Terraform value. VDF is the nested key-value format used by Steam and Source engine games.
+
+```
+provider::burnham::vdfdecode(input) → dynamic
+```
+
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| `input` | `string` | Yes | A VDF string to parse. |
+
+**Returns:** A `dynamic` object. VDF only has strings and nested objects — all leaf values are strings. Comments (`//`) are stripped.
+
+---
+
+### `vdfencode`
+
+Encode a Terraform object as a VDF string.
+
+```
+provider::burnham::vdfencode(value) → string
+```
+
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| `value` | `dynamic` | Yes | An object to encode. Values must be strings or nested objects. Numbers and bools are converted to strings. |
+
+**Returns:** A VDF `string` with tab-indented Valve-style formatting.
 
 ## Installation
 
@@ -686,6 +719,28 @@ locals {
       }
     }
   )
+}
+```
+
+### Valve Data Format (VDF)
+
+```hcl
+locals {
+  # Decode a Steam config file
+  library = provider::burnham::vdfdecode(file("${path.module}/libraryfolders.vdf"))
+  steam_path = local.library.libraryfolders["0"].path
+
+  # Build a VDF config
+  config = provider::burnham::vdfencode({
+    AppState = {
+      appid      = "730"
+      name       = "Counter-Strike 2"
+      installdir = "Counter-Strike Global Offensive"
+      UserConfig = {
+        language = "english"
+      }
+    }
+  })
 }
 ```
 

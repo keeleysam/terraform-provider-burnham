@@ -61,5 +61,7 @@ func (p *BurnhamProvider) Functions(_ context.Context) []func() function.Functio
 		NewRegBinaryFunction,
 		NewRegMultiFunction,
 		NewRegExpandSzFunction,
+		NewVDFDecodeFunction,
+		NewVDFEncodeFunction,
 	}
 }

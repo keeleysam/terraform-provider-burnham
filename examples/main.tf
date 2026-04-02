@@ -484,6 +484,49 @@ output "yaml_dedupe" {
   )
 }
 
+# ─── vdfdecode / vdfencode ────────────────────────────────────────
+# Parse and generate Valve Data Format (VDF) files — used by Steam and Source engine.
+
+output "vdf_decoded" {
+  description = "Decode a VDF string (Steam/Source engine config format)"
+  value = provider::burnham::vdfdecode(<<-EOT
+    "libraryfolders"
+    {
+      "0"
+      {
+        "path"    "/Applications/Steam"
+        "label"   ""
+        // Game sizes
+        "apps"
+        {
+          "730"     "26685592507"
+          "440"     "21899556124"
+        }
+      }
+    }
+  EOT
+  )
+}
+
+output "vdf_steam_path" {
+  description = "Accessing a value from decoded VDF"
+  value       = provider::burnham::vdfdecode("\"Config\"\n{\n\t\"path\"\t\t\"/Applications/Steam\"\n}\n").Config.path
+}
+
+output "vdf_encoded" {
+  description = "Encode a Terraform object as VDF"
+  value = provider::burnham::vdfencode({
+    AppState = {
+      appid      = "730"
+      name       = "Counter-Strike 2"
+      installdir = "Counter-Strike Global Offensive"
+      UserConfig = {
+        language = "english"
+      }
+    }
+  })
+}
+
 # ─── regdecode / regencode ────────────────────────────────────────
 # Parse and generate Windows .reg (Registry Editor export) files.
 
