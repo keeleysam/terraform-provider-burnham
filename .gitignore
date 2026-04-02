@@ -1,0 +1,13 @@
+*.dll
+*.dylib
+*.exe
+*.so
+*.test
+dist/
+terraform-provider-burnham
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+.DS_Store

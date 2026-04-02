@@ -1,0 +1,264 @@
+terraform {
+  required_providers {
+    burnham = {
+      source = "keeleysam/burnham"
+    }
+  }
+}
+
+# ─── jsonencode ────────────────────────────────────────────────────
+# Pretty-prints any Terraform value as JSON. Default indent is tab.
+
+output "json_tabs" {
+  description = "Pretty-printed JSON with tab indentation (default)"
+  value = provider::burnham::jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["s3:GetObject", "s3:ListBucket"]
+        Resource = ["arn:aws:s3:::my-bucket", "arn:aws:s3:::my-bucket/*"]
+      },
+    ]
+  })
+}
+
+output "json_spaces" {
+  description = "Pretty-printed JSON with 2-space indentation"
+  value       = provider::burnham::jsonencode({ count = 42, enabled = true, name = "test" }, "  ")
+}
+
+# ─── hujsondecode ─────────────────────────────────────────────────
+# Parses HuJSON (JSON with // comments, /* block comments */, and trailing commas).
+# Also accepts standard JSON.
+
+locals {
+  hujson_input = <<-EOT
+    {
+      // Server configuration
+      "hosts": [
+        "app-1.example.com",
+        "app-2.example.com",
+      ],
+      "port": 8080,
+      /* TLS is required in production */
+      "tls": true,
+    }
+  EOT
+
+  decoded_hujson = provider::burnham::hujsondecode(local.hujson_input)
+}
+
+output "hujson_decoded_hosts" {
+  description = "Accessing values from decoded HuJSON"
+  value       = local.decoded_hujson.hosts
+}
+
+output "hujson_decoded_port" {
+  description = "Numeric value from decoded HuJSON"
+  value       = local.decoded_hujson.port
+}
+
+# ─── hujsonencode ─────────────────────────────────────────────────
+# Encodes a value as HuJSON with trailing commas. Default indent is tab.
+
+output "hujson_encode_tabs" {
+  description = "HuJSON with tab indentation (default)"
+  value       = provider::burnham::hujsonencode(local.decoded_hujson)
+}
+
+output "hujson_encode_spaces" {
+  description = "HuJSON with 2-space indentation"
+  value       = provider::burnham::hujsonencode(local.decoded_hujson, "  ")
+}
+
+# ─── plistdecode ──────────────────────────────────────────────────
+# Parses Apple property lists. Auto-detects XML, binary, and OpenStep formats.
+# Also auto-detects base64-encoded input (for binary plists via filebase64()).
+
+locals {
+  plist_xml = <<-EOT
+    <?xml version="1.0" encoding="UTF-8"?>
+    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+    <plist version="1.0">
+    <dict>
+      <key>PayloadDisplayName</key>
+      <string>Content Caching</string>
+      <key>PayloadVersion</key>
+      <integer>1</integer>
+      <key>PayloadEnabled</key>
+      <true/>
+      <key>Rating</key>
+      <real>4.5</real>
+      <key>PayloadContent</key>
+      <array>
+        <dict>
+          <key>AllowSharedCaching</key>
+          <true/>
+          <key>CacheLimit</key>
+          <integer>0</integer>
+        </dict>
+      </array>
+    </dict>
+    </plist>
+  EOT
+
+  decoded_plist = provider::burnham::plistdecode(local.plist_xml)
+}
+
+output "plist_string_value" {
+  description = "Accessing a string from a decoded plist"
+  value       = local.decoded_plist.PayloadDisplayName
+}
+
+output "plist_integer_value" {
+  description = "Accessing an integer from a decoded plist"
+  value       = local.decoded_plist.PayloadVersion
+}
+
+output "plist_bool_value" {
+  description = "Accessing a bool from a decoded plist"
+  value       = local.decoded_plist.PayloadEnabled
+}
+
+output "plist_float_value" {
+  description = "Accessing a fractional real from a decoded plist (plain number)"
+  value       = local.decoded_plist.Rating
+}
+
+output "plist_nested_value" {
+  description = "Accessing a nested value from a decoded plist"
+  value       = local.decoded_plist.PayloadContent[0].CacheLimit
+}
+
+# Decode a plist that has <date> and <data> elements
+locals {
+  plist_with_special_types = <<-EOT
+    <?xml version="1.0" encoding="UTF-8"?>
+    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+    <plist version="1.0">
+    <dict>
+      <key>ExpirationDate</key>
+      <date>2025-12-31T00:00:00Z</date>
+      <key>Certificate</key>
+      <data>SGVsbG8gV29ybGQ=</data>
+      <key>WholeReal</key>
+      <real>2</real>
+    </dict>
+    </plist>
+  EOT
+
+  decoded_special = provider::burnham::plistdecode(local.plist_with_special_types)
+}
+
+output "plist_date_tagged_object" {
+  description = "A <date> element decodes as a tagged object"
+  value       = local.decoded_special.ExpirationDate
+  # => { __plist_type = "date", value = "2025-12-31T00:00:00Z" }
+}
+
+output "plist_date_value" {
+  description = "Accessing the RFC 3339 string from a decoded date"
+  value       = local.decoded_special.ExpirationDate.value
+  # => "2025-12-31T00:00:00Z"
+}
+
+output "plist_data_tagged_object" {
+  description = "A <data> element decodes as a tagged object"
+  value       = local.decoded_special.Certificate
+  # => { __plist_type = "data", value = "SGVsbG8gV29ybGQ=" }
+}
+
+output "plist_data_base64" {
+  description = "Accessing the base64 string from decoded binary data"
+  value       = local.decoded_special.Certificate.value
+  # => "SGVsbG8gV29ybGQ="
+}
+
+output "plist_real_tagged_object" {
+  description = "A whole-number <real> decodes as a tagged object to distinguish from <integer>"
+  value       = local.decoded_special.WholeReal
+  # => { __plist_type = "real", value = "2" }
+}
+
+# ─── plistencode ──────────────────────────────────────────────────
+# Encodes a value as an Apple property list. Default format is XML.
+
+output "plist_encode_xml" {
+  description = "Build a plist from scratch (XML, default)"
+  value = provider::burnham::plistencode({
+    PayloadDisplayName       = "WiFi - Corporate"
+    PayloadIdentifier        = "com.example.wifi"
+    PayloadType              = "Configuration"
+    PayloadVersion           = 1
+    PayloadRemovalDisallowed = true
+    PayloadContent = [
+      {
+        PayloadType    = "com.apple.wifi.managed"
+        AutoJoin       = true
+        HIDDEN_NETWORK = false
+        SSID_STR       = "CorpNet"
+        EncryptionType = "WPA2"
+      },
+    ]
+  })
+}
+
+output "plist_encode_openstep" {
+  description = "Encode as OpenStep/GNUStep format"
+  value = provider::burnham::plistencode({
+    Name    = "OpenStep Example"
+    Version = 1
+  }, "openstep")
+}
+
+output "plist_encode_binary_b64" {
+  description = "Encode as binary plist (output is base64 since Terraform strings are UTF-8)"
+  value = provider::burnham::plistencode({
+    Name    = "Binary Example"
+    Version = 1
+  }, "binary")
+}
+
+# ─── plistdate ────────────────────────────────────────────────────
+# Creates a tagged date object for use in plistencode.
+
+output "plist_with_date" {
+  description = "Using plistdate() to create a <date> element"
+  value = provider::burnham::plistencode({
+    PayloadExpirationDate = provider::burnham::plistdate("2025-12-31T00:00:00Z")
+    PayloadIdentifier     = "com.example.expiring"
+  })
+}
+
+# ─── plistdata ────────────────────────────────────────────────────
+# Creates a tagged data object for use in plistencode.
+
+output "plist_with_data" {
+  description = "Using plistdata() to create a <data> element"
+  value = provider::burnham::plistencode({
+    PayloadContent = provider::burnham::plistdata("SGVsbG8gV29ybGQ=")
+  })
+}
+
+# ─── plistreal ────────────────────────────────────────────────────
+# Creates a tagged real object to force <real> instead of <integer> for whole numbers.
+
+output "plist_with_real" {
+  description = "Using plistreal() to force <real>2</real> instead of <integer>2</integer>"
+  value = provider::burnham::plistencode({
+    ScaleFactor = provider::burnham::plistreal(2)
+    Ratio       = 3.14 # fractional numbers are automatically <real>
+    Count       = 2    # plain integers are <integer>
+  })
+}
+
+# ─── Round-trip: decode → modify → re-encode ─────────────────────
+# All types (dates, data, integer vs real) are preserved automatically.
+
+output "plist_roundtrip" {
+  description = "Decode a plist, modify it, re-encode — types are preserved"
+  value = provider::burnham::plistencode(merge(local.decoded_special, {
+    ExpirationDate = provider::burnham::plistdate("2026-06-01T00:00:00Z")
+  }))
+}
