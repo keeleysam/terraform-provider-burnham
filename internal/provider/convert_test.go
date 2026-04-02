@@ -198,7 +198,7 @@ func TestGoToTerraformValue_Slice(t *testing.T) {
 
 func TestGoToTerraformValue_Map(t *testing.T) {
 	input := map[string]interface{}{
-		"name": "test",
+		"name":  "test",
 		"count": float64(5),
 	}
 	val, err := goToTerraformValue(input)
@@ -482,7 +482,7 @@ func TestTryUnpackPlistTaggedObject_UnknownType(t *testing.T) {
 
 func TestTryUnpackPlistTaggedObject_MissingKeys(t *testing.T) {
 	attrs := map[string]attr.Value{
-		"wrong_key": types.StringValue("date"),
+		"wrong_key":  types.StringValue("date"),
 		"also_wrong": types.StringValue("2025-06-01T00:00:00Z"),
 	}
 	_, ok, err := tryUnpackPlistTaggedObject(attrs)
@@ -561,9 +561,9 @@ func TestGoValueForJSONEncode_Fractional(t *testing.T) {
 
 func TestGoValueForJSONEncode_SortedKeys(t *testing.T) {
 	input := map[string]interface{}{
-		"zebra":    "z",
-		"apple":    "a",
-		"mango":    "m",
+		"zebra": "z",
+		"apple": "a",
+		"mango": "m",
 	}
 	result := goValueForJSONEncode(input)
 	om, ok := result.(orderedMap)
