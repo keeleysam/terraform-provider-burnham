@@ -1,5 +1,9 @@
 # Terraform Provider Burnham
 
+<p align="center">
+  <img src="assets/logo.svg" alt="Burnham" width="300" height="300">
+</p>
+
 > *"Aim high in hope and work, remembering that a noble, logical diagram once recorded will never die."*
 > — Daniel Burnham
 

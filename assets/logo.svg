@@ -1,0 +1,129 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0f0c29"/>
+      <stop offset="50%" stop-color="#302b63"/>
+      <stop offset="100%" stop-color="#24243e"/>
+    </linearGradient>
+    <linearGradient id="bldg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#c084fc"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fbbf24" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.3"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Night sky background -->
+  <rect width="240" height="240" rx="24" fill="url(#sky)"/>
+
+  <!-- Stars -->
+  <g fill="white" opacity="0.6">
+    <circle cx="30" cy="25" r="1.2"/>
+    <circle cx="65" cy="15" r="0.8"/>
+    <circle cx="110" cy="22" r="1"/>
+    <circle cx="155" cy="12" r="1.3"/>
+    <circle cx="195" cy="28" r="0.9"/>
+    <circle cx="210" cy="18" r="1.1"/>
+    <circle cx="45" cy="45" r="0.7"/>
+    <circle cx="180" cy="42" r="1"/>
+    <circle cx="22" cy="60" r="0.8"/>
+    <circle cx="218" cy="55" r="0.9"/>
+  </g>
+
+  <!-- Ground / horizon -->
+  <rect x="0" y="180" width="240" height="60" rx="0" fill="#1a1a2e"/>
+  <line x1="0" y1="180" x2="240" y2="180" stroke="#7c3aed" stroke-width="1" opacity="0.4"/>
+
+  <!-- Building body -->
+  <rect x="70" y="80" width="100" height="100" fill="url(#bldg)" rx="2" opacity="0.9"/>
+
+  <!-- Columns -->
+  <rect x="72" y="78" width="8" height="104" fill="#a78bfa" rx="1"/>
+  <rect x="160" y="78" width="8" height="104" fill="#a78bfa" rx="1"/>
+
+  <!-- Column capitals -->
+  <rect x="69" y="74" width="14" height="6" fill="#c4b5fd" rx="1"/>
+  <rect x="157" y="74" width="14" height="6" fill="#c4b5fd" rx="1"/>
+
+  <!-- Pediment (triangle roof) -->
+  <polygon points="62,74 120,42 178,74" fill="#8b5cf6" stroke="#c4b5fd" stroke-width="1.5"/>
+
+  <!-- Pediment detail circle -->
+  <circle cx="120" cy="62" r="8" fill="none" stroke="#c4b5fd" stroke-width="1.5"/>
+
+  <!-- Windows with warm glow -->
+  <g fill="url(#glow)">
+    <rect x="90" y="90" width="12" height="16" rx="1.5"/>
+    <rect x="108" y="90" width="12" height="16" rx="1.5"/>
+    <rect x="126" y="90" width="12" height="16" rx="1.5"/>
+    <rect x="144" y="90" width="12" height="16" rx="1.5"/>
+    <rect x="90" y="112" width="12" height="16" rx="1.5"/>
+    <rect x="108" y="112" width="12" height="16" rx="1.5"/>
+    <rect x="126" y="112" width="12" height="16" rx="1.5"/>
+    <rect x="144" y="112" width="12" height="16" rx="1.5"/>
+  </g>
+
+  <!-- Grand entrance door -->
+  <rect x="107" y="146" width="26" height="34" rx="13" fill="#4c1d95"/>
+  <rect x="110" y="149" width="20" height="31" rx="10" fill="#fbbf24" opacity="0.5"/>
+
+  <!-- Window glow halos -->
+  <g opacity="0.15" fill="#fbbf24">
+    <circle cx="96" cy="98" r="14"/>
+    <circle cx="114" cy="98" r="14"/>
+    <circle cx="132" cy="98" r="14"/>
+    <circle cx="150" cy="98" r="14"/>
+    <circle cx="96" cy="120" r="14"/>
+    <circle cx="114" cy="120" r="14"/>
+    <circle cx="132" cy="120" r="14"/>
+    <circle cx="150" cy="120" r="14"/>
+  </g>
+
+  <!-- "{ B }" on the ground — geometric path style -->
+  <g transform="translate(120, 205)" fill="none" stroke="#c4b5fd" stroke-linecap="round" stroke-linejoin="round" opacity="0.9">
+    <path d="M-42,-12 L-38,-12 L-38,-3 L-42,0 L-38,3 L-38,12 L-42,12" stroke-width="2.5"/>
+    <g stroke-width="2.5">
+      <line x1="-10" y1="-10" x2="-10" y2="10"/>
+      <line x1="-10" y1="-10" x2="2" y2="-10"/>
+      <path d="M2,-10 C8,-10 8,-1 2,-1"/>
+      <line x1="-10" y1="-1" x2="2" y2="-1"/>
+      <path d="M2,-1 C10,-1 10,10 2,10"/>
+      <line x1="-10" y1="10" x2="2" y2="10"/>
+    </g>
+    <path d="M42,-12 L38,-12 L38,-3 L42,0 L38,3 L38,12 L42,12" stroke-width="2.5"/>
+  </g>
+
+  <!-- Floating format icons as paths -->
+  <g opacity="0.8">
+    <!-- JSON {} (top-left) -->
+    <g transform="translate(42, 100) rotate(-15)" fill="none" stroke="#fbbf24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M-6,-7 L-4,-7 L-4,-2 L-6,0 L-4,2 L-4,7 L-6,7"/>
+      <path d="M6,-7 L4,-7 L4,-2 L6,0 L4,2 L4,7 L6,7"/>
+    </g>
+
+    <!-- XML </> (top-right) -->
+    <g transform="translate(190, 90) rotate(10)" fill="none" stroke="#34d399" stroke-width="1.8" stroke-linecap="round">
+      <polyline points="-8,-6 -3,0 -8,6"/>
+      <line x1="-1" y1="-6" x2="-4" y2="6"/>
+      <polyline points="8,-6 3,0 8,6"/>
+    </g>
+
+    <!-- INI [ ] (left) -->
+    <g transform="translate(38, 140) rotate(-8)" fill="none" stroke="#60a5fa" stroke-width="1.8" stroke-linecap="round">
+      <polyline points="-4,-5 -8,-5 -8,5 -4,5"/>
+      <polyline points="4,-5 8,-5 8,5 4,5"/>
+    </g>
+
+    <!-- CSV ,,, (right) -->
+    <g transform="translate(195, 138) rotate(12)" fill="#fb923c">
+      <circle cx="-6" cy="-1" r="1.3"/>
+      <line x1="-6" y1="0.3" x2="-7.5" y2="3.5" stroke="#fb923c" stroke-width="1.3" stroke-linecap="round"/>
+      <circle cx="0" cy="-1" r="1.3"/>
+      <line x1="0" y1="0.3" x2="-1.5" y2="3.5" stroke="#fb923c" stroke-width="1.3" stroke-linecap="round"/>
+      <circle cx="6" cy="-1" r="1.3"/>
+      <line x1="6" y1="0.3" x2="4.5" y2="3.5" stroke="#fb923c" stroke-width="1.3" stroke-linecap="round"/>
+    </g>
+  </g>
+</svg>
