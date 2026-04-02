@@ -8,6 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"howett.net/plist"
 )
 
@@ -26,16 +27,16 @@ func (f *PlistEncodeFunction) Metadata(_ context.Context, _ function.MetadataReq
 func (f *PlistEncodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:     "Encode a value as an Apple property list",
-		Description: "Encodes a Terraform value as an Apple property list (plist) string. Default format is XML. Tagged objects from plistdate() and plistdata() are converted to native plist <date> and <data> elements. Numbers with no fractional part become <integer>, otherwise <real>. When format is \"binary\", the output is base64-encoded.",
+		Description: "Encodes a Terraform value as an Apple property list (plist) string. Default format is XML. Tagged objects from plistdate() and plistdata() are converted to native plist <date> and <data> elements. Numbers with no fractional part become <integer>, otherwise <real>. When format is \"binary\", the output is base64-encoded. Pass an optional options object with a \"format\" key to override the default.",
 		Parameters: []function.Parameter{
 			function.DynamicParameter{
 				Name:        "value",
 				Description: "The value to encode as a plist.",
 			},
 		},
-		VariadicParameter: function.StringParameter{
-			Name:        "format",
-			Description: "The plist format: \"xml\" (default), \"binary\", or \"openstep\". Pass at most one value.",
+		VariadicParameter: function.DynamicParameter{
+			Name:        "options",
+			Description: "An optional options object. Supported keys: \"format\" (string) — \"xml\" (default), \"binary\", or \"openstep\". Pass at most one.",
 		},
 		Return: function.StringReturn{},
 	}
@@ -43,18 +44,30 @@ func (f *PlistEncodeFunction) Definition(_ context.Context, _ function.Definitio
 
 func (f *PlistEncodeFunction) Run(ctx context.Context, req function.RunRequest, resp *function.RunResponse) {
 	var value types.Dynamic
-	var formatArgs []string
+	var optsArgs []types.Dynamic
 
-	resp.Error = function.ConcatFuncErrors(resp.Error, req.Arguments.Get(ctx, &value, &formatArgs))
+	resp.Error = function.ConcatFuncErrors(resp.Error, req.Arguments.Get(ctx, &value, &optsArgs))
 	if resp.Error != nil {
 		return
 	}
 
 	formatStr := "xml"
-	if len(formatArgs) == 1 {
-		formatStr = formatArgs[0]
-	} else if len(formatArgs) > 1 {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewArgumentFuncError(1, "At most one format argument may be provided."))
+	if len(optsArgs) == 1 {
+		obj, ok := optsArgs[0].UnderlyingValue().(basetypes.ObjectValue)
+		if !ok {
+			resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError(fmt.Sprintf("options must be an object, got %T", optsArgs[0].UnderlyingValue())))
+			return
+		}
+		parsed, err := getStringOption(obj.Attributes(), "format")
+		if err != nil {
+			resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError(err.Error()))
+			return
+		}
+		if parsed != "" {
+			formatStr = parsed
+		}
+	} else if len(optsArgs) > 1 {
+		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewArgumentFuncError(1, "At most one options argument may be provided."))
 		return
 	}
 

@@ -10,18 +10,17 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-func runJSONEncode(t *testing.T, value attr.Value, indentArgs ...string) (string, *function.FuncError) {
+func runJSONEncode(t *testing.T, value attr.Value, opts ...attr.Value) (string, *function.FuncError) {
 	t.Helper()
 	f := &JSONEncodeFunction{}
 
-	// Build the variadic tuple for indent args.
-	indentElems := make([]attr.Value, len(indentArgs))
-	indentTypes := make([]attr.Type, len(indentArgs))
-	for i, s := range indentArgs {
-		indentElems[i] = types.StringValue(s)
-		indentTypes[i] = types.StringType
+	optsElems := make([]attr.Value, len(opts))
+	optsTypes := make([]attr.Type, len(opts))
+	for i, o := range opts {
+		optsElems[i] = types.DynamicValue(o)
+		optsTypes[i] = types.DynamicType
 	}
-	variadicTuple := types.TupleValueMust(indentTypes, indentElems)
+	variadicTuple := types.TupleValueMust(optsTypes, optsElems)
 
 	args := function.NewArgumentsData([]attr.Value{
 		types.DynamicValue(value),
@@ -42,6 +41,13 @@ func runJSONEncode(t *testing.T, value attr.Value, indentArgs ...string) (string
 		t.Fatalf("expected String result, got %T", resp.Result.Value())
 	}
 	return result.ValueString(), nil
+}
+
+func makeIndentOpts(indent string) attr.Value {
+	return types.ObjectValueMust(
+		map[string]attr.Type{"indent": types.StringType},
+		map[string]attr.Value{"indent": types.StringValue(indent)},
+	)
 }
 
 func TestJSONEncode_SimpleObject(t *testing.T) {
@@ -77,7 +83,7 @@ func TestJSONEncode_TwoSpaces(t *testing.T) {
 		},
 	)
 
-	result, err := runJSONEncode(t, obj, "  ")
+	result, err := runJSONEncode(t, obj, makeIndentOpts("  "))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -88,14 +94,15 @@ func TestJSONEncode_TwoSpaces(t *testing.T) {
 	}
 }
 
-func TestJSONEncode_TooManyIndentArgs(t *testing.T) {
+func TestJSONEncode_TooManyOpts(t *testing.T) {
 	obj := types.ObjectValueMust(
 		map[string]attr.Type{},
 		map[string]attr.Value{},
 	)
-	_, err := runJSONEncode(t, obj, "  ", "\t")
+	empty := types.ObjectValueMust(map[string]attr.Type{}, map[string]attr.Value{})
+	_, err := runJSONEncode(t, obj, empty, empty)
 	if err == nil {
-		t.Fatal("expected error for too many indent args")
+		t.Fatal("expected error for too many options args")
 	}
 }
 

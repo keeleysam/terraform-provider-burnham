@@ -11,17 +11,17 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-func runHuJSONEncode(t *testing.T, value attr.Value, indentArgs ...string) (string, *function.FuncError) {
+func runHuJSONEncode(t *testing.T, value attr.Value, opts ...attr.Value) (string, *function.FuncError) {
 	t.Helper()
 	f := &HuJSONEncodeFunction{}
 
-	indentElems := make([]attr.Value, len(indentArgs))
-	indentTypes := make([]attr.Type, len(indentArgs))
-	for i, s := range indentArgs {
-		indentElems[i] = types.StringValue(s)
-		indentTypes[i] = types.StringType
+	optsElems := make([]attr.Value, len(opts))
+	optsTypes := make([]attr.Type, len(opts))
+	for i, o := range opts {
+		optsElems[i] = types.DynamicValue(o)
+		optsTypes[i] = types.DynamicType
 	}
-	variadicTuple := types.TupleValueMust(indentTypes, indentElems)
+	variadicTuple := types.TupleValueMust(optsTypes, optsElems)
 
 	args := function.NewArgumentsData([]attr.Value{
 		types.DynamicValue(value),
@@ -45,7 +45,6 @@ func runHuJSONEncode(t *testing.T, value attr.Value, indentArgs ...string) (stri
 }
 
 func TestHuJSONEncode_LargeObject(t *testing.T) {
-	// Use a structure large enough that hujson expands it to multi-line.
 	obj := types.ObjectValueMust(
 		map[string]attr.Type{
 			"name":        types.StringType,
@@ -66,24 +65,20 @@ func TestHuJSONEncode_LargeObject(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	// Multi-line expanded objects get trailing commas.
 	if !strings.Contains(result, ",\n") {
 		t.Errorf("expected trailing commas in multi-line output:\n%s", result)
 	}
 
-	// Should be tab-indented by default.
 	if !strings.Contains(result, "\t") {
 		t.Errorf("expected tab indentation in output:\n%s", result)
 	}
 
-	// Should not contain the injected comment.
 	if strings.Contains(result, "//") {
 		t.Errorf("should not contain injected comment:\n%s", result)
 	}
 }
 
 func TestHuJSONEncode_SmallObject(t *testing.T) {
-	// Small objects stay on one line per hujson formatting (this is correct).
 	obj := types.ObjectValueMust(
 		map[string]attr.Type{
 			"a": types.NumberType,
@@ -119,7 +114,7 @@ func TestHuJSONEncode_CustomIndent(t *testing.T) {
 		},
 	)
 
-	result, err := runHuJSONEncode(t, obj, "  ")
+	result, err := runHuJSONEncode(t, obj, makeIndentOpts("  "))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -133,7 +128,6 @@ func TestHuJSONEncode_CustomIndent(t *testing.T) {
 }
 
 func TestHuJSONEncode_NestedArray(t *testing.T) {
-	// Build a nested structure with enough content to be expanded.
 	innerArr := types.TupleValueMust(
 		[]attr.Type{types.StringType, types.StringType, types.StringType},
 		[]attr.Value{
@@ -157,14 +151,12 @@ func TestHuJSONEncode_NestedArray(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	// Verify it's valid output (contains the values).
 	if !strings.Contains(result, "user1@example.com") {
 		t.Errorf("expected user1 in output:\n%s", result)
 	}
 }
 
 func TestHuJSONEncode_NoInjectedComment(t *testing.T) {
-	// Verify the output never contains the injected comment used internally.
 	obj := types.ObjectValueMust(
 		map[string]attr.Type{
 			"key": types.StringType,
@@ -184,13 +176,229 @@ func TestHuJSONEncode_NoInjectedComment(t *testing.T) {
 	}
 }
 
-func TestHuJSONEncode_TooManyIndentArgs(t *testing.T) {
+func TestHuJSONEncode_TooManyOpts(t *testing.T) {
 	obj := types.ObjectValueMust(
 		map[string]attr.Type{},
 		map[string]attr.Value{},
 	)
-	_, err := runHuJSONEncode(t, obj, "  ", "\t")
+	empty := types.ObjectValueMust(map[string]attr.Type{}, map[string]attr.Value{})
+	_, err := runHuJSONEncode(t, obj, empty, empty)
 	if err == nil {
-		t.Fatal("expected error for too many indent args")
+		t.Fatal("expected error for too many options args")
+	}
+}
+
+// ─── Comment tests ───────────────────────────────────────────────
+
+func makeCommentsOpts(comments attr.Value) attr.Value {
+	return types.ObjectValueMust(
+		map[string]attr.Type{"comments": comments.Type(nil)},
+		map[string]attr.Value{"comments": comments},
+	)
+}
+
+func TestHuJSONEncode_SingleLineComment(t *testing.T) {
+	obj := types.ObjectValueMust(
+		map[string]attr.Type{
+			"acls":   types.StringType,
+			"groups": types.StringType,
+		},
+		map[string]attr.Value{
+			"acls":   types.StringValue("data"),
+			"groups": types.StringValue("data"),
+		},
+	)
+
+	comments := types.ObjectValueMust(
+		map[string]attr.Type{
+			"acls":   types.StringType,
+			"groups": types.StringType,
+		},
+		map[string]attr.Value{
+			"acls":   types.StringValue("Network ACLs"),
+			"groups": types.StringValue("Group definitions"),
+		},
+	)
+
+	result, err := runHuJSONEncode(t, obj, makeCommentsOpts(comments))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if !strings.Contains(result, "// Network ACLs") {
+		t.Errorf("expected // Network ACLs in output:\n%s", result)
+	}
+	if !strings.Contains(result, "// Group definitions") {
+		t.Errorf("expected // Group definitions in output:\n%s", result)
+	}
+}
+
+func TestHuJSONEncode_MultiLineComment(t *testing.T) {
+	obj := types.ObjectValueMust(
+		map[string]attr.Type{
+			"config": types.StringType,
+		},
+		map[string]attr.Value{
+			"config": types.StringValue("data"),
+		},
+	)
+
+	comments := types.ObjectValueMust(
+		map[string]attr.Type{
+			"config": types.StringType,
+		},
+		map[string]attr.Value{
+			"config": types.StringValue("This is a\nmulti-line comment"),
+		},
+	)
+
+	result, err := runHuJSONEncode(t, obj, makeCommentsOpts(comments))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if !strings.Contains(result, "/*") || !strings.Contains(result, "*/") {
+		t.Errorf("expected /* */ block comment in output:\n%s", result)
+	}
+}
+
+func TestHuJSONEncode_NestedComments(t *testing.T) {
+	inner := types.ObjectValueMust(
+		map[string]attr.Type{
+			"host": types.StringType,
+			"port": types.StringType,
+		},
+		map[string]attr.Value{
+			"host": types.StringValue("localhost"),
+			"port": types.StringValue("5432"),
+		},
+	)
+
+	obj := types.ObjectValueMust(
+		map[string]attr.Type{
+			"database": inner.Type(nil),
+		},
+		map[string]attr.Value{
+			"database": inner,
+		},
+	)
+
+	innerComments := types.ObjectValueMust(
+		map[string]attr.Type{
+			"host": types.StringType,
+		},
+		map[string]attr.Value{
+			"host": types.StringValue("Database hostname"),
+		},
+	)
+
+	comments := types.ObjectValueMust(
+		map[string]attr.Type{
+			"database": innerComments.Type(nil),
+		},
+		map[string]attr.Value{
+			"database": innerComments,
+		},
+	)
+
+	result, err := runHuJSONEncode(t, obj, makeCommentsOpts(comments))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if !strings.Contains(result, "// Database hostname") {
+		t.Errorf("expected nested comment in output:\n%s", result)
+	}
+}
+
+func TestHuJSONEncode_CommentOnMissingKey(t *testing.T) {
+	obj := types.ObjectValueMust(
+		map[string]attr.Type{
+			"existing": types.StringType,
+		},
+		map[string]attr.Value{
+			"existing": types.StringValue("data"),
+		},
+	)
+
+	comments := types.ObjectValueMust(
+		map[string]attr.Type{
+			"nonexistent": types.StringType,
+		},
+		map[string]attr.Value{
+			"nonexistent": types.StringValue("This key doesn't exist"),
+		},
+	)
+
+	// Should not error — missing keys are silently skipped.
+	result, err := runHuJSONEncode(t, obj, makeCommentsOpts(comments))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if strings.Contains(result, "This key doesn't exist") {
+		t.Errorf("comment for missing key should not appear in output:\n%s", result)
+	}
+}
+
+func TestHuJSONEncode_EmptyComments(t *testing.T) {
+	obj := types.ObjectValueMust(
+		map[string]attr.Type{"a": types.StringType},
+		map[string]attr.Value{"a": types.StringValue("b")},
+	)
+
+	emptyComments := types.ObjectValueMust(
+		map[string]attr.Type{},
+		map[string]attr.Value{},
+	)
+
+	result, err := runHuJSONEncode(t, obj, makeCommentsOpts(emptyComments))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if strings.Contains(result, "//") || strings.Contains(result, "/*") {
+		t.Errorf("empty comments should produce no comments:\n%s", result)
+	}
+}
+
+func TestHuJSONEncode_CommentsWithIndent(t *testing.T) {
+	obj := types.ObjectValueMust(
+		map[string]attr.Type{
+			"key1": types.StringType,
+			"key2": types.StringType,
+		},
+		map[string]attr.Value{
+			"key1": types.StringValue("val1"),
+			"key2": types.StringValue("val2"),
+		},
+	)
+
+	comments := types.ObjectValueMust(
+		map[string]attr.Type{"key1": types.StringType},
+		map[string]attr.Value{"key1": types.StringValue("First key")},
+	)
+
+	opts := types.ObjectValueMust(
+		map[string]attr.Type{
+			"indent":   types.StringType,
+			"comments": comments.Type(nil),
+		},
+		map[string]attr.Value{
+			"indent":   types.StringValue("  "),
+			"comments": comments,
+		},
+	)
+
+	result, err := runHuJSONEncode(t, obj, opts)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if !strings.Contains(result, "// First key") {
+		t.Errorf("expected comment in output:\n%s", result)
+	}
+	if strings.Contains(result, "\t") {
+		t.Errorf("expected no tabs with 2-space indent:\n%s", result)
 	}
 }

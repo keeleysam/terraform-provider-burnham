@@ -416,3 +416,41 @@ func (o orderedMap) MarshalJSON() ([]byte, error) {
 	buf.WriteByte('}')
 	return buf.Bytes(), nil
 }
+
+// parseOptionsIndent extracts the "indent" string from a dynamic options value.
+// Returns "" if no indent key is present (caller should use default).
+func parseOptionsIndent(opts types.Dynamic) (string, error) {
+	obj, ok := opts.UnderlyingValue().(basetypes.ObjectValue)
+	if !ok {
+		return "", fmt.Errorf("options must be an object, got %T", opts.UnderlyingValue())
+	}
+	return getStringOption(obj.Attributes(), "indent")
+}
+
+// getStringOption extracts an optional string value from an attributes map.
+// Returns "" if the key is not present.
+func getStringOption(attrs map[string]attr.Value, key string) (string, error) {
+	v, ok := attrs[key]
+	if !ok {
+		return "", nil
+	}
+	sv, ok := v.(basetypes.StringValue)
+	if !ok {
+		return "", fmt.Errorf("%q must be a string, got %T", key, v)
+	}
+	return sv.ValueString(), nil
+}
+
+// getBoolOption extracts an optional bool value from an attributes map.
+// Returns false if the key is not present.
+func getBoolOption(attrs map[string]attr.Value, key string) (bool, error) {
+	v, ok := attrs[key]
+	if !ok {
+		return false, nil
+	}
+	bv, ok := v.(basetypes.BoolValue)
+	if !ok {
+		return false, fmt.Errorf("%q must be a bool, got %T", key, v)
+	}
+	return bv.ValueBool(), nil
+}

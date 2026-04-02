@@ -40,7 +40,7 @@ func TestAcc_JSONEncode_CustomIndent(t *testing.T) {
 		TerraformVersionChecks:   testAccTerraformVersionChecks,
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{{
-			Config: `output "test" { value = provider::burnham::jsonencode({ a = 1 }, "  ") }`,
+			Config: `output "test" { value = provider::burnham::jsonencode({ a = 1 }, { indent = "  " }) }`,
 			ConfigStateChecks: []statecheck.StateCheck{
 				statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("{\n  \"a\": 1\n}")),
 			},
@@ -87,6 +87,34 @@ func TestAcc_HuJSONEncode_Basic(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{{
 			Config: `output "test" { value = provider::burnham::hujsonencode({ key = "value" }) }`,
+			ConfigStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownOutputValue("test", knownvalue.NotNull()),
+			},
+		}},
+	})
+}
+
+func TestAcc_HuJSONEncode_WithComments(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		TerraformVersionChecks:   testAccTerraformVersionChecks,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{{
+			Config: `
+				output "test" {
+					value = provider::burnham::hujsonencode(
+						{
+							acls   = ["accept"]
+							groups = { admin = ["alice@example.com"] }
+						},
+						{
+							comments = {
+								acls   = "Network ACLs"
+								groups = "Group definitions"
+							}
+						}
+					)
+				}
+			`,
 			ConfigStateChecks: []statecheck.StateCheck{
 				statecheck.ExpectKnownOutputValue("test", knownvalue.NotNull()),
 			},
@@ -218,7 +246,7 @@ func TestAcc_PlistEncode_InvalidFormat(t *testing.T) {
 		TerraformVersionChecks:   testAccTerraformVersionChecks,
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{{
-			Config:      `output "test" { value = provider::burnham::plistencode({ a = 1 }, "yaml") }`,
+			Config:      `output "test" { value = provider::burnham::plistencode({ a = 1 }, { format = "yaml" }) }`,
 			ExpectError: regexp.MustCompile(`unsupported plist`),
 		}},
 	})

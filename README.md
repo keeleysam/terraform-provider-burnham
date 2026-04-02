@@ -29,13 +29,13 @@ The result is Terraform code that reads like a blueprint — clear, logical, and
 Encode a value as pretty-printed JSON. Unlike Terraform's built-in `jsonencode`, this produces human-readable output with configurable indentation.
 
 ```
-provider::burnham::jsonencode(value, indent?) → string
+provider::burnham::jsonencode(value, options?) → string
 ```
 
 | Parameter | Type | Required | Description |
 |---|---|---|---|
 | `value` | `dynamic` | Yes | Any Terraform value to encode as JSON. |
-| `indent` | `string` | No | Indentation string for each level. Default: `"\t"` (tab). |
+| `options` | `object` | No | Options object. Supported keys: `indent` (string, default `"\t"`). |
 
 **Returns:** A pretty-printed JSON `string`. Keys are sorted alphabetically. Whole numbers render without a decimal point (e.g. `1` not `1.0`).
 
@@ -59,16 +59,43 @@ provider::burnham::hujsondecode(input) → dynamic
 
 ### `hujsonencode`
 
-Encode a Terraform value as a HuJSON string with trailing commas and pretty-printed formatting.
+Encode a Terraform value as a HuJSON string with trailing commas and pretty-printed formatting. Optionally add comments using a mirrored comment structure.
 
 ```
-provider::burnham::hujsonencode(value, indent?) → string
+provider::burnham::hujsonencode(value, options?) → string
 ```
 
 | Parameter | Type | Required | Description |
 |---|---|---|---|
 | `value` | `dynamic` | Yes | Any Terraform value to encode. |
-| `indent` | `string` | No | Indentation string for each level. Default: `"\t"` (tab). |
+| `options` | `object` | No | Options object (see below). |
+
+**Options:**
+
+| Key | Type | Default | Description |
+|---|---|---|---|
+| `indent` | `string` | `"\t"` | Indentation string for each level. |
+| `comments` | `object` | none | A mirrored structure where string values become comments placed before the matching key. |
+
+**Comments** mirror the shape of the data. Each key in the comments object corresponds to a key in the data. String values become comments — single-line strings produce `//` comments, multi-line strings (containing `\n`) produce `/* */` block comments. Nested objects in the comment map add comments to nested keys. Array elements are addressed by index as string keys (`"0"`, `"1"`, etc.). Comments for keys that don't exist in the data are silently ignored.
+
+```hcl
+provider::burnham::hujsonencode(
+  { acls = [...], groups = {...} },
+  {
+    comments = {
+      acls   = "Network ACL rules"
+      groups = "Group membership"
+    }
+  }
+)
+# {
+# 	// Network ACL rules
+# 	"acls": [...],
+# 	// Group membership
+# 	"groups": {...},
+# }
+```
 
 **Returns:** A HuJSON `string`. Multi-line objects and arrays get trailing commas. Small composites that fit on one line stay compact (standard hujson formatting behavior). Keys are sorted alphabetically.
 
@@ -108,13 +135,13 @@ Tagged objects for `<date>` and `<data>` use the same format as `plistdate()` an
 Encode a Terraform value as an Apple property list.
 
 ```
-provider::burnham::plistencode(value, format?) → string
+provider::burnham::plistencode(value, options?) → string
 ```
 
 | Parameter | Type | Required | Description |
 |---|---|---|---|
 | `value` | `dynamic` | Yes | The value to encode. Tagged objects from `plistdate()` and `plistdata()` are converted to native `<date>` and `<data>` elements. |
-| `format` | `string` | No | Output format: `"xml"` (default), `"binary"`, or `"openstep"`. |
+| `options` | `object` | No | Options object. Supported keys: `format` (string) — `"xml"` (default), `"binary"`, or `"openstep"`. |
 
 **Returns:** A plist `string`. When format is `"binary"`, the output is base64-encoded (since Terraform strings are UTF-8). Numbers with no fractional part become `<integer>`, otherwise `<real>`.
 
@@ -265,7 +292,7 @@ locals {
   # ...
 
   # With 2-space indent:
-  policy_spaces = provider::burnham::jsonencode({a = 1}, "  ")
+  policy_spaces = provider::burnham::jsonencode({a = 1}, { indent = "  " })
 }
 ```
 
@@ -274,13 +301,19 @@ locals {
 ```hcl
 locals {
   # Decode HuJSON — comments stripped, trailing commas handled.
-  # Works with any JWCC/HuJSON file: Tailscale ACLs, annotated configs, etc.
   config = provider::burnham::hujsondecode(file("${path.module}/config.hujson"))
 
-  # Modify and re-encode as HuJSON (trailing commas + formatting added)
-  updated = provider::burnham::hujsonencode(merge(local.config, {
-    port = 9090
-  }))
+  # Re-encode as HuJSON with comments
+  updated = provider::burnham::hujsonencode(
+    merge(local.config, { port = 9090 }),
+    {
+      comments = {
+        hosts = "Server hostnames"
+        port  = "Main listening port"
+        tls   = "Require TLS in production"
+      }
+    }
+  )
 }
 ```
 

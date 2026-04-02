@@ -3,10 +3,14 @@ package provider
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"strconv"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/tailscale/hujson"
 )
 
@@ -24,17 +28,24 @@ func (f *HuJSONEncodeFunction) Metadata(_ context.Context, _ function.MetadataRe
 
 func (f *HuJSONEncodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
-		Summary:     "Encode a value as a HuJSON (JWCC) string",
-		Description: "Encodes a Terraform value as a HuJSON string with trailing commas and pretty-printed formatting. Default indentation is a tab character; pass an optional indent string to override.",
+		Summary: "Encode a value as a HuJSON (JWCC) string",
+		Description: "Encodes a Terraform value as a HuJSON string with trailing commas and pretty-printed formatting. " +
+			"Pass an optional options object with \"indent\" to override the default tab indentation, " +
+			"and \"comments\" to add comments to the output. The comments object mirrors the data structure — " +
+			"each key corresponds to a key in the data, and the string value becomes a comment placed before that key. " +
+			"Single-line strings become // comments, multi-line strings become /* */ comments.",
 		Parameters: []function.Parameter{
 			function.DynamicParameter{
 				Name:        "value",
 				Description: "The value to encode as HuJSON.",
 			},
 		},
-		VariadicParameter: function.StringParameter{
-			Name:        "indent",
-			Description: "The string to use for each indentation level. Defaults to a tab character. Pass at most one value.",
+		VariadicParameter: function.DynamicParameter{
+			Name: "options",
+			Description: "An optional options object. Supported keys: " +
+				"\"indent\" (string) — indentation string, default \"\\t\"; " +
+				"\"comments\" (object) — a mirrored structure where string values become comments placed before the matching key. " +
+				"Pass at most one.",
 		},
 		Return: function.StringReturn{},
 	}
@@ -42,18 +53,38 @@ func (f *HuJSONEncodeFunction) Definition(_ context.Context, _ function.Definiti
 
 func (f *HuJSONEncodeFunction) Run(ctx context.Context, req function.RunRequest, resp *function.RunResponse) {
 	var value types.Dynamic
-	var indentArgs []string
+	var optsArgs []types.Dynamic
 
-	resp.Error = function.ConcatFuncErrors(resp.Error, req.Arguments.Get(ctx, &value, &indentArgs))
+	resp.Error = function.ConcatFuncErrors(resp.Error, req.Arguments.Get(ctx, &value, &optsArgs))
 	if resp.Error != nil {
 		return
 	}
 
 	indent := "\t"
-	if len(indentArgs) == 1 {
-		indent = indentArgs[0]
-	} else if len(indentArgs) > 1 {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewArgumentFuncError(1, "At most one indent argument may be provided."))
+	var comments attr.Value
+
+	if len(optsArgs) == 1 {
+		obj, ok := optsArgs[0].UnderlyingValue().(basetypes.ObjectValue)
+		if !ok {
+			resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError(fmt.Sprintf("options must be an object, got %T", optsArgs[0].UnderlyingValue())))
+			return
+		}
+		attrs := obj.Attributes()
+
+		parsed, err := getStringOption(attrs, "indent")
+		if err != nil {
+			resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError(err.Error()))
+			return
+		}
+		if parsed != "" {
+			indent = parsed
+		}
+
+		if c, ok := attrs["comments"]; ok {
+			comments = c
+		}
+	} else if len(optsArgs) > 1 {
+		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewArgumentFuncError(1, "At most one options argument may be provided."))
 		return
 	}
 
@@ -72,7 +103,6 @@ func (f *HuJSONEncodeFunction) Run(ctx context.Context, req function.RunRequest,
 	}
 
 	// Make the JSON non-standard so hujson.Format() will add trailing commas.
-	// We prepend a line comment which makes IsStandard() return false.
 	hujsonBytes := append([]byte("//\n"), jsonBytes...)
 
 	ast, err := hujson.Parse(hujsonBytes)
@@ -83,8 +113,18 @@ func (f *HuJSONEncodeFunction) Run(ctx context.Context, req function.RunRequest,
 
 	ast.Format()
 
-	// Remove the injected comment from the output.
+	// Remove the injected comment.
 	ast.BeforeExtra = nil
+
+	// Apply comments from the mirrored structure.
+	if comments != nil {
+		if err := applyComments(&ast, comments); err != nil {
+			resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Failed to apply comments: "+err.Error()))
+			return
+		}
+		// Re-format after adding comments so indentation is correct.
+		ast.Format()
+	}
 
 	result := string(ast.Pack())
 
@@ -103,4 +143,80 @@ func (f *HuJSONEncodeFunction) Run(ctx context.Context, req function.RunRequest,
 	}
 
 	resp.Error = function.ConcatFuncErrors(resp.Error, resp.Result.Set(ctx, result))
+}
+
+// applyComments walks the hujson AST and the comments value in parallel,
+// setting BeforeExtra on matching keys.
+func applyComments(ast *hujson.Value, comments attr.Value) error {
+	switch cv := comments.(type) {
+	case basetypes.ObjectValue:
+		return applyCommentsToValue(ast, cv.Attributes())
+	default:
+		return nil
+	}
+}
+
+func applyCommentsToValue(ast *hujson.Value, commentsMap map[string]attr.Value) error {
+	switch comp := ast.Value.(type) {
+	case *hujson.Object:
+		for key, commentVal := range commentsMap {
+			memberIdx := findObjectMember(comp, key)
+			if memberIdx < 0 {
+				continue // Key not in data, silently skip.
+			}
+
+			switch cv := commentVal.(type) {
+			case basetypes.StringValue:
+				// Leaf: set comment on this member's name.
+				comp.Members[memberIdx].Name.BeforeExtra = formatComment(cv.ValueString())
+
+			case basetypes.ObjectValue:
+				// Nested: recurse into the member's value.
+				if err := applyCommentsToValue(&comp.Members[memberIdx].Value, cv.Attributes()); err != nil {
+					return err
+				}
+			}
+		}
+
+	case *hujson.Array:
+		for key, commentVal := range commentsMap {
+			idx, err := strconv.Atoi(key)
+			if err != nil || idx < 0 || idx >= len(comp.Elements) {
+				continue // Not a valid index, silently skip.
+			}
+
+			switch cv := commentVal.(type) {
+			case basetypes.StringValue:
+				comp.Elements[idx].BeforeExtra = formatComment(cv.ValueString())
+
+			case basetypes.ObjectValue:
+				if err := applyCommentsToValue(&comp.Elements[idx], cv.Attributes()); err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+// findObjectMember returns the index of the member with the given key, or -1.
+func findObjectMember(obj *hujson.Object, key string) int {
+	quotedKey := `"` + key + `"`
+	for i, m := range obj.Members {
+		if string(m.Name.Value.(hujson.Literal)) == quotedKey {
+			return i
+		}
+	}
+	return -1
+}
+
+// formatComment converts a string to a hujson.Extra comment.
+// Single-line strings become // comments, multi-line become /* */ comments.
+// A leading newline is included so Format() places the comment on its own line.
+func formatComment(s string) hujson.Extra {
+	if strings.Contains(s, "\n") {
+		return hujson.Extra("\n/* " + s + " */\n")
+	}
+	return hujson.Extra("\n// " + s + "\n")
 }

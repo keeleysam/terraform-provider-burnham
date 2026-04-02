@@ -25,7 +25,7 @@ output "json_tabs" {
 
 output "json_spaces" {
   description = "Pretty-printed JSON with 2-space indentation"
-  value       = provider::burnham::jsonencode({ count = 42, enabled = true, name = "test" }, "  ")
+  value       = provider::burnham::jsonencode({ count = 42, enabled = true, name = "test" }, { indent = "  " })
 }
 
 # ─── hujsondecode ─────────────────────────────────────────────────
@@ -69,7 +69,21 @@ output "hujson_encode_tabs" {
 
 output "hujson_encode_spaces" {
   description = "HuJSON with 2-space indentation"
-  value       = provider::burnham::hujsonencode(local.decoded_hujson, "  ")
+  value       = provider::burnham::hujsonencode(local.decoded_hujson, { indent = "  " })
+}
+
+output "hujson_with_comments" {
+  description = "HuJSON with declarative comments"
+  value = provider::burnham::hujsonencode(
+    local.decoded_hujson,
+    {
+      comments = {
+        hosts = "Server hostnames"
+        port  = "Main listening port"
+        tls   = "Require TLS in production"
+      }
+    }
+  )
 }
 
 # ─── plistdecode ──────────────────────────────────────────────────
@@ -209,7 +223,7 @@ output "plist_encode_openstep" {
   value = provider::burnham::plistencode({
     Name    = "OpenStep Example"
     Version = 1
-  }, "openstep")
+  }, { format = "openstep" })
 }
 
 output "plist_encode_binary_b64" {
@@ -217,7 +231,7 @@ output "plist_encode_binary_b64" {
   value = provider::burnham::plistencode({
     Name    = "Binary Example"
     Version = 1
-  }, "binary")
+  }, { format = "binary" })
 }
 
 # ─── plistdate ────────────────────────────────────────────────────

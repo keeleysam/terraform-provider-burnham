@@ -12,17 +12,25 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-func runPlistEncode(t *testing.T, value attr.Value, formatArgs ...string) (string, *function.FuncError) {
+func runPlistEncode(t *testing.T, value attr.Value, formatStr ...string) (string, *function.FuncError) {
 	t.Helper()
 	f := &PlistEncodeFunction{}
 
-	fmtElems := make([]attr.Value, len(formatArgs))
-	fmtTypes := make([]attr.Type, len(formatArgs))
-	for i, s := range formatArgs {
-		fmtElems[i] = types.StringValue(s)
-		fmtTypes[i] = types.StringType
+	var opts []attr.Value
+	if len(formatStr) == 1 {
+		opts = append(opts, makeFormatOpts(formatStr[0]))
+	} else if len(formatStr) > 1 {
+		// Pass two options objects to trigger the "too many" error.
+		opts = append(opts, makeFormatOpts(formatStr[0]), makeFormatOpts(formatStr[1]))
 	}
-	variadicTuple := types.TupleValueMust(fmtTypes, fmtElems)
+
+	optsElems := make([]attr.Value, len(opts))
+	optsTypes := make([]attr.Type, len(opts))
+	for i, o := range opts {
+		optsElems[i] = types.DynamicValue(o)
+		optsTypes[i] = types.DynamicType
+	}
+	variadicTuple := types.TupleValueMust(optsTypes, optsElems)
 
 	args := function.NewArgumentsData([]attr.Value{
 		types.DynamicValue(value),
@@ -43,6 +51,13 @@ func runPlistEncode(t *testing.T, value attr.Value, formatArgs ...string) (strin
 		t.Fatalf("expected String result, got %T", resp.Result.Value())
 	}
 	return result.ValueString(), nil
+}
+
+func makeFormatOpts(format string) attr.Value {
+	return types.ObjectValueMust(
+		map[string]attr.Type{"format": types.StringType},
+		map[string]attr.Value{"format": types.StringValue(format)},
+	)
 }
 
 func TestPlistEncode_SimpleDict(t *testing.T) {

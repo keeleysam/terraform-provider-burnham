@@ -23,16 +23,16 @@ func (f *JSONEncodeFunction) Metadata(_ context.Context, _ function.MetadataRequ
 func (f *JSONEncodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:     "Encode a value as pretty-printed JSON",
-		Description: "Encodes a Terraform value as a pretty-printed JSON string. Default indentation is a tab character; pass an optional indent string to override. Unlike the built-in jsonencode, this produces human-readable output.",
+		Description: "Encodes a Terraform value as a pretty-printed JSON string. Unlike the built-in jsonencode, this produces human-readable output. Pass an optional options object with an \"indent\" key to override the default tab indentation.",
 		Parameters: []function.Parameter{
 			function.DynamicParameter{
 				Name:        "value",
 				Description: "The value to encode as JSON.",
 			},
 		},
-		VariadicParameter: function.StringParameter{
-			Name:        "indent",
-			Description: "The string to use for each indentation level. Defaults to a tab character. Pass at most one value.",
+		VariadicParameter: function.DynamicParameter{
+			Name:        "options",
+			Description: "An optional options object. Supported keys: \"indent\" (string) — indentation string, default \"\\t\". Pass at most one.",
 		},
 		Return: function.StringReturn{},
 	}
@@ -40,18 +40,25 @@ func (f *JSONEncodeFunction) Definition(_ context.Context, _ function.Definition
 
 func (f *JSONEncodeFunction) Run(ctx context.Context, req function.RunRequest, resp *function.RunResponse) {
 	var value types.Dynamic
-	var indentArgs []string
+	var optsArgs []types.Dynamic
 
-	resp.Error = function.ConcatFuncErrors(resp.Error, req.Arguments.Get(ctx, &value, &indentArgs))
+	resp.Error = function.ConcatFuncErrors(resp.Error, req.Arguments.Get(ctx, &value, &optsArgs))
 	if resp.Error != nil {
 		return
 	}
 
 	indent := "\t"
-	if len(indentArgs) == 1 {
-		indent = indentArgs[0]
-	} else if len(indentArgs) > 1 {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewArgumentFuncError(1, "At most one indent argument may be provided."))
+	if len(optsArgs) == 1 {
+		parsed, err := parseOptionsIndent(optsArgs[0])
+		if err != nil {
+			resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError(err.Error()))
+			return
+		}
+		if parsed != "" {
+			indent = parsed
+		}
+	} else if len(optsArgs) > 1 {
+		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewArgumentFuncError(1, "At most one options argument may be provided."))
 		return
 	}
 
@@ -71,3 +78,4 @@ func (f *JSONEncodeFunction) Run(ctx context.Context, req function.RunRequest, r
 
 	resp.Error = function.ConcatFuncErrors(resp.Error, resp.Result.Set(ctx, string(result)))
 }
+
