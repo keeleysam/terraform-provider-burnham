@@ -54,5 +54,12 @@ func (p *BurnhamProvider) Functions(_ context.Context) []func() function.Functio
 		NewINIEncodeFunction,
 		NewCSVEncodeFunction,
 		NewYAMLEncodeFunction,
+		NewRegDecodeFunction,
+		NewRegEncodeFunction,
+		NewRegDwordFunction,
+		NewRegQwordFunction,
+		NewRegBinaryFunction,
+		NewRegMultiFunction,
+		NewRegExpandSzFunction,
 	}
 }

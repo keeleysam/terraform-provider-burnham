@@ -3,6 +3,7 @@ module github.com/keeleysam/terraform-burnham
 go 1.26.1
 
 require (
+	github.com/gersonkurz/go-regis3 v0.0.0-20260204141052-9cc701fe149b
 	github.com/hashicorp/terraform-plugin-framework v1.19.0
 	github.com/hashicorp/terraform-plugin-go v0.31.0
 	github.com/hashicorp/terraform-plugin-testing v1.15.0

@@ -465,6 +465,34 @@ output "yaml_dedupe" {
   )
 }
 
+# ─── regdecode / regencode ────────────────────────────────────────
+# Parse and generate Windows .reg (Registry Editor export) files.
+
+output "reg_decode" {
+  description = "Decode a .reg file — REG_SZ becomes strings, other types use tagged objects"
+  value = provider::burnham::regdecode(<<-EOT
+    Windows Registry Editor Version 5.00
+
+    [HKEY_LOCAL_MACHINE\SOFTWARE\MyApp]
+    "DisplayName"="My Application"
+    "Version"=dword:00000002
+    @="Default Value"
+  EOT
+  )
+}
+
+output "reg_encode" {
+  description = "Build a .reg file with typed values"
+  value = provider::burnham::regencode({
+    "HKEY_LOCAL_MACHINE\\SOFTWARE\\MyApp" = {
+      "DisplayName" = "My Application"
+      "Version"     = provider::burnham::regdword(2)
+      "InstallPath" = provider::burnham::regexpandsz("%ProgramFiles%\\MyApp")
+      "Features"    = provider::burnham::regmulti(["core", "plugins"])
+    }
+  })
+}
+
 # ─── Round-trip: decode → modify → re-encode ─────────────────────
 # All types (dates, data, integer vs real) are preserved automatically.
 

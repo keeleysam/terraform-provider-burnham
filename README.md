@@ -21,6 +21,7 @@ Burnham fixes this. It's a pure function provider — no resources, no data sour
 | INI | `iniencode` | `inidecode` | Standard `[section]` / `key = value` files |
 | CSV | `csvencode` | — | Terraform has `csvdecode` built-in |
 | YAML | `yamlencode` | — | Block style, literal scalars, comments. Terraform has `yamldecode` built-in |
+| Windows .reg | `regencode` | `regdecode` | Registry Editor export format with typed values |
 | TOML | — | — | Use [Tobotimus/toml](https://registry.terraform.io/providers/Tobotimus/toml) instead |
 
 Your configuration profiles, ACL policies, and structured documents become first-class citizens in your Terraform plans, not opaque blobs passed through `file()` and hoped for the best.
@@ -285,6 +286,58 @@ provider::burnham::yamlencode(value, options?) → string
 | `comments` | `object` | none | Mirrored structure for `#` comments (same pattern as `hujsonencode`). |
 
 **Returns:** A YAML `string` in block style by default. Multi-line strings use literal block scalars (`|`). Keys are sorted alphabetically unless `sort_keys = false`.
+
+---
+
+### `regdecode`
+
+Parse a Windows Registry Editor export (.reg) file into a Terraform value. Auto-detects Version 4 (REGEDIT4) and Version 5 formats.
+
+```
+provider::burnham::regdecode(input) → dynamic
+```
+
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| `input` | `string` | Yes | A .reg file string to parse. |
+
+**Returns:** A `dynamic` object of `{ "HKEY_...\\Path" = { "ValueName" = value } }`. REG_SZ values become plain strings. Other types use tagged objects:
+
+| Registry type | Terraform representation |
+|---|---|
+| `REG_SZ` | plain string |
+| `REG_DWORD` | `{ __reg_type = "dword", value = "42" }` |
+| `REG_QWORD` | `{ __reg_type = "qword", value = "42" }` |
+| `REG_BINARY` | `{ __reg_type = "binary", value = "48656c6c6f" }` (hex) |
+| `REG_MULTI_SZ` | `{ __reg_type = "multi_sz", value = ["str1", "str2"] }` |
+| `REG_EXPAND_SZ` | `{ __reg_type = "expand_sz", value = "%SystemRoot%\\system32" }` |
+| Default value (`@`) | key name is `"@"` |
+
+---
+
+### `regencode`
+
+Encode a Terraform object as a Windows .reg file (Version 5).
+
+```
+provider::burnham::regencode(value) → string
+```
+
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| `value` | `dynamic` | Yes | An object of `{ "HKEY_...\\Path" = { "ValueName" = value } }`. Plain strings become REG_SZ. Use helper functions for other types. |
+
+**Returns:** A .reg file `string` with the `Windows Registry Editor Version 5.00` header.
+
+**Helper functions** for typed registry values:
+
+| Function | Creates | Example |
+|---|---|---|
+| `regdword(number)` | REG_DWORD | `regdword(42)` |
+| `regqword(number)` | REG_QWORD | `regqword(1099511627776)` |
+| `regbinary(hex_string)` | REG_BINARY | `regbinary("48656c6c6f")` |
+| `regmulti(list)` | REG_MULTI_SZ | `regmulti(["path1", "path2"])` |
+| `regexpandsz(string)` | REG_EXPAND_SZ | `regexpandsz("%SystemRoot%\\system32")` |
 
 ## Installation
 
@@ -572,6 +625,26 @@ locals {
   # staging: *_ref1
   # prod:
   #   db: ...
+}
+```
+
+### Windows .reg files
+
+```hcl
+locals {
+  # Decode a .reg file
+  reg = provider::burnham::regdecode(file("${path.module}/settings.reg"))
+  app_name = local.reg["HKEY_LOCAL_MACHINE\\SOFTWARE\\MyApp"].Name
+
+  # Build a .reg file
+  new_reg = provider::burnham::regencode({
+    "HKEY_LOCAL_MACHINE\\SOFTWARE\\MyApp" = {
+      "DisplayName" = "My Application"
+      "Version"     = provider::burnham::regdword(2)
+      "InstallPath" = provider::burnham::regexpandsz("%ProgramFiles%\\MyApp")
+      "Features"    = provider::burnham::regmulti(["core", "plugins", "updates"])
+    }
+  })
 }
 ```
 
