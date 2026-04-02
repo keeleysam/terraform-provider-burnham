@@ -23,6 +23,7 @@ Burnham fixes this. It's a pure function provider — no resources, no data sour
 | YAML | `yamlencode` | — | Block style, literal scalars, comments. Terraform has `yamldecode` built-in |
 | Windows .reg | `regencode` | `regdecode` | Registry Editor export format with typed values and comments |
 | Valve VDF | `vdfencode` | `vdfdecode` | Steam/Source engine config format |
+| KDL | `kdlencode` | `kdldecode` | Modern document language, v1 and v2 |
 | TOML | — | — | Use [Tobotimus/toml](https://registry.terraform.io/providers/Tobotimus/toml) instead |
 
 Your configuration profiles, ACL policies, and structured documents become first-class citizens in your Terraform plans, not opaque blobs passed through `file()` and hoped for the best.
@@ -373,6 +374,39 @@ provider::burnham::vdfencode(value) → string
 | `value` | `dynamic` | Yes | An object to encode. Values must be strings or nested objects. Numbers and bools are converted to strings. |
 
 **Returns:** A VDF `string` with tab-indented Valve-style formatting.
+
+---
+
+### `kdldecode`
+
+Parse a [KDL](https://kdl.dev/) document into a Terraform value. KDL is a modern document language where each node has a name, positional arguments, named properties, and children. Supports both KDL v1 and v2 input.
+
+```
+provider::burnham::kdldecode(input) → dynamic
+```
+
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| `input` | `string` | Yes | A KDL document string to parse. |
+
+**Returns:** A `dynamic` list of node objects. Each node has: `name` (string), `args` (list of values), `props` (map of values), `children` (list of child nodes).
+
+---
+
+### `kdlencode`
+
+Encode a list of node objects as a KDL document.
+
+```
+provider::burnham::kdlencode(value, options?) → string
+```
+
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| `value` | `dynamic` | Yes | A list of node objects with `name`, `args`, `props`, and `children` keys. |
+| `options` | `object` | No | Options object. Supported keys: `version` (string) — `"v2"` (default) or `"v1"`. |
+
+**Returns:** A KDL `string`. Default output is KDL v2 format.
 
 ## Installation
 
@@ -741,6 +775,30 @@ locals {
       }
     }
   })
+}
+```
+
+### KDL
+
+```hcl
+locals {
+  # Decode a KDL document
+  doc = provider::burnham::kdldecode(<<-EOT
+    title "My Config"
+    server "web" host="0.0.0.0" port=8080 {
+      tls enabled=true
+    }
+  EOT
+  )
+  title = local.doc[0].args[0] # "My Config"
+
+  # Encode a KDL document (v2 default, v1 available)
+  config = provider::burnham::kdlencode([
+    { name = "title", args = ["My Config"], props = {}, children = [] },
+    { name = "server", args = ["web"], props = { host = "0.0.0.0", port = 8080 }, children = [
+      { name = "tls", args = [], props = { enabled = true }, children = [] },
+    ]},
+  ])
 }
 ```
 

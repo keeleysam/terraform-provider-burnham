@@ -486,6 +486,47 @@ func TestAcc_CSVEncode_TypeCoercion(t *testing.T) {
 
 // ─── vdfdecode / vdfencode ───────────────────────────────────────
 
+// ─── kdldecode / kdlencode ───────────────────────────────────────
+
+func TestAcc_KDLDecode_Basic(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		TerraformVersionChecks:   testAccTerraformVersionChecks,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{{
+			Config: `
+				locals {
+					kdl = provider::burnham::kdldecode("title \"Hello\"")
+				}
+				output "name" { value = local.kdl[0].name }
+			`,
+			ConfigStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownOutputValue("name", knownvalue.StringExact("title")),
+			},
+		}},
+	})
+}
+
+func TestAcc_KDLEncode_Basic(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		TerraformVersionChecks:   testAccTerraformVersionChecks,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{{
+			Config: `
+				output "test" {
+					value = provider::burnham::kdlencode([
+						{ name = "title", args = ["Hello"], props = {}, children = [] }
+					])
+				}
+			`,
+			ConfigStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownOutputValue("test", knownvalue.NotNull()),
+			},
+		}},
+	})
+}
+
+// ─── vdfdecode / vdfencode ───────────────────────────────────────
+
 func TestAcc_VDFDecode_Basic(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		TerraformVersionChecks:   testAccTerraformVersionChecks,

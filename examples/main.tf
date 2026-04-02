@@ -484,6 +484,43 @@ output "yaml_dedupe" {
   )
 }
 
+# ─── kdldecode / kdlencode ────────────────────────────────────────
+# Parse and generate KDL (KDL Document Language) — a modern config format.
+
+output "kdl_decoded" {
+  description = "Decode a KDL document into node objects"
+  value = provider::burnham::kdldecode(<<-EOT
+    title "My Application"
+    server "web" host="0.0.0.0" port=8080 {
+      tls enabled=true
+    }
+  EOT
+  )
+}
+
+output "kdl_title" {
+  description = "Access the first argument of the first node"
+  value       = provider::burnham::kdldecode("title \"Hello\"")[0].args[0]
+}
+
+output "kdl_encoded_v2" {
+  description = "Encode as KDL v2 (default)"
+  value = provider::burnham::kdlencode([
+    { name = "title", args = ["My App"], props = {}, children = [] },
+    { name = "server", args = ["web"], props = { host = "0.0.0.0", port = 8080 }, children = [
+      { name = "tls", args = [], props = { enabled = true }, children = [] },
+    ]},
+  ])
+}
+
+output "kdl_encoded_v1" {
+  description = "Encode as KDL v1"
+  value = provider::burnham::kdlencode(
+    [{ name = "config", args = ["value"], props = { key = "test" }, children = [] }],
+    { version = "v1" }
+  )
+}
+
 # ─── vdfdecode / vdfencode ────────────────────────────────────────
 # Parse and generate Valve Data Format (VDF) files — used by Steam and Source engine.
 
