@@ -1,0 +1,31 @@
+name: Dependabot Auto-Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  auto-release:
+    runs-on: ubuntu-latest
+    if: contains(github.event.head_commit.message, 'dependabot')
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Get latest tag and bump patch version
+        id: version
+        run: |
+          latest=$(git tag -l 'v*' --sort=-v:refname | head -n1)
+          if [ -z "$latest" ]; then
+            echo "new_tag=v0.1.0" >> "$GITHUB_OUTPUT"
+          else
+            IFS='.' read -r major minor patch <<< "${latest#v}"
+            echo "new_tag=v${major}.${minor}.$((patch + 1))" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Create and push tag
+        run: |
+          git tag "${{ steps.version.outputs.new_tag }}"
+          git push origin "${{ steps.version.outputs.new_tag }}"
