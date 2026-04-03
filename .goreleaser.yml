@@ -45,7 +45,8 @@ checksum:
 #       - "--detach-sign"
 #       - "${artifact}"
 release:
-  draft: true
+  draft: false
+  prerelease: true
 changelog:
   sort: asc
   filters:
