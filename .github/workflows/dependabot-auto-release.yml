@@ -15,6 +15,7 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          token: ${{ secrets.DEPENDABOT_PAT }}
       - name: Get latest tag and bump patch version
         id: version
         run: |
