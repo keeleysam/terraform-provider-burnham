@@ -205,7 +205,7 @@ func regValueToTerraform(val *regis3.ValueEntry) (attr.Value, error) {
 			elemTypes[i] = types.StringType
 		}
 		list := types.TupleValueMust(elemTypes, elems)
-		return makeRegTaggedObjectDynamic(regTypeMultiSz, list)
+		return makeRegTaggedObject(regTypeMultiSz, list)
 
 	case regis3.RegExpandSz:
 		return makeRegTaggedObject(regTypeExpandSz, types.StringValue(val.GetString("")))
@@ -231,9 +231,4 @@ func makeRegTaggedObject(regType string, value attr.Value) (attr.Value, error) {
 		return nil, fmt.Errorf("creating tagged object: %s", diags.Errors()[0].Detail())
 	}
 	return obj, nil
-}
-
-// makeRegTaggedObjectDynamic creates a tagged object with __reg_type and a dynamic value.
-func makeRegTaggedObjectDynamic(regType string, value attr.Value) (attr.Value, error) {
-	return makeRegTaggedObject(regType, value)
 }

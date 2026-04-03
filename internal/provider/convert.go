@@ -440,17 +440,3 @@ func getStringOption(attrs map[string]attr.Value, key string) (string, error) {
 	}
 	return sv.ValueString(), nil
 }
-
-// getBoolOption extracts an optional bool value from an attributes map.
-// Returns false if the key is not present.
-func getBoolOption(attrs map[string]attr.Value, key string) (bool, error) {
-	v, ok := attrs[key]
-	if !ok {
-		return false, nil
-	}
-	bv, ok := v.(basetypes.BoolValue)
-	if !ok {
-		return false, fmt.Errorf("%q must be a bool, got %T", key, v)
-	}
-	return bv.ValueBool(), nil
-}
