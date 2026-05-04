@@ -78,7 +78,7 @@ func TestHuJSONEncode_LargeObject(t *testing.T) {
 	}
 }
 
-func TestHuJSONEncode_SmallObject(t *testing.T) {
+func TestHuJSONEncode_SmallObject_Default(t *testing.T) {
 	obj := types.ObjectValueMust(
 		map[string]attr.Type{
 			"a": types.NumberType,
@@ -89,6 +89,27 @@ func TestHuJSONEncode_SmallObject(t *testing.T) {
 	)
 
 	result, err := runHuJSONEncode(t, obj)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Default is the always-expanded layout.
+	if result != "{\n\t\"a\": 1,\n}" {
+		t.Errorf("expected always-expanded default output, got:\n%q", result)
+	}
+}
+
+func TestHuJSONEncode_SmallObject_Compact(t *testing.T) {
+	obj := types.ObjectValueMust(
+		map[string]attr.Type{
+			"a": types.NumberType,
+		},
+		map[string]attr.Value{
+			"a": types.NumberValue(big.NewFloat(1)),
+		},
+	)
+
+	result, err := runHuJSONEncode(t, obj, makeBoolOpts("compact", true))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
