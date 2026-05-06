@@ -44,7 +44,7 @@ func (f *NAT64SynthesizeCIDRFunction) Run(ctx context.Context, req function.RunR
 	if resp.Error != nil {
 		return
 	}
-	useMixed := len(useHexArgs) == 0 || !useHexArgs[0]
+	useMixed := !optionalArg(useHexArgs, false)
 
 	result, err := iputil.NAT64SynthesizeCIDR(ipv4CIDR, nat64Prefix, useMixed)
 	if err != nil {

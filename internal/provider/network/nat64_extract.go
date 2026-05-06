@@ -46,12 +46,7 @@ func (f *NAT64ExtractFunction) Run(ctx context.Context, req function.RunRequest,
 		return
 	}
 
-	prefix := ""
-	if len(prefixArgs) > 0 {
-		prefix = prefixArgs[0]
-	}
-
-	result, err := iputil.NAT64Extract(ipv6, prefix)
+	result, err := iputil.NAT64Extract(ipv6, optionalArg(prefixArgs, ""))
 	if err != nil {
 		resp.Error = function.NewFuncError(err.Error())
 		return

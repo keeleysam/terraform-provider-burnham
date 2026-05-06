@@ -43,7 +43,7 @@ func (f *NAT64SynthesizeFunction) Run(ctx context.Context, req function.RunReque
 	if resp.Error != nil {
 		return
 	}
-	useMixed := len(useHexArgs) == 0 || !useHexArgs[0]
+	useMixed := !optionalArg(useHexArgs, false)
 
 	result, err := iputil.NAT64Synthesize(ipv4, prefix, useMixed)
 	if err != nil {
