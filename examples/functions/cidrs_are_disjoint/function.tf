@@ -6,7 +6,8 @@ output "ok" {
 
 // Idiomatic use is in a variable validation block:
 variable "subnet_cidrs" {
-  type = list(string)
+  type    = list(string)
+  default = ["10.0.0.0/24", "10.0.1.0/24"]
   validation {
     condition     = provider::burnham::cidrs_are_disjoint(var.subnet_cidrs)
     error_message = "subnet_cidrs must not contain overlapping entries."
