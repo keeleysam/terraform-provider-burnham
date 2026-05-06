@@ -22,7 +22,10 @@ jobs:
       - run: go mod download
       - run: go build ./...
       - run: go vet ./...
-      - run: go test ./... -count=1 -cover -v
+      # `-coverpkg=./internal/...` captures cross-package coverage. The acceptance tests live in package provider but exercise package dataformat and package network through the protocol layer; without -coverpkg, that work doesn't count toward those packages and the per-package numbers look much worse than they actually are. We then write all per-package profiles into one merged file and report a single combined coverage figure, which is the number worth tracking.
+      - run: go test ./... -count=1 -coverpkg=./internal/... -coverprofile=coverage.out -v
+      - name: Combined coverage across all internal packages
+        run: go tool cover -func=coverage.out | tail -1
       # Guard: docs/ must be up-to-date with the function metadata in source. If a contributor edited a function's MarkdownDescription / Summary / parameter docs without running `make docs`, this step fails with the diff so the PR can be told to regenerate.
       - name: Verify generated docs are up to date
         run: |
