@@ -1,6 +1,12 @@
 # Visit https://goreleaser.com for documentation on how to customize this
 # behavior.
 version: 2
+
+# Pin ProjectName explicitly so release artifacts are named
+# `terraform-provider-burnham_v<version>` regardless of where the repo is
+# cloned (local working dir vs. CI checkout dir).
+project_name: terraform-provider-burnham
+
 before:
   hooks:
     - go mod tidy
