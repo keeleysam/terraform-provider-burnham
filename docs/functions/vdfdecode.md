@@ -13,7 +13,8 @@ Decodes a VDF string (used by Steam/Source engine) into a Terraform object. VDF 
 ## Example Usage
 
 ```terraform
-# Parse Valve VDF (Steam / Source engine config format).
+// Parse Valve VDF (Steam / Source engine config format).
+// Output structure depends on the input file.
 output "appstate" {
   value = provider::burnham::vdfdecode(file("${path.module}/appmanifest_730.acf"))
 }

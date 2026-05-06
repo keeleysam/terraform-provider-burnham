@@ -1,4 +1,5 @@
-# Tagged binary value (hex string) for use inside a regencode payload.
+// Tagged binary value (hex string) for use inside a regencode payload.
 output "blob" {
-  value = provider::burnham::regbinary("48656c6c6f")  # "Hello"
+  value = provider::burnham::regbinary("48656c6c6f")
+  // → { __reg_type = "binary", value = "48656c6c6f" }
 }

@@ -13,10 +13,10 @@ Returns the last address in the CIDR (all host bits set). For IPv4 this is the b
 ## Example Usage
 
 ```terraform
-# Last address in a CIDR (broadcast for IPv4).
+// Last address in a CIDR (broadcast for IPv4).
 output "subnet_top" {
   value = provider::burnham::cidr_last_ip("10.0.0.0/24")
-  # → "10.0.0.255"
+  // → "10.0.0.255"
 }
 ```
 

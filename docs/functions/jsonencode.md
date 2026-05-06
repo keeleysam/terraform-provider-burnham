@@ -13,13 +13,16 @@ Encodes a Terraform value as a pretty-printed JSON string. Unlike the built-in j
 ## Example Usage
 
 ```terraform
-# Pretty-printed JSON, configurable indent.
-output "policy" {
-  value = provider::burnham::jsonencode({
-    Version = "2012-10-17"
-    Statement = [{ Effect = "Allow", Action = ["s3:GetObject"] }]
-  })
+// Pretty-printed JSON. Defaults to tab indent; pass options.indent to override.
+output "data" {
+  value = provider::burnham::jsonencode({ name = "alice", count = 3 })
 }
+/* →
+{
+    "count": 3,
+    "name": "alice"
+}
+*/
 ```
 
 ## Signature

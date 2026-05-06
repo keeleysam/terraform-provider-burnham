@@ -13,14 +13,17 @@ Encodes a Terraform value as a YAML string. Unlike the built-in yamlencode, this
 ## Example Usage
 
 ```terraform
-# YAML with block style, literal scalars for multi-line strings.
-output "k8s_configmap" {
+// YAML with block style and literal scalars for multi-line strings.
+output "configmap" {
   value = provider::burnham::yamlencode({
     apiVersion = "v1"
     kind       = "ConfigMap"
-    data       = { script = "#!/bin/bash\necho hello\n" }
   })
 }
+/* →
+apiVersion: v1
+kind: ConfigMap
+*/
 ```
 
 ## Signature

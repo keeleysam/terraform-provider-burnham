@@ -13,10 +13,10 @@ Returns every individual IP address within the given CIDR as a list of strings. 
 ## Example Usage
 
 ```terraform
-# All individual IPs in a small CIDR. Capped at 65536 addresses.
+// All individual IPs in a small CIDR. Capped at 65536 addresses.
 output "host_ips" {
   value = provider::burnham::cidr_expand("10.0.0.0/30")
-  # → ["10.0.0.0", "10.0.0.1", "10.0.0.2", "10.0.0.3"]
+  // → ["10.0.0.0", "10.0.0.1", "10.0.0.2", "10.0.0.3"]
 }
 ```
 

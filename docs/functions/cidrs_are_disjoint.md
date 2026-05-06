@@ -15,7 +15,13 @@ Returns `true` if every CIDR in the list is non-overlapping with every other. Un
 ## Example Usage
 
 ```terraform
-# Validation helper: ensure a list of subnet CIDRs has no overlaps.
+// Validation helper: ensure a list of subnet CIDRs has no overlaps.
+output "ok" {
+  value = provider::burnham::cidrs_are_disjoint(["10.0.0.0/24", "10.0.1.0/24"])
+  // → true
+}
+
+// Idiomatic use is in a variable validation block:
 variable "subnet_cidrs" {
   type = list(string)
   validation {

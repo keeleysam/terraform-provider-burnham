@@ -15,11 +15,10 @@ Returns the wildcard mask for the given IPv4 CIDR. For example, `10.0.0.0/24` �
 ## Example Usage
 
 ```terraform
-# Cisco-style wildcard mask (bitwise inverse of the subnet mask).
-# IPv4 only.
+// Cisco-style wildcard mask (bitwise inverse of the subnet mask). IPv4 only.
 output "acl_mask" {
   value = provider::burnham::cidr_wildcard("10.0.0.0/24")
-  # → "0.0.0.255"
+  // → "0.0.0.255"
 }
 ```
 

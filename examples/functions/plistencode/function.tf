@@ -1,8 +1,16 @@
-# Build a configuration profile / .mobileconfig payload.
-output "wifi_profile" {
-  value = provider::burnham::plistencode({
-    PayloadDisplayName = "WiFi"
-    PayloadIdentifier  = "com.example.wifi"
-    PayloadVersion     = 1
-  })
+// Build a configuration profile / .mobileconfig payload. Output is XML by default.
+output "wifi" {
+  value = provider::burnham::plistencode({ Name = "Office", Enabled = true })
 }
+/* →
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Enabled</key>
+    <true/>
+    <key>Name</key>
+    <string>Office</string>
+</dict>
+</plist>
+*/

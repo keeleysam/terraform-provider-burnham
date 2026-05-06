@@ -13,13 +13,21 @@ Encodes a Terraform value as a HuJSON string with trailing commas and pretty-pri
 ## Example Usage
 
 ```terraform
-# Encode a value as HuJSON. Optional comments mirror the data structure.
+// Encode a value as HuJSON. Optional comments mirror the data structure.
 output "acl_text" {
   value = provider::burnham::hujsonencode(
     { acls = [], groups = {} },
     { comments = { acls = "Network ACL rules", groups = "Group definitions" } },
   )
 }
+/* →
+{
+    // Network ACL rules
+    "acls": [],
+    // Group definitions
+    "groups": {},
+}
+*/
 ```
 
 ## Signature

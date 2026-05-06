@@ -15,10 +15,10 @@ Extracts and returns just the prefix length from a CIDR string.
 ## Example Usage
 
 ```terraform
-# Plain integer prefix length, for APIs that don't take CIDR notation.
+// Plain integer prefix length, for APIs that don't take CIDR notation.
 output "bits" {
   value = provider::burnham::cidr_prefix_length("10.0.0.0/23")
-  # → 23
+  // → 23
 }
 ```
 
