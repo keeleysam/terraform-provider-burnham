@@ -100,438 +100,66 @@ No provider configuration is needed — Burnham is a pure function provider with
 
 ## Examples
 
+A short tour. See [`examples/`](examples/) for the full set of working snippets — every function has at least one — and [`docs/functions/`](docs/functions/) for per-function reference.
+
 ### Pretty-printed JSON
+
+Terraform's built-in `jsonencode` produces a single line. Burnham's gives you human-editable output and configurable indentation.
 
 ```hcl
 locals {
   policy = provider::burnham::jsonencode({
     Version = "2012-10-17"
-    Statement = [
-      {
-        Effect   = "Allow"
-        Action   = ["s3:GetObject", "s3:ListBucket"]
-        Resource = ["arn:aws:s3:::my-bucket/*"]
-      },
-    ]
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["s3:GetObject", "s3:ListBucket"]
+      Resource = ["arn:aws:s3:::my-bucket/*"]
+    }]
   })
-  # Output:
-  # {
-  # 	"Statement": [
-  # 		{
-  # 			"Action": [
-  # 				"s3:GetObject",
-  # 				"s3:ListBucket"
-  # 			],
-  # ...
 
-  # With 2-space indent:
-  policy_spaces = provider::burnham::jsonencode({a = 1}, { indent = "  " })
+  # Two-space indent:
+  policy_spaces = provider::burnham::jsonencode(local.policy_input, { indent = "  " })
 }
 ```
 
-### HuJSON (JSON with comments and trailing commas)
+### Apple plist from scratch
+
+Build a configuration profile or `.mobileconfig` payload as a native HCL value. Output is XML by default; pass `format = "binary"` for a base64-encoded binary plist or `format = "openstep"` for OpenStep/GNUStep.
 
 ```hcl
-locals {
-  # Decode HuJSON — comments stripped, trailing commas handled.
-  config = provider::burnham::hujsondecode(file("${path.module}/config.hujson"))
-
-  # Re-encode as HuJSON with comments
-  updated = provider::burnham::hujsonencode(
-    merge(local.config, { port = 9090 }),
-    {
-      comments = {
-        hosts = "Server hostnames"
-        port  = "Main listening port"
-        tls   = "Require TLS in production"
-      }
-    }
-  )
-}
-```
-
-Useful for Tailscale ACL policies or any configuration file where you want comments and trailing commas alongside your JSON. Also parses JSONC files (comments only, no trailing commas) since HuJSON is a superset.
-
-### Decoding a macOS configuration profile
-
-```hcl
-locals {
-  profile = provider::burnham::plistdecode(file("${path.module}/profile.plist"))
-
-  # Access values naturally
-  profile_name = local.profile.PayloadDisplayName
-  cache_limit  = local.profile.PayloadContent[0].CacheLimit
-}
-```
-
-### Building a plist from scratch
-
-```hcl
-locals {
-  config = provider::burnham::plistencode({
+output "wifi_profile" {
+  value = provider::burnham::plistencode({
     PayloadDisplayName       = "WiFi - Corporate"
     PayloadIdentifier        = "com.example.wifi"
     PayloadType              = "Configuration"
     PayloadVersion           = 1
     PayloadRemovalDisallowed = true
-    PayloadContent = [
-      {
-        PayloadType  = "com.apple.wifi.managed"
-        AutoJoin     = true
-        SSID_STR     = "CorpNet"
-      },
-    ]
+    PayloadContent = [{
+      PayloadType    = "com.apple.wifi.managed"
+      AutoJoin       = true
+      SSID_STR       = "CorpNet"
+      EncryptionType = "WPA2"
+    }]
   })
 }
 ```
 
-### Modifying a plist (decode, change, re-encode)
+### Dual-stack CIDR merge
 
-Dates, binary data, integer vs real distinction, and all other types are preserved automatically through round-trips.
-
-```hcl
-locals {
-  original = provider::burnham::plistdecode(file("profile.plist"))
-  modified = provider::burnham::plistencode(merge(local.original, {
-    PayloadDisplayName = "Updated Name"
-  }))
-}
-```
-
-### Plist with XML comments
+`cidr_merge` accepts a mixed IPv4/IPv6 list and returns merged ranges in both families — useful when you've collected blocks from multiple sources and want a single canonical, non-overlapping list to feed into a security group, route table, or firewall allowlist.
 
 ```hcl
 locals {
-  commented_plist = provider::burnham::plistencode(
-    {
-      PayloadDisplayName = "WiFi - Corporate"
-      PayloadIdentifier  = "com.example.wifi"
-      PayloadVersion     = 1
-    },
-    {
-      comments = {
-        PayloadDisplayName = "Human-readable profile name"
-        PayloadIdentifier  = "Unique reverse-DNS identifier"
-      }
-    }
-  )
-  # <?xml version="1.0" encoding="UTF-8"?>
-  # ...
-  # 	<!-- Human-readable profile name -->
-  # 	<key>PayloadDisplayName</key>
-  # 	<string>WiFi - Corporate</string>
-  # 	<!-- Unique reverse-DNS identifier -->
-  # 	<key>PayloadIdentifier</key>
-  # 	<string>com.example.wifi</string>
-  # ...
+  ipv4_blocks = ["10.0.0.0/24", "10.0.1.0/24", "10.0.2.0/23"]
+  ipv6_blocks = ["2001:db8::/65", "2001:db8::8000:0:0:0/65", "2001:db9::/64"]
+
+  # Single call, both families collapse independently:
+  merged = provider::burnham::cidr_merge(concat(local.ipv4_blocks, local.ipv6_blocks))
+  # → ["10.0.0.0/22", "2001:db8::/64", "2001:db9::/64"]
 }
 ```
 
-### Dates, binary data, and explicit reals in plists
-
-```hcl
-locals {
-  profile = provider::burnham::plistencode({
-    PayloadExpirationDate = provider::burnham::plistdate("2025-12-31T00:00:00Z")
-    PayloadContent        = provider::burnham::plistdata(filebase64("${path.module}/cert.der"))
-    ScaleFactor           = provider::burnham::plistreal(2) # <real>2</real>, not <integer>2</integer>
-  })
-  # Produces <date>, <data>, and <real> elements in the plist XML
-}
-```
-
-### Binary plists
-
-Binary plists aren't valid UTF-8, so use `filebase64()` — Burnham auto-detects the encoding:
-
-```hcl
-locals {
-  binary = provider::burnham::plistdecode(filebase64("${path.module}/binary.plist"))
-}
-```
-
-### Nested plists
-
-macOS configuration profiles commonly nest plists inside `<data>` blocks — the outer profile wraps an inner payload as base64-encoded plist data. Build the inner plist with `plistencode`, base64-encode it with Terraform's built-in `base64encode`, and wrap it with `plistdata()`:
-
-```hcl
-locals {
-  profile = provider::burnham::plistencode({
-    PayloadDisplayName = "WiFi"
-    PayloadType        = "Configuration"
-    PayloadVersion     = 1
-    PayloadContent = [
-      {
-        PayloadType    = "com.apple.wifi.managed"
-        PayloadVersion = 1
-        PayloadContent = provider::burnham::plistdata(base64encode(
-          provider::burnham::plistencode({
-            AutoJoin       = true
-            SSID_STR       = "CorpNet"
-            EncryptionType = "WPA2"
-          })
-        ))
-      },
-    ]
-  })
-}
-```
-
-To decode a nested plist, chain `plistdecode` calls — the inner plist is in the tagged data object's `.value`:
-
-```hcl
-locals {
-  outer = provider::burnham::plistdecode(file("profile.mobileconfig"))
-  inner = provider::burnham::plistdecode(local.outer.PayloadContent[0].PayloadContent.value)
-  ssid  = local.inner.SSID_STR
-}
-```
-
-### INI files
-
-```hcl
-locals {
-  # Decode an INI file
-  config = provider::burnham::inidecode(file("${path.module}/config.ini"))
-  # => { "" = { ... }, "database" = { "host" = "localhost", "port" = "5432" }, ... }
-
-  db_host = local.config.database.host
-  db_port = tonumber(local.config.database.port) # values are always strings
-
-  # Encode an INI file
-  new_config = provider::burnham::iniencode({
-    database = {
-      host = "db.example.com"
-      port = "5432"
-    }
-    cache = {
-      enabled = "true"
-      ttl     = "3600"
-    }
-  })
-}
-```
-
-### CSV encoding
-
-```hcl
-locals {
-  # Auto-detect headers (sorted alphabetically)
-  users_csv = provider::burnham::csvencode([
-    { name = "alice", email = "alice@example.com", role = "admin" },
-    { name = "bob", email = "bob@example.com", role = "user" },
-  ])
-  # email,name,role
-  # alice@example.com,alice,admin
-  # bob@example.com,bob,user
-
-  # Explicit column order
-  users_ordered = provider::burnham::csvencode(
-    [{ name = "alice", email = "alice@example.com" }],
-    { columns = ["name", "email"] }
-  )
-  # name,email
-  # alice,alice@example.com
-
-  # Data only (no header row)
-  users_data = provider::burnham::csvencode(
-    [{ name = "alice", count = 42, active = true }],
-    { columns = ["name", "count", "active"], no_header = true }
-  )
-  # alice,42,true
-}
-```
-
-Numbers, bools, and nulls are converted to strings automatically. Commas, quotes, and newlines in values are escaped per RFC 4180.
-
-### YAML (better than built-in)
-
-```hcl
-locals {
-  # Block style, literal block scalars for scripts — unlike Terraform's yamlencode
-  k8s_manifest = provider::burnham::yamlencode({
-    apiVersion = "v1"
-    kind       = "ConfigMap"
-    metadata   = { name = "app-config", namespace = "production" }
-    data = {
-      "startup.sh" = "#!/bin/bash\nset -e\necho Starting...\n./run-app\n"
-    }
-  })
-  # apiVersion: v1
-  # kind: ConfigMap
-  # metadata:
-  #   name: app-config
-  #   namespace: production
-  # data:
-  #   startup.sh: |
-  #     #!/bin/bash
-  #     set -e
-  #     echo Starting...
-  #     ./run-app
-
-  # With comments and options
-  annotated = provider::burnham::yamlencode(
-    { replicas = 3, image = "nginx:latest" },
-    {
-      indent = 4
-      comments = {
-        replicas = "Desired pod count"
-        image    = "Container image"
-      }
-    }
-  )
-  # # Desired pod count
-  # replicas: 3
-  # # Container image
-  # image: nginx:latest
-
-  # Deduplicate identical subtrees with YAML anchors
-  deduped = provider::burnham::yamlencode(
-    {
-      dev     = { db = { host = "localhost", port = 5432 } }
-      staging = { db = { host = "localhost", port = 5432 } }
-      prod    = { db = { host = "db.prod.internal", port = 5432 } }
-    },
-    { dedupe = true }
-  )
-  # dev: &_ref1
-  #   db: ...
-  # staging: *_ref1
-  # prod:
-  #   db: ...
-}
-```
-
-### Windows .reg files
-
-```hcl
-locals {
-  # Decode a .reg file
-  reg = provider::burnham::regdecode(file("${path.module}/settings.reg"))
-  app_name = local.reg["HKEY_LOCAL_MACHINE\\SOFTWARE\\MyApp"].DisplayName
-
-  # Build a .reg file with comments
-  new_reg = provider::burnham::regencode(
-    {
-      "HKEY_LOCAL_MACHINE\\SOFTWARE\\MyApp" = {
-        "DisplayName" = "My Application"
-        "Version"     = provider::burnham::regdword(2)
-        "InstallPath" = provider::burnham::regexpandsz("%ProgramFiles%\\MyApp")
-        "Features"    = provider::burnham::regmulti(["core", "plugins", "updates"])
-      }
-    },
-    {
-      comments = {
-        "HKEY_LOCAL_MACHINE\\SOFTWARE\\MyApp" = {
-          "Version"     = "Incremented on each release"
-          "InstallPath" = "Uses %ProgramFiles% for standard location"
-        }
-      }
-    }
-  )
-}
-```
-
-### Valve Data Format (VDF)
-
-```hcl
-locals {
-  # Decode a Steam config file
-  library = provider::burnham::vdfdecode(file("${path.module}/libraryfolders.vdf"))
-  steam_path = local.library.libraryfolders["0"].path
-
-  # Build a VDF config
-  config = provider::burnham::vdfencode({
-    AppState = {
-      appid      = "730"
-      name       = "Counter-Strike 2"
-      installdir = "Counter-Strike Global Offensive"
-      UserConfig = {
-        language = "english"
-      }
-    }
-  })
-}
-```
-
-### KDL
-
-```hcl
-locals {
-  # Decode a KDL document
-  doc = provider::burnham::kdldecode(<<-EOT
-    title "My Config"
-    server "web" host="0.0.0.0" port=8080 {
-      tls enabled=true
-    }
-  EOT
-  )
-  title = local.doc[0].args[0] # "My Config"
-
-  # Encode a KDL document (v2 default, v1 available)
-  config = provider::burnham::kdlencode([
-    { name = "title", args = ["My Config"], props = {}, children = [] },
-    { name = "server", args = ["web"], props = { host = "0.0.0.0", port = 8080 }, children = [
-      { name = "tls", args = [], props = { enabled = true }, children = [] },
-    ]},
-  ])
-}
-```
-
-### Dual-stack security group from an IPv4 allowlist
-
-Take an existing IPv4 allowlist and produce the corresponding NAT64 IPv6 ranges, then merge both into a single rule set. IPv6-only clients can reach the same services through a NAT64 gateway with no extra configuration.
-
-```hcl
-locals {
-  ipv4_allow = ["203.0.113.0/24", "198.51.100.0/24"]
-  ipv6_allow = provider::burnham::nat64_synthesize_cidrs(local.ipv4_allow, "64:ff9b::/96")
-  full_allow = concat(local.ipv4_allow, local.ipv6_allow)
-}
-```
-
-### Compact a sprawling allowlist before pushing it to a cloud rule limit
-
-Cloud providers cap the number of rules per security group. Merging redundant prefixes before applying avoids hitting those limits.
-
-```hcl
-locals {
-  raw_cidrs = [
-    "10.0.0.0/24", "10.0.1.0/24", "10.0.2.0/23",   # → "10.0.0.0/22"
-    "10.0.4.0/24", "10.0.5.0/24",                  # → "10.0.4.0/23"
-    "192.168.1.0/24", "192.168.1.0/25",            # /25 is redundant
-  ]
-  merged = provider::burnham::cidr_merge(local.raw_cidrs)
-  # → ["10.0.0.0/22", "10.0.4.0/23", "192.168.1.0/24"]
-}
-```
-
-### Validate non-overlapping subnet inputs
-
-Catch operator mistakes — accidentally including a summary prefix and a more-specific one in the same list — at plan time instead of at API call time.
-
-```hcl
-variable "subnet_cidrs" {
-  type = list(string)
-  validation {
-    condition     = provider::burnham::cidrs_are_disjoint(var.subnet_cidrs)
-    error_message = "subnet_cidrs must not contain overlapping entries."
-  }
-}
-```
-
-### Find the next free /24 in an IPAM pool
-
-```hcl
-locals {
-  vpc_cidrs       = ["10.0.0.0/16"]
-  allocated       = ["10.0.0.0/24", "10.0.1.0/24", "10.0.3.0/24"]
-  next_free_block = provider::burnham::cidr_find_free(local.vpc_cidrs, local.allocated, 24)
-  # → "10.0.2.0/24"
-}
-```
-
-See [`examples/main.tf`](examples/main.tf) for a complete working example of every function in both families.
+For the canonical "build a NAT64-aware dual-stack allowlist from an existing IPv4 list" pattern, see [`examples/networking.tf`](examples/networking.tf).
 
 ## Requirements
 
