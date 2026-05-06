@@ -6,7 +6,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
-	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
@@ -23,83 +22,52 @@ var testAccTerraformVersionChecks = []tfversion.TerraformVersionCheck{
 // ─── jsonencode ───────────────────────────────────────────────────
 
 func TestAcc_JSONEncode_DefaultTabs(t *testing.T) {
-	resource.UnitTest(t, resource.TestCase{
-		TerraformVersionChecks:   testAccTerraformVersionChecks,
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{{
-			Config: `output "test" { value = provider::burnham::jsonencode({ name = "hello", count = 2 }) }`,
-			ConfigStateChecks: []statecheck.StateCheck{
-				statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("{\n\t\"count\": 2,\n\t\"name\": \"hello\"\n}")),
-			},
-		}},
-	})
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::jsonencode({ name = "hello", count = 2 }) }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("{\n\t\"count\": 2,\n\t\"name\": \"hello\"\n}")),
+	)
 }
 
 func TestAcc_JSONEncode_CustomIndent(t *testing.T) {
-	resource.UnitTest(t, resource.TestCase{
-		TerraformVersionChecks:   testAccTerraformVersionChecks,
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{{
-			Config: `output "test" { value = provider::burnham::jsonencode({ a = 1 }, { indent = "  " }) }`,
-			ConfigStateChecks: []statecheck.StateCheck{
-				statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("{\n  \"a\": 1\n}")),
-			},
-		}},
-	})
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::jsonencode({ a = 1 }, { indent = "  " }) }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("{\n  \"a\": 1\n}")),
+	)
 }
 
 // ─── hujsondecode ────────────────────────────────────────────────
 
 func TestAcc_HuJSONDecode_WithComments(t *testing.T) {
-	resource.UnitTest(t, resource.TestCase{
-		TerraformVersionChecks:   testAccTerraformVersionChecks,
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{{
-			Config: `
+	runOutputTest(t,
+		`
 				locals {
 					decoded = provider::burnham::hujsondecode("{// comment\n\"key\": \"value\",}")
 				}
 				output "test" { value = local.decoded.key }
 			`,
-			ConfigStateChecks: []statecheck.StateCheck{
-				statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("value")),
-			},
-		}},
-	})
+		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("value")),
+	)
 }
 
 func TestAcc_HuJSONDecode_Invalid(t *testing.T) {
-	resource.UnitTest(t, resource.TestCase{
-		TerraformVersionChecks:   testAccTerraformVersionChecks,
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{{
-			Config:      `output "test" { value = provider::burnham::hujsondecode("{bad}") }`,
-			ExpectError: regexp.MustCompile(`Invalid HuJSON`),
-		}},
-	})
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::hujsondecode("{bad}") }`,
+		regexp.MustCompile(`Invalid HuJSON`),
+	)
 }
 
 // ─── hujsonencode ────────────────────────────────────────────────
 
 func TestAcc_HuJSONEncode_Basic(t *testing.T) {
-	resource.UnitTest(t, resource.TestCase{
-		TerraformVersionChecks:   testAccTerraformVersionChecks,
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{{
-			Config: `output "test" { value = provider::burnham::hujsonencode({ key = "value" }) }`,
-			ConfigStateChecks: []statecheck.StateCheck{
-				statecheck.ExpectKnownOutputValue("test", knownvalue.NotNull()),
-			},
-		}},
-	})
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::hujsonencode({ key = "value" }) }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.NotNull()),
+	)
 }
 
 func TestAcc_HuJSONEncode_WithComments(t *testing.T) {
-	resource.UnitTest(t, resource.TestCase{
-		TerraformVersionChecks:   testAccTerraformVersionChecks,
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{{
-			Config: `
+	runOutputTest(t,
+		`
 				output "test" {
 					value = provider::burnham::hujsonencode(
 						{
@@ -115,21 +83,15 @@ func TestAcc_HuJSONEncode_WithComments(t *testing.T) {
 					)
 				}
 			`,
-			ConfigStateChecks: []statecheck.StateCheck{
-				statecheck.ExpectKnownOutputValue("test", knownvalue.NotNull()),
-			},
-		}},
-	})
+		statecheck.ExpectKnownOutputValue("test", knownvalue.NotNull()),
+	)
 }
 
 // ─── plistdecode ─────────────────────────────────────────────────
 
 func TestAcc_PlistDecode_XML(t *testing.T) {
-	resource.UnitTest(t, resource.TestCase{
-		TerraformVersionChecks:   testAccTerraformVersionChecks,
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{{
-			Config: `
+	runOutputTest(t,
+		`
 				locals {
 					plist = provider::burnham::plistdecode(<<-EOT
 						<?xml version="1.0" encoding="UTF-8"?>
@@ -151,21 +113,15 @@ func TestAcc_PlistDecode_XML(t *testing.T) {
 				output "version" { value = local.plist.Version }
 				output "enabled" { value = local.plist.Enabled }
 			`,
-			ConfigStateChecks: []statecheck.StateCheck{
-				statecheck.ExpectKnownOutputValue("name", knownvalue.StringExact("Test")),
-				statecheck.ExpectKnownOutputValue("version", knownvalue.Int64Exact(1)),
-				statecheck.ExpectKnownOutputValue("enabled", knownvalue.Bool(true)),
-			},
-		}},
-	})
+		statecheck.ExpectKnownOutputValue("name", knownvalue.StringExact("Test")),
+		statecheck.ExpectKnownOutputValue("version", knownvalue.Int64Exact(1)),
+		statecheck.ExpectKnownOutputValue("enabled", knownvalue.Bool(true)),
+	)
 }
 
 func TestAcc_PlistDecode_DateTaggedObject(t *testing.T) {
-	resource.UnitTest(t, resource.TestCase{
-		TerraformVersionChecks:   testAccTerraformVersionChecks,
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{{
-			Config: `
+	runOutputTest(t,
+		`
 				locals {
 					plist = provider::burnham::plistdecode(<<-EOT
 						<?xml version="1.0" encoding="UTF-8"?>
@@ -182,20 +138,14 @@ func TestAcc_PlistDecode_DateTaggedObject(t *testing.T) {
 				output "type" { value = local.plist.ExpirationDate.__plist_type }
 				output "value" { value = local.plist.ExpirationDate.value }
 			`,
-			ConfigStateChecks: []statecheck.StateCheck{
-				statecheck.ExpectKnownOutputValue("type", knownvalue.StringExact("date")),
-				statecheck.ExpectKnownOutputValue("value", knownvalue.StringExact("2025-06-01T00:00:00Z")),
-			},
-		}},
-	})
+		statecheck.ExpectKnownOutputValue("type", knownvalue.StringExact("date")),
+		statecheck.ExpectKnownOutputValue("value", knownvalue.StringExact("2025-06-01T00:00:00Z")),
+	)
 }
 
 func TestAcc_PlistDecode_IntegerVsReal(t *testing.T) {
-	resource.UnitTest(t, resource.TestCase{
-		TerraformVersionChecks:   testAccTerraformVersionChecks,
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{{
-			Config: `
+	runOutputTest(t,
+		`
 				locals {
 					plist = provider::burnham::plistdecode(<<-EOT
 						<?xml version="1.0" encoding="UTF-8"?>
@@ -217,137 +167,95 @@ func TestAcc_PlistDecode_IntegerVsReal(t *testing.T) {
 				output "real_type" { value = local.plist.RealVal.__plist_type }
 				output "frac_val" { value = local.plist.FracVal }
 			`,
-			ConfigStateChecks: []statecheck.StateCheck{
-				statecheck.ExpectKnownOutputValue("int_val", knownvalue.Int64Exact(5)),
-				statecheck.ExpectKnownOutputValue("real_type", knownvalue.StringExact("real")),
-				statecheck.ExpectKnownOutputValue("frac_val", knownvalue.Float64Exact(3.14)),
-			},
-		}},
-	})
+		statecheck.ExpectKnownOutputValue("int_val", knownvalue.Int64Exact(5)),
+		statecheck.ExpectKnownOutputValue("real_type", knownvalue.StringExact("real")),
+		statecheck.ExpectKnownOutputValue("frac_val", knownvalue.Float64Exact(3.14)),
+	)
 }
 
 // ─── plistencode ─────────────────────────────────────────────────
 
 func TestAcc_PlistEncode_XML(t *testing.T) {
-	resource.UnitTest(t, resource.TestCase{
-		TerraformVersionChecks:   testAccTerraformVersionChecks,
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{{
-			Config: `output "test" { value = provider::burnham::plistencode({ Name = "Test", Version = 1 }) }`,
-			ConfigStateChecks: []statecheck.StateCheck{
-				statecheck.ExpectKnownOutputValue("test", knownvalue.NotNull()),
-			},
-		}},
-	})
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::plistencode({ Name = "Test", Version = 1 }) }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.NotNull()),
+	)
 }
 
 func TestAcc_PlistEncode_InvalidFormat(t *testing.T) {
-	resource.UnitTest(t, resource.TestCase{
-		TerraformVersionChecks:   testAccTerraformVersionChecks,
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{{
-			Config:      `output "test" { value = provider::burnham::plistencode({ a = 1 }, { format = "yaml" }) }`,
-			ExpectError: regexp.MustCompile(`unsupported plist`),
-		}},
-	})
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::plistencode({ a = 1 }, { format = "yaml" }) }`,
+		regexp.MustCompile(`unsupported plist`),
+	)
 }
 
 // ─── plistdate ───────────────────────────────────────────────────
 
 func TestAcc_PlistDate_Valid(t *testing.T) {
-	resource.UnitTest(t, resource.TestCase{
-		TerraformVersionChecks:   testAccTerraformVersionChecks,
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{{
-			Config: `
+	runOutputTest(t,
+		`
 				locals {
 					d = provider::burnham::plistdate("2025-06-01T00:00:00Z")
 				}
 				output "type" { value = local.d.__plist_type }
 				output "value" { value = local.d.value }
 			`,
-			ConfigStateChecks: []statecheck.StateCheck{
-				statecheck.ExpectKnownOutputValue("type", knownvalue.StringExact("date")),
-				statecheck.ExpectKnownOutputValue("value", knownvalue.StringExact("2025-06-01T00:00:00Z")),
-			},
-		}},
-	})
+		statecheck.ExpectKnownOutputValue("type", knownvalue.StringExact("date")),
+		statecheck.ExpectKnownOutputValue("value", knownvalue.StringExact("2025-06-01T00:00:00Z")),
+	)
 }
 
 func TestAcc_PlistDate_Invalid(t *testing.T) {
-	resource.UnitTest(t, resource.TestCase{
-		TerraformVersionChecks:   testAccTerraformVersionChecks,
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{{
-			Config:      `output "test" { value = provider::burnham::plistdate("not-a-date") }`,
-			ExpectError: regexp.MustCompile(`Invalid RFC 3339`),
-		}},
-	})
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::plistdate("not-a-date") }`,
+		regexp.MustCompile(`Invalid RFC 3339`),
+	)
 }
 
 // ─── plistdata ───────────────────────────────────────────────────
 
 func TestAcc_PlistData_Valid(t *testing.T) {
-	resource.UnitTest(t, resource.TestCase{
-		TerraformVersionChecks:   testAccTerraformVersionChecks,
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{{
-			Config: `
+	runOutputTest(t,
+		`
 				locals {
 					d = provider::burnham::plistdata("SGVsbG8=")
 				}
 				output "type" { value = local.d.__plist_type }
 				output "value" { value = local.d.value }
 			`,
-			ConfigStateChecks: []statecheck.StateCheck{
-				statecheck.ExpectKnownOutputValue("type", knownvalue.StringExact("data")),
-				statecheck.ExpectKnownOutputValue("value", knownvalue.StringExact("SGVsbG8=")),
-			},
-		}},
-	})
+		statecheck.ExpectKnownOutputValue("type", knownvalue.StringExact("data")),
+		statecheck.ExpectKnownOutputValue("value", knownvalue.StringExact("SGVsbG8=")),
+	)
 }
 
 func TestAcc_PlistData_Invalid(t *testing.T) {
-	resource.UnitTest(t, resource.TestCase{
-		TerraformVersionChecks:   testAccTerraformVersionChecks,
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{{
-			Config:      `output "test" { value = provider::burnham::plistdata("!!!invalid!!!") }`,
-			ExpectError: regexp.MustCompile(`Invalid base64`),
-		}},
-	})
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::plistdata("!!!invalid!!!") }`,
+		regexp.MustCompile(`Invalid base64`),
+	)
 }
 
 // ─── plistreal ───────────────────────────────────────────────────
 
 func TestAcc_PlistReal_Valid(t *testing.T) {
-	resource.UnitTest(t, resource.TestCase{
-		TerraformVersionChecks:   testAccTerraformVersionChecks,
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{{
-			Config: `
+	runOutputTest(t,
+		`
 				locals {
 					r = provider::burnham::plistreal(2)
 				}
 				output "type" { value = local.r.__plist_type }
 				output "value" { value = local.r.value }
 			`,
-			ConfigStateChecks: []statecheck.StateCheck{
-				statecheck.ExpectKnownOutputValue("type", knownvalue.StringExact("real")),
-				statecheck.ExpectKnownOutputValue("value", knownvalue.StringExact("2")),
-			},
-		}},
-	})
+		statecheck.ExpectKnownOutputValue("type", knownvalue.StringExact("real")),
+		statecheck.ExpectKnownOutputValue("value", knownvalue.StringExact("2")),
+	)
 }
 
 // ─── Round-trips ─────────────────────────────────────────────────
 
 func TestAcc_PlistRoundTrip_PreservesTypes(t *testing.T) {
-	resource.UnitTest(t, resource.TestCase{
-		TerraformVersionChecks:   testAccTerraformVersionChecks,
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{{
-			Config: `
+	runOutputTest(t,
+		`
 				locals {
 					input = <<-EOT
 						<?xml version="1.0" encoding="UTF-8"?>
@@ -370,64 +278,46 @@ func TestAcc_PlistRoundTrip_PreservesTypes(t *testing.T) {
 				}
 				output "encoded" { value = local.encoded }
 			`,
-			ConfigStateChecks: []statecheck.StateCheck{
-				statecheck.ExpectKnownOutputValue("encoded", knownvalue.NotNull()),
-			},
-		}},
-	})
+		statecheck.ExpectKnownOutputValue("encoded", knownvalue.NotNull()),
+	)
 }
 
 // ─── inidecode ───────────────────────────────────────────────────
 
 func TestAcc_INIDecode_Basic(t *testing.T) {
-	resource.UnitTest(t, resource.TestCase{
-		TerraformVersionChecks:   testAccTerraformVersionChecks,
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{{
-			Config: `
+	runOutputTest(t,
+		`
 				locals {
 					ini = provider::burnham::inidecode("[database]\nhost = localhost\nport = 5432\n")
 				}
 				output "host" { value = local.ini.database.host }
 				output "port" { value = local.ini.database.port }
 			`,
-			ConfigStateChecks: []statecheck.StateCheck{
-				statecheck.ExpectKnownOutputValue("host", knownvalue.StringExact("localhost")),
-				statecheck.ExpectKnownOutputValue("port", knownvalue.StringExact("5432")),
-			},
-		}},
-	})
+		statecheck.ExpectKnownOutputValue("host", knownvalue.StringExact("localhost")),
+		statecheck.ExpectKnownOutputValue("port", knownvalue.StringExact("5432")),
+	)
 }
 
 // ─── iniencode ───────────────────────────────────────────────────
 
 func TestAcc_INIEncode_Basic(t *testing.T) {
-	resource.UnitTest(t, resource.TestCase{
-		TerraformVersionChecks:   testAccTerraformVersionChecks,
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{{
-			Config: `
+	runOutputTest(t,
+		`
 				output "test" {
 					value = provider::burnham::iniencode({
 						database = { host = "localhost", port = "5432" }
 					})
 				}
 			`,
-			ConfigStateChecks: []statecheck.StateCheck{
-				statecheck.ExpectKnownOutputValue("test", knownvalue.NotNull()),
-			},
-		}},
-	})
+		statecheck.ExpectKnownOutputValue("test", knownvalue.NotNull()),
+	)
 }
 
 // ─── csvencode ───────────────────────────────────────────────────
 
 func TestAcc_CSVEncode_Basic(t *testing.T) {
-	resource.UnitTest(t, resource.TestCase{
-		TerraformVersionChecks:   testAccTerraformVersionChecks,
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{{
-			Config: `
+	runOutputTest(t,
+		`
 				output "test" {
 					value = provider::burnham::csvencode([
 						{ name = "alice", email = "alice@example.com" },
@@ -435,19 +325,13 @@ func TestAcc_CSVEncode_Basic(t *testing.T) {
 					])
 				}
 			`,
-			ConfigStateChecks: []statecheck.StateCheck{
-				statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("email,name\nalice@example.com,alice\nbob@example.com,bob\n")),
-			},
-		}},
-	})
+		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("email,name\nalice@example.com,alice\nbob@example.com,bob\n")),
+	)
 }
 
 func TestAcc_CSVEncode_WithOptions(t *testing.T) {
-	resource.UnitTest(t, resource.TestCase{
-		TerraformVersionChecks:   testAccTerraformVersionChecks,
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{{
-			Config: `
+	runOutputTest(t,
+		`
 				output "test" {
 					value = provider::burnham::csvencode(
 						[{ name = "alice", role = "admin" }],
@@ -455,19 +339,13 @@ func TestAcc_CSVEncode_WithOptions(t *testing.T) {
 					)
 				}
 			`,
-			ConfigStateChecks: []statecheck.StateCheck{
-				statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("alice,admin\n")),
-			},
-		}},
-	})
+		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("alice,admin\n")),
+	)
 }
 
 func TestAcc_CSVEncode_TypeCoercion(t *testing.T) {
-	resource.UnitTest(t, resource.TestCase{
-		TerraformVersionChecks:   testAccTerraformVersionChecks,
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{{
-			Config: `
+	runOutputTest(t,
+		`
 				output "test" {
 					value = provider::burnham::csvencode(
 						[{ name = "alice", count = 42, active = true }],
@@ -475,11 +353,8 @@ func TestAcc_CSVEncode_TypeCoercion(t *testing.T) {
 					)
 				}
 			`,
-			ConfigStateChecks: []statecheck.StateCheck{
-				statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("name,count,active\nalice,42,true\n")),
-			},
-		}},
-	})
+		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("name,count,active\nalice,42,true\n")),
+	)
 }
 
 // ─── yamlencode ──────────────────────────────────────────────────
@@ -489,87 +364,60 @@ func TestAcc_CSVEncode_TypeCoercion(t *testing.T) {
 // ─── kdldecode / kdlencode ───────────────────────────────────────
 
 func TestAcc_KDLDecode_Basic(t *testing.T) {
-	resource.UnitTest(t, resource.TestCase{
-		TerraformVersionChecks:   testAccTerraformVersionChecks,
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{{
-			Config: `
+	runOutputTest(t,
+		`
 				locals {
 					kdl = provider::burnham::kdldecode("title \"Hello\"")
 				}
 				output "name" { value = local.kdl[0].name }
 			`,
-			ConfigStateChecks: []statecheck.StateCheck{
-				statecheck.ExpectKnownOutputValue("name", knownvalue.StringExact("title")),
-			},
-		}},
-	})
+		statecheck.ExpectKnownOutputValue("name", knownvalue.StringExact("title")),
+	)
 }
 
 func TestAcc_KDLEncode_Basic(t *testing.T) {
-	resource.UnitTest(t, resource.TestCase{
-		TerraformVersionChecks:   testAccTerraformVersionChecks,
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{{
-			Config: `
+	runOutputTest(t,
+		`
 				output "test" {
 					value = provider::burnham::kdlencode([
 						{ name = "title", args = ["Hello"], props = {}, children = [] }
 					])
 				}
 			`,
-			ConfigStateChecks: []statecheck.StateCheck{
-				statecheck.ExpectKnownOutputValue("test", knownvalue.NotNull()),
-			},
-		}},
-	})
+		statecheck.ExpectKnownOutputValue("test", knownvalue.NotNull()),
+	)
 }
 
 // ─── vdfdecode / vdfencode ───────────────────────────────────────
 
 func TestAcc_VDFDecode_Basic(t *testing.T) {
-	resource.UnitTest(t, resource.TestCase{
-		TerraformVersionChecks:   testAccTerraformVersionChecks,
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{{
-			Config: `
+	runOutputTest(t,
+		`
 				locals {
 					vdf = provider::burnham::vdfdecode("\"Config\"\n{\n\t\"key\"\t\t\"value\"\n}\n")
 				}
 				output "val" { value = local.vdf.Config.key }
 			`,
-			ConfigStateChecks: []statecheck.StateCheck{
-				statecheck.ExpectKnownOutputValue("val", knownvalue.StringExact("value")),
-			},
-		}},
-	})
+		statecheck.ExpectKnownOutputValue("val", knownvalue.StringExact("value")),
+	)
 }
 
 func TestAcc_VDFEncode_Basic(t *testing.T) {
-	resource.UnitTest(t, resource.TestCase{
-		TerraformVersionChecks:   testAccTerraformVersionChecks,
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{{
-			Config: `
+	runOutputTest(t,
+		`
 				output "test" {
 					value = provider::burnham::vdfencode({
 						AppState = { appid = "730", name = "CS2" }
 					})
 				}
 			`,
-			ConfigStateChecks: []statecheck.StateCheck{
-				statecheck.ExpectKnownOutputValue("test", knownvalue.NotNull()),
-			},
-		}},
-	})
+		statecheck.ExpectKnownOutputValue("test", knownvalue.NotNull()),
+	)
 }
 
 func TestAcc_YAMLEncode_BlockStyle(t *testing.T) {
-	resource.UnitTest(t, resource.TestCase{
-		TerraformVersionChecks:   testAccTerraformVersionChecks,
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{{
-			Config: `
+	runOutputTest(t,
+		`
 				output "test" {
 					value = provider::burnham::yamlencode({
 						apiVersion = "v1"
@@ -578,19 +426,13 @@ func TestAcc_YAMLEncode_BlockStyle(t *testing.T) {
 					})
 				}
 			`,
-			ConfigStateChecks: []statecheck.StateCheck{
-				statecheck.ExpectKnownOutputValue("test", knownvalue.NotNull()),
-			},
-		}},
-	})
+		statecheck.ExpectKnownOutputValue("test", knownvalue.NotNull()),
+	)
 }
 
 func TestAcc_YAMLEncode_WithComments(t *testing.T) {
-	resource.UnitTest(t, resource.TestCase{
-		TerraformVersionChecks:   testAccTerraformVersionChecks,
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{{
-			Config: `
+	runOutputTest(t,
+		`
 				output "test" {
 					value = provider::burnham::yamlencode(
 						{ apiVersion = "v1", kind = "ConfigMap" },
@@ -598,39 +440,27 @@ func TestAcc_YAMLEncode_WithComments(t *testing.T) {
 					)
 				}
 			`,
-			ConfigStateChecks: []statecheck.StateCheck{
-				statecheck.ExpectKnownOutputValue("test", knownvalue.NotNull()),
-			},
-		}},
-	})
+		statecheck.ExpectKnownOutputValue("test", knownvalue.NotNull()),
+	)
 }
 
 // ─── regdecode / regencode ───────────────────────────────────────
 
 func TestAcc_RegDecode_Basic(t *testing.T) {
-	resource.UnitTest(t, resource.TestCase{
-		TerraformVersionChecks:   testAccTerraformVersionChecks,
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{{
-			Config: `
+	runOutputTest(t,
+		`
 				locals {
 					reg = provider::burnham::regdecode("Windows Registry Editor Version 5.00\r\n\r\n[HKEY_LOCAL_MACHINE\\SOFTWARE\\Test]\r\n\"Name\"=\"Hello\"\r\n")
 				}
 				output "name" { value = local.reg["HKEY_LOCAL_MACHINE\\SOFTWARE\\Test"].Name }
 			`,
-			ConfigStateChecks: []statecheck.StateCheck{
-				statecheck.ExpectKnownOutputValue("name", knownvalue.StringExact("Hello")),
-			},
-		}},
-	})
+		statecheck.ExpectKnownOutputValue("name", knownvalue.StringExact("Hello")),
+	)
 }
 
 func TestAcc_RegEncode_Basic(t *testing.T) {
-	resource.UnitTest(t, resource.TestCase{
-		TerraformVersionChecks:   testAccTerraformVersionChecks,
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{{
-			Config: `
+	runOutputTest(t,
+		`
 				output "test" {
 					value = provider::burnham::regencode({
 						"HKEY_LOCAL_MACHINE\\SOFTWARE\\Test" = {
@@ -640,40 +470,28 @@ func TestAcc_RegEncode_Basic(t *testing.T) {
 					})
 				}
 			`,
-			ConfigStateChecks: []statecheck.StateCheck{
-				statecheck.ExpectKnownOutputValue("test", knownvalue.NotNull()),
-			},
-		}},
-	})
+		statecheck.ExpectKnownOutputValue("test", knownvalue.NotNull()),
+	)
 }
 
 func TestAcc_YAMLEncode_MultilineScript(t *testing.T) {
-	resource.UnitTest(t, resource.TestCase{
-		TerraformVersionChecks:   testAccTerraformVersionChecks,
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{{
-			Config: `
+	runOutputTest(t,
+		`
 				output "test" {
 					value = provider::burnham::yamlencode({
 						data = { script = "#!/bin/bash\necho hello\n" }
 					})
 				}
 			`,
-			ConfigStateChecks: []statecheck.StateCheck{
-				statecheck.ExpectKnownOutputValue("test", knownvalue.NotNull()),
-			},
-		}},
-	})
+		statecheck.ExpectKnownOutputValue("test", knownvalue.NotNull()),
+	)
 }
 
 // ─── Round-trips ─────────────────────────────────────────────────
 
 func TestAcc_INIRoundTrip(t *testing.T) {
-	resource.UnitTest(t, resource.TestCase{
-		TerraformVersionChecks:   testAccTerraformVersionChecks,
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{{
-			Config: `
+	runOutputTest(t,
+		`
 				locals {
 					input   = "[db]\nhost = localhost\nport = 5432\n"
 					decoded = provider::burnham::inidecode(local.input)
@@ -681,19 +499,13 @@ func TestAcc_INIRoundTrip(t *testing.T) {
 				}
 				output "host" { value = local.decoded.db.host }
 			`,
-			ConfigStateChecks: []statecheck.StateCheck{
-				statecheck.ExpectKnownOutputValue("host", knownvalue.StringExact("localhost")),
-			},
-		}},
-	})
+		statecheck.ExpectKnownOutputValue("host", knownvalue.StringExact("localhost")),
+	)
 }
 
 func TestAcc_HuJSONRoundTrip(t *testing.T) {
-	resource.UnitTest(t, resource.TestCase{
-		TerraformVersionChecks:   testAccTerraformVersionChecks,
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{{
-			Config: `
+	runOutputTest(t,
+		`
 				locals {
 					input   = "{// comment\n\"key\": \"value\",\n\"num\": 42,}"
 					decoded = provider::burnham::hujsondecode(local.input)
@@ -701,9 +513,6 @@ func TestAcc_HuJSONRoundTrip(t *testing.T) {
 				}
 				output "key" { value = local.decoded.key }
 			`,
-			ConfigStateChecks: []statecheck.StateCheck{
-				statecheck.ExpectKnownOutputValue("key", knownvalue.StringExact("value")),
-			},
-		}},
-	})
+		statecheck.ExpectKnownOutputValue("key", knownvalue.StringExact("value")),
+	)
 }
