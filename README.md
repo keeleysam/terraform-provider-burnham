@@ -100,7 +100,7 @@ No provider configuration is needed — Burnham is a pure function provider with
 
 ## Examples
 
-A short tour. See [`examples/`](examples/) for the full set of working snippets — every function has at least one — and [`docs/functions/`](docs/functions/) for per-function reference.
+A short tour. See [`examples/functions/`](examples/functions/) for a working snippet per function and [`docs/functions/`](docs/functions/) for the rendered per-function reference.
 
 ### Pretty-printed JSON
 
@@ -153,13 +153,21 @@ locals {
   ipv4_blocks = ["10.0.0.0/24", "10.0.1.0/24", "10.0.2.0/23"]
   ipv6_blocks = ["2001:db8::/65", "2001:db8::8000:0:0:0/65", "2001:db9::/64"]
 
-  # Single call, both families collapse independently:
+  // Single call, both families collapse independently:
   merged = provider::burnham::cidr_merge(concat(local.ipv4_blocks, local.ipv6_blocks))
-  # → ["10.0.0.0/22", "2001:db8::/64", "2001:db9::/64"]
+  // → ["10.0.0.0/22", "2001:db8::/64", "2001:db9::/64"]
 }
 ```
 
-For the canonical "build a NAT64-aware dual-stack allowlist from an existing IPv4 list" pattern, see [`examples/networking.tf`](examples/networking.tf).
+The dual-stack-allowlist pattern combines `cidr_merge` with `nat64_synthesize_cidrs` to extend an existing IPv4 allowlist into IPv6 space so IPv6-only clients reaching the service through a NAT64 gateway end up matching the same rule:
+
+```hcl
+locals {
+  ipv4_allow = ["203.0.113.0/24", "198.51.100.0/24"]
+  ipv6_allow = provider::burnham::nat64_synthesize_cidrs(local.ipv4_allow, "64:ff9b::/96")
+  full_allow = provider::burnham::cidr_merge(concat(local.ipv4_allow, local.ipv6_allow))
+}
+```
 
 ## Requirements
 
@@ -214,7 +222,7 @@ provider_installation {
 }
 ```
 
-Then run `terraform plan` or `terraform console` in the `examples/` directory — no `terraform init` needed with dev overrides.
+Then either run `terraform console` from anywhere (no config required — type `provider::burnham::cidr_merge(...)` interactively), or `terraform plan` against any of the per-function modules in `examples/functions/<name>/`. No `terraform init` needed with dev overrides.
 
 ## License
 
