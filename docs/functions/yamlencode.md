@@ -8,7 +8,18 @@ description: |-
 
 # function: yamlencode
 
-Encodes a Terraform value as a YAML string. Unlike the built-in yamlencode, this defaults to block style, uses literal block scalars (|) for multi-line strings, and supports comments. Pass an optional options object to control indentation, style, quoting, null representation, key sorting, and comments.
+Encodes a Terraform value as a YAML string. Unlike Terraform's built-in `yamlencode`, this defaults to block style, uses literal block scalars (`|`) for multi-line strings, and supports inline comments through an `options.comments` map.
+
+Pass an optional `options` object with these keys:
+
+- `indent` (number): indent width in spaces (default `2`).
+- `style` (string): `"block"` (default) or `"flow"`.
+- `quote_style` (string): `"double"`, `"single"`, or `"plain"`.
+- `null` (string): how to render nulls (default empty).
+- `sort_keys` (bool): sort object keys (default `true`).
+- `comments` (object): mirrored structure with string values that become `# ` comments before the matching key.
+
+**Common uses:** generating Kubernetes manifests, GitHub Actions workflows, Helm values files, or any other YAML configuration that gets reviewed and edited by humans.
 
 ## Example Usage
 

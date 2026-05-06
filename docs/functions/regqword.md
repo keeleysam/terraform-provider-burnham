@@ -8,7 +8,9 @@ description: |-
 
 # function: regqword
 
-Returns a tagged object representing a REG_QWORD (64-bit integer) registry value for use with regencode.
+Returns a tagged object representing a `REG_QWORD` (64-bit unsigned integer) registry value, for use inside a `regencode` payload.
+
+**Common uses:** large numeric values in registry-driven config — file size limits, byte offsets, or any integer that exceeds `REG_DWORD`'s 32-bit range.
 
 ## Example Usage
 

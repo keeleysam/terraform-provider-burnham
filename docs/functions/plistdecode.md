@@ -8,7 +8,11 @@ description: |-
 
 # function: plistdecode
 
-Decodes an Apple property list (plist) string into a Terraform value. Auto-detects XML, binary, and OpenStep formats. For binary plists, pass the output of filebase64() — the function auto-detects base64-encoded input. NSDate values become tagged objects with __plist_type="date" and an RFC 3339 value; NSData values become tagged objects with __plist_type="data" and a base64 value.
+Parses an [Apple property list](https://developer.apple.com/documentation/foundation/archives_and_serialization/property_lists) string into a Terraform value. Auto-detects XML, binary, OpenStep, and GNUStep formats. For binary plists, pass the output of `filebase64()` — base64-encoded input is detected automatically.
+
+`<date>` elements decode as tagged objects of the form `{ __plist_type = "date", value = "<RFC 3339 string>" }`; `<data>` elements as `{ __plist_type = "data", value = "<base64>" }`; whole-number `<real>` elements as `{ __plist_type = "real", value = "..." }` (to distinguish from `<integer>`). All three round-trip cleanly back through `plistencode`.
+
+**Common uses:** reading Apple configuration profiles (`.mobileconfig`), `.plist` preference files, or any payload from MDM tooling where the on-disk format may be XML or binary.
 
 ## Example Usage
 

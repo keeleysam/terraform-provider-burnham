@@ -28,12 +28,14 @@ func (f *CSVEncodeFunction) Metadata(_ context.Context, _ function.MetadataReque
 func (f *CSVEncodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary: "Encode a list of objects as a CSV string",
-		MarkdownDescription: `Encodes a list of objects as a CSV string. Each object becomes a row, and object keys become columns. ` +
-			`By default, columns are sorted alphabetically and a header row is written. ` +
-			`Pass an optional options object to control column order and header behavior. ` +
-			`All values are converted to strings: numbers render as their string representation, ` +
-			`bools as "true"/"false", and nulls as empty strings. ` +
-			`Nested values (lists, objects) are not supported and will produce an error.`,
+		MarkdownDescription: "Encodes a list of objects as a CSV string. Each object becomes a row; object keys become columns.\n\n" +
+			"By default columns are sorted alphabetically and a header row is written. Pass an optional `options` object:\n\n" +
+			"- `columns` (list of strings): explicit column ordering — only listed columns are included.\n" +
+			"- `no_header` (bool): omit the header row.\n\n" +
+			"All cell values are converted to strings: numbers render as their string representation, bools as `\"true\"`/`\"false\"`, " +
+			"and nulls as empty fields. Nested values (lists, objects) are not supported and produce an error.\n\n" +
+			"**Common uses:** generating CSV inputs for downstream loaders, exporting lookup tables, or producing reproducible " +
+			"spreadsheet-friendly output. Terraform has a built-in `csvdecode` for the reverse direction.",
 		Parameters: []function.Parameter{
 			function.DynamicParameter{
 				Name:        "rows",

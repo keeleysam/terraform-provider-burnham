@@ -8,7 +8,13 @@ description: |-
 
 # function: regencode
 
-Encodes a Terraform object as a Windows Registry Editor export (.reg) file (Version 5). The input must be a map of registry key paths to maps of value names. Plain strings become REG_SZ values. Tagged objects from regdword(), regqword(), etc. are converted to their native registry types. Pass an optional options object with a "comments" key to add ; comments.
+Encodes a Terraform object as a [Windows Registry Editor export (`.reg`) file](https://learn.microsoft.com/en-us/windows/win32/sysinfo/regedit) in Version 5 format.
+
+The input must be a two-level map: registry key paths at the outer level, value names at the inner level. Plain strings become `REG_SZ` values; tagged objects from `regdword()`, `regqword()`, `regbinary()`, `regmulti()`, and `regexpandsz()` are converted to their native registry types. The default value uses the key name `"@"`.
+
+Pass an optional `comments` key in `options` (mirroring the data structure) to inject `;` comments above specific keys.
+
+**Common uses:** generating `.reg` files for endpoint management — Group Policy alternatives, app preferences, security baselines, or developer-tooling defaults — and committing them to a managed config repo.
 
 ## Example Usage
 

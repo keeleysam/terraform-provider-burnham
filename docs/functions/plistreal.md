@@ -8,7 +8,11 @@ description: |-
 
 # function: plistreal
 
-Returns a tagged object representing a plist <real> value. Use this when you need to force a whole number to encode as <real> instead of <integer> in a plist. Fractional numbers like 3.14 are automatically encoded as <real> without needing this helper, but whole numbers like 2 would otherwise become <integer>. The same tagged object format is returned by plistdecode for whole-number <real> elements, enabling seamless round-trips.
+Returns a tagged object representing a plist `<real>` (floating-point) value. `plistencode` would normally encode whole numbers as `<integer>` and only fractional numbers as `<real>` — this helper forces a whole number into `<real>` form when the consumer expects a floating-point type. `plistdecode` returns the same tagged-object shape for whole-number `<real>` elements, preserving the type across round-trips.
+
+Fractional values like `3.14` already encode as `<real>` automatically — this helper is only needed for whole-number reals.
+
+**Common uses:** profile fields that demand a floating-point type even when the value happens to be a whole number (e.g. some `Rating`, `Score`, or version fields in MDM payloads).
 
 ## Example Usage
 

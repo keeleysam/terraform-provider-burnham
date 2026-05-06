@@ -8,7 +8,11 @@ description: |-
 
 # function: plistdata
 
-Returns a tagged object representing an NSData plist value. When passed to plistencode, this produces a <data> element. The same tagged object format is returned by plistdecode for <data> elements, enabling seamless round-trips. Use with filebase64() to embed binary data such as certificates.
+Returns a tagged object representing an [`NSData`](https://developer.apple.com/documentation/foundation/nsdata) plist value. When passed to `plistencode`, this produces a `<data>` XML element with the given binary payload. `plistdecode` returns the same tagged-object shape for `<data>` elements, so encode/decode round-trips preserve the type.
+
+The input must be a base64-encoded string. Pair with `filebase64("path/to/file")` to embed file contents like certificates, profile-signing material, or images.
+
+**Common uses:** embedding signing certificates, custom icons, or other binary blobs into Apple configuration profiles.
 
 ## Example Usage
 

@@ -8,7 +8,11 @@ description: |-
 
 # function: plistencode
 
-Encodes a Terraform value as an Apple property list (plist) string. Default format is XML. Tagged objects from plistdate() and plistdata() are converted to native plist <date> and <data> elements. Numbers with no fractional part become <integer>, otherwise <real>. When format is "binary", the output is base64-encoded. Pass an optional options object with "format" and/or "comments" keys.
+Encodes a Terraform value as an [Apple property list](https://developer.apple.com/documentation/foundation/archives_and_serialization/property_lists) string. Default output format is XML; pass `format = "binary"` for a base64-encoded binary plist or `format = "openstep"` for the OpenStep/GNUStep textual format.
+
+Tagged objects from `plistdate()`, `plistdata()`, and `plistreal()` are converted to native `<date>`, `<data>`, and `<real>` elements. Numbers with no fractional part become `<integer>`; numbers with a fractional part become `<real>`. Pass an optional `comments` key in `options` (mirroring the data structure) to inject `<!-- -->` XML comments before specific keys.
+
+**Common uses:** generating Apple configuration profiles (`.mobileconfig`) for MDM deployment, WiFi/VPN payloads, app preference files, or anything else that downstream Apple tooling consumes.
 
 ## Example Usage
 

@@ -27,8 +27,15 @@ func (f *PlistDecodeFunction) Metadata(_ context.Context, _ function.MetadataReq
 
 func (f *PlistDecodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
-		Summary:     "Parse an Apple property list into a Terraform value",
-		MarkdownDescription: "Decodes an Apple property list (plist) string into a Terraform value. Auto-detects XML, binary, and OpenStep formats. For binary plists, pass the output of filebase64() — the function auto-detects base64-encoded input. NSDate values become tagged objects with __plist_type=\"date\" and an RFC 3339 value; NSData values become tagged objects with __plist_type=\"data\" and a base64 value.",
+		Summary: "Parse an Apple property list into a Terraform value",
+		MarkdownDescription: "Parses an [Apple property list](https://developer.apple.com/documentation/foundation/archives_and_serialization/property_lists) " +
+			"string into a Terraform value. Auto-detects XML, binary, OpenStep, and GNUStep formats. For binary plists, pass " +
+			"the output of `filebase64()` — base64-encoded input is detected automatically.\n\n" +
+			"`<date>` elements decode as tagged objects of the form `{ __plist_type = \"date\", value = \"<RFC 3339 string>\" }`; " +
+			"`<data>` elements as `{ __plist_type = \"data\", value = \"<base64>\" }`; whole-number `<real>` elements as " +
+			"`{ __plist_type = \"real\", value = \"...\" }` (to distinguish from `<integer>`). All three round-trip cleanly back through `plistencode`.\n\n" +
+			"**Common uses:** reading Apple configuration profiles (`.mobileconfig`), `.plist` preference files, or any payload from MDM tooling " +
+			"where the on-disk format may be XML or binary.",
 		Parameters: []function.Parameter{
 			function.StringParameter{
 				Name:        "input",
@@ -111,11 +118,14 @@ func (f *PlistEncodeFunction) Metadata(_ context.Context, _ function.MetadataReq
 func (f *PlistEncodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary: "Encode a value as an Apple property list",
-		MarkdownDescription: "Encodes a Terraform value as an Apple property list (plist) string. Default format is XML. " +
-			"Tagged objects from plistdate() and plistdata() are converted to native plist <date> and <data> elements. " +
-			"Numbers with no fractional part become <integer>, otherwise <real>. " +
-			"When format is \"binary\", the output is base64-encoded. " +
-			"Pass an optional options object with \"format\" and/or \"comments\" keys.",
+		MarkdownDescription: "Encodes a Terraform value as an [Apple property list](https://developer.apple.com/documentation/foundation/archives_and_serialization/property_lists) string. " +
+			"Default output format is XML; pass `format = \"binary\"` for a base64-encoded binary plist or `format = \"openstep\"` for the " +
+			"OpenStep/GNUStep textual format.\n\n" +
+			"Tagged objects from `plistdate()`, `plistdata()`, and `plistreal()` are converted to native `<date>`, `<data>`, and `<real>` elements. " +
+			"Numbers with no fractional part become `<integer>`; numbers with a fractional part become `<real>`. Pass an optional `comments` key " +
+			"in `options` (mirroring the data structure) to inject `<!-- -->` XML comments before specific keys.\n\n" +
+			"**Common uses:** generating Apple configuration profiles (`.mobileconfig`) for MDM deployment, WiFi/VPN payloads, " +
+			"app preference files, or anything else that downstream Apple tooling consumes.",
 		Parameters: []function.Parameter{
 			function.DynamicParameter{
 				Name:        "value",

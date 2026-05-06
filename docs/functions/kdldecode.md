@@ -8,7 +8,11 @@ description: |-
 
 # function: kdldecode
 
-Decodes a KDL document string into a Terraform list of node objects. Each node has "name" (string), "args" (list of values), "props" (map of values), and "children" (list of child nodes). Supports both KDL v1 and v2 input.
+Parses a [KDL document](https://kdl.dev/) string into a Terraform list of node objects. Each node has these keys: `name` (string), `args` (list of values), `props` (map of values), and `children` (list of child nodes).
+
+Both KDL v1 and v2 input are accepted; the parser auto-detects the version.
+
+**Common uses:** reading KDL-based configuration files such as the [`kdl-org/kdl`](https://github.com/kdl-org/kdl) specification documents, Cargo-style nested configuration, or any tool that's adopted KDL as its config format.
 
 ## Example Usage
 
