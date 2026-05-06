@@ -14,7 +14,15 @@ By default returns the result in mixed `x:x:x:x:x:x:d.d.d.d/N` notation. Pass `t
 
 **Common uses:** pre-computing the IPv6 pool CIDR for a NAT64 gateway configuration; expressing IPv4 address allocations in IPv6 space for dual-stack firewall rules.
 
+## Example Usage
 
+```terraform
+# Single IPv4 CIDR → NAT64 IPv6 CIDR. /64 and /96 prefixes only.
+output "nat64_pool" {
+  value = provider::burnham::nat64_synthesize_cidr("192.0.2.0/24", "64:ff9b::/96")
+  # → "64:ff9b::192.0.2.0/120"
+}
+```
 
 ## Signature
 

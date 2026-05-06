@@ -10,7 +10,14 @@ description: |-
 
 Returns `true` if the entire CIDR is contained within a private, loopback, link-local, or CGNAT range (RFC1918, RFC6598, RFC4193, loopback, link-local).
 
+## Example Usage
 
+```terraform
+# Same coverage as ip_is_private, applied to a whole CIDR.
+output "internal_block" {
+  value = provider::burnham::cidr_is_private("10.0.0.0/8")
+}
+```
 
 ## Signature
 

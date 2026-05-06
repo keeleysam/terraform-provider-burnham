@@ -10,7 +10,14 @@ description: |-
 
 Decodes a HuJSON string (JSON with comments and trailing commas) into a Terraform value. Comments are stripped during parsing.
 
+## Example Usage
 
+```terraform
+# HuJSON / JWCC: JSON with comments and trailing commas (Tailscale ACL format).
+output "acl" {
+  value = provider::burnham::hujsondecode(file("${path.module}/policy.hujson"))
+}
+```
 
 ## Signature
 

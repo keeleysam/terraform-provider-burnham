@@ -16,7 +16,16 @@ With an optional `nat64_prefix` argument (e.g. `"2001:db8::/48"`), uses the RFC 
 
 **Common uses:** reverse-mapping NAT64 addresses in flow logs or firewall hits back to the original IPv4; ACL generation from IPv6 traffic records.
 
+## Example Usage
 
+```terraform
+# Recover the IPv4 from a NAT64 IPv6 address. Default extracts the
+# last 32 bits — correct for any /96 prefix including 64:ff9b::/96.
+output "ipv4" {
+  value = provider::burnham::nat64_extract("64:ff9b::192.0.2.1")
+  # → "192.0.2.1"
+}
+```
 
 ## Signature
 

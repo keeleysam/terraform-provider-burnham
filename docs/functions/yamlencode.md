@@ -10,7 +10,18 @@ description: |-
 
 Encodes a Terraform value as a YAML string. Unlike the built-in yamlencode, this defaults to block style, uses literal block scalars (|) for multi-line strings, and supports comments. Pass an optional options object to control indentation, style, quoting, null representation, key sorting, and comments.
 
+## Example Usage
 
+```terraform
+# YAML with block style, literal scalars for multi-line strings.
+output "k8s_configmap" {
+  value = provider::burnham::yamlencode({
+    apiVersion = "v1"
+    kind       = "ConfigMap"
+    data       = { script = "#!/bin/bash\necho hello\n" }
+  })
+}
+```
 
 ## Signature
 

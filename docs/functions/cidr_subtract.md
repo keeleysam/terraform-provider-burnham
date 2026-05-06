@@ -10,7 +10,14 @@ description: |-
 
 Returns the set of CIDRs that remain after removing all addresses covered by the `exclude` list from the `input` list. The result is merged into the smallest equivalent set.
 
+## Example Usage
 
+```terraform
+# Carve reserved ranges out of a parent allocation.
+output "available" {
+  value = provider::burnham::cidr_subtract(["10.0.0.0/8"], ["10.1.0.0/16"])
+}
+```
 
 ## Signature
 

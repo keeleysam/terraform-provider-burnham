@@ -12,7 +12,17 @@ Returns `true` if any CIDR in list `a` overlaps with any CIDR in list `b`.
 
 **Common uses:** pre-flight validation in `variable` validation blocks to ensure a proposed VPC CIDR does not conflict with existing peered networks; checking that new security group ranges don't collide with reserved address space.
 
+## Example Usage
 
+```terraform
+# Bulk conflict check: does any CIDR in `a` overlap any in `b`?
+output "any_collision" {
+  value = provider::burnham::cidrs_overlap_any(
+    ["10.4.0.0/16", "10.5.0.0/16"],
+    ["10.0.0.0/16", "10.4.0.0/16"],
+  )
+}
+```
 
 ## Signature
 

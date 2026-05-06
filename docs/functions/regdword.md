@@ -10,7 +10,14 @@ description: |-
 
 Returns a tagged object representing a REG_DWORD (32-bit integer) registry value for use with regencode.
 
+## Example Usage
 
+```terraform
+# Tagged 32-bit integer for use inside a regencode payload.
+output "build_number" {
+  value = provider::burnham::regdword(0x10203)
+}
+```
 
 ## Signature
 

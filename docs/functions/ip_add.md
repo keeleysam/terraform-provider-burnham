@@ -12,7 +12,16 @@ Returns the IP address shifted by `n` (positive to advance, negative to go back)
 
 **Common uses:** computing gateway addresses (`ip_add(cidr_first_ip(var.subnet), 1)`), deriving DNS server IPs, enumerating specific host addresses without needing a full CIDR context.
 
+## Example Usage
 
+```terraform
+# Conventional addresses derived from a subnet base.
+locals {
+  subnet_base = provider::burnham::cidr_first_ip("10.0.1.0/24")
+  gateway     = provider::burnham::ip_add(local.subnet_base, 1)  # "10.0.1.1"
+  dns         = provider::burnham::ip_add(local.subnet_base, 2)  # "10.0.1.2"
+}
+```
 
 ## Signature
 

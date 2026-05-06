@@ -12,7 +12,18 @@ Returns `true` if every CIDR in the list is non-overlapping with every other. Un
 
 **Common uses:** validating a `list(string)` variable of subnet CIDRs to ensure no two subnets overlap before creating them — catches mistakes like including both a summary prefix and a more-specific one in the same list.
 
+## Example Usage
 
+```terraform
+# Validation helper: ensure a list of subnet CIDRs has no overlaps.
+variable "subnet_cidrs" {
+  type = list(string)
+  validation {
+    condition     = provider::burnham::cidrs_are_disjoint(var.subnet_cidrs)
+    error_message = "subnet_cidrs must not contain overlapping entries."
+  }
+}
+```
 
 ## Signature
 

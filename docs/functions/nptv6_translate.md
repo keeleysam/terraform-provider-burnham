@@ -14,7 +14,19 @@ The first 48 bits are replaced with the new prefix. An adjustment is then applie
 
 **Common uses:** computing the external address an internal host will appear as through an NPTv6 gateway (e.g. for DNS, ACL, or route configuration); reverse-translating an external address back to its internal form by swapping `from_prefix` and `to_prefix`.
 
+## Example Usage
 
+```terraform
+# Stateless ULA → public-prefix translation, checksum-neutral.
+# Reverse a translation by swapping the from/to prefixes.
+output "external_address" {
+  value = provider::burnham::nptv6_translate(
+    "fd00::10:0:1",
+    "fd00::/48",      # internal
+    "2001:db8::/48",  # external
+  )
+}
+```
 
 ## Signature
 

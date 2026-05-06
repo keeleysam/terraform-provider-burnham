@@ -10,7 +10,14 @@ description: |-
 
 Decodes a Windows Registry Editor export (.reg) file into a Terraform object. Auto-detects Version 4 (REGEDIT4) and Version 5 (Windows Registry Editor Version 5.00). The result is a map of registry key paths to maps of value names. REG_SZ values become plain strings. Other types use tagged objects with __reg_type and value keys. The default value (@) uses the key name "@".
 
+## Example Usage
 
+```terraform
+# Parse a Windows .reg export into nested key paths and typed values.
+output "reg_data" {
+  value = provider::burnham::regdecode(file("${path.module}/policy.reg"))
+}
+```
 
 ## Signature
 

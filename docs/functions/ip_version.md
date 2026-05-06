@@ -10,7 +10,15 @@ description: |-
 
 Returns `4` for IPv4 addresses and `6` for IPv6 addresses. IPv4-mapped IPv6 addresses (e.g. `::ffff:10.0.0.1`) are treated as IPv4.
 
+## Example Usage
 
+```terraform
+# 4 or 6. IPv4-mapped IPv6 (::ffff:1.2.3.4) is treated as IPv4.
+output "family" {
+  value = provider::burnham::ip_version("2001:db8::1")
+  # → 6
+}
+```
 
 ## Signature
 

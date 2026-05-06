@@ -10,7 +10,17 @@ description: |-
 
 Encodes a Terraform value as a HuJSON string with trailing commas and pretty-printed formatting. By default every object member and array element is placed on its own line. Pass an optional options object with "indent" to override the default tab indentation, "compact" (bool) to opt in to hujson.Format's "fit on one line if it can" packing instead of the default expanded layout, and "comments" to add comments to the output. The comments object mirrors the data structure — each key corresponds to a key in the data, and the string value becomes a comment placed before that key. Single-line strings become // comments, multi-line strings become /* */ comments.
 
+## Example Usage
 
+```terraform
+# Encode a value as HuJSON. Optional comments mirror the data structure.
+output "acl_text" {
+  value = provider::burnham::hujsonencode(
+    { acls = [], groups = {} },
+    { comments = { acls = "Network ACL rules", groups = "Group definitions" } },
+  )
+}
+```
 
 ## Signature
 

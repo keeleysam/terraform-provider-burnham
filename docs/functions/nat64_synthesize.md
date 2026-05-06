@@ -14,7 +14,15 @@ By default returns the address in mixed `x:x:x:x:x:x:d.d.d.d` notation (e.g. `64
 
 **Common uses:** pre-computing NAT64 pool members for DNS64 AAAA records, configuring NAT64 gateway address pools, generating IPv6 addresses for IPv4-only services.
 
+## Example Usage
 
+```terraform
+# Embed an IPv4 into a NAT64 prefix. Mixed notation by default.
+output "nat64" {
+  value = provider::burnham::nat64_synthesize("192.0.2.1", "64:ff9b::/96")
+  # → "64:ff9b::192.0.2.1"
+}
+```
 
 ## Signature
 

@@ -10,7 +10,14 @@ description: |-
 
 Decodes a VDF string (used by Steam/Source engine) into a Terraform object. VDF is a nested key-value format with only strings and objects — all leaf values are strings. Comments (//) are stripped during parsing.
 
+## Example Usage
 
+```terraform
+# Parse Valve VDF (Steam / Source engine config format).
+output "appstate" {
+  value = provider::burnham::vdfdecode(file("${path.module}/appmanifest_730.acf"))
+}
+```
 
 ## Signature
 

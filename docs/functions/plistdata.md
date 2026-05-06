@@ -10,7 +10,14 @@ description: |-
 
 Returns a tagged object representing an NSData plist value. When passed to plistencode, this produces a <data> element. The same tagged object format is returned by plistdecode for <data> elements, enabling seamless round-trips. Use with filebase64() to embed binary data such as certificates.
 
+## Example Usage
 
+```terraform
+# Tagged-object representation of an Apple plist <data> (binary) element.
+output "cert_blob" {
+  value = provider::burnham::plistdata(filebase64("${path.module}/cert.der"))
+}
+```
 
 ## Signature
 

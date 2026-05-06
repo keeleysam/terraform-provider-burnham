@@ -12,7 +12,20 @@ Returns the first prefix of length `prefix_len` that is available within `pool` 
 
 **Common uses:** IPAM-style subnet allocation — given a VPC CIDR as the pool and a list of already-allocated subnets as used, find the next free subnet to assign to a new workload. Useful in `locals` blocks to compute the next available AZ subnet without hardcoding offsets.
 
+## Example Usage
 
+```terraform
+# Find the first free /N within a pool, skipping already-allocated
+# CIDRs. Returns null if no prefix of that size is available.
+output "next_subnet" {
+  value = provider::burnham::cidr_find_free(
+    ["10.0.0.0/16"],
+    ["10.0.0.0/24", "10.0.1.0/24"],
+    24,
+  )
+  # → "10.0.2.0/24"
+}
+```
 
 ## Signature
 

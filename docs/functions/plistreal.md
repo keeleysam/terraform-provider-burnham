@@ -10,7 +10,15 @@ description: |-
 
 Returns a tagged object representing a plist <real> value. Use this when you need to force a whole number to encode as <real> instead of <integer> in a plist. Fractional numbers like 3.14 are automatically encoded as <real> without needing this helper, but whole numbers like 2 would otherwise become <integer>. The same tagged object format is returned by plistdecode for whole-number <real> elements, enabling seamless round-trips.
 
+## Example Usage
 
+```terraform
+# Force a whole-number value to encode as plist <real> instead of <integer>.
+output "scale" {
+  value = provider::burnham::plistreal(2)
+  # → { __plist_type = "real", value = "2" }
+}
+```
 
 ## Signature
 

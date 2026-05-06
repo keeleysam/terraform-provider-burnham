@@ -10,7 +10,14 @@ description: |-
 
 Returns a tagged object representing a REG_MULTI_SZ (multi-string) registry value for use with regencode.
 
+## Example Usage
 
+```terraform
+# Tagged REG_MULTI_SZ (list of strings) for use inside a regencode payload.
+output "search_paths" {
+  value = provider::burnham::regmulti(["C:\\bin", "C:\\tools", "D:\\data"])
+}
+```
 
 ## Signature
 

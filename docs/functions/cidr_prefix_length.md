@@ -12,7 +12,15 @@ Extracts and returns just the prefix length from a CIDR string.
 
 **Common uses:** passing prefix lengths to BGP route-map configurations, conditional logic based on subnet size, feeding into `cidrsubnet` calls.
 
+## Example Usage
 
+```terraform
+# Plain integer prefix length, for APIs that don't take CIDR notation.
+output "bits" {
+  value = provider::burnham::cidr_prefix_length("10.0.0.0/23")
+  # → 23
+}
+```
 
 ## Signature
 

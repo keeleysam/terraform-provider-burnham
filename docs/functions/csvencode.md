@@ -10,7 +10,17 @@ description: |-
 
 Encodes a list of objects as a CSV string. Each object becomes a row, and object keys become columns. By default, columns are sorted alphabetically and a header row is written. Pass an optional options object to control column order and header behavior. All values are converted to strings: numbers render as their string representation, bools as "true"/"false", and nulls as empty strings. Nested values (lists, objects) are not supported and will produce an error.
 
+## Example Usage
 
+```terraform
+# CSV with column ordering. Header row by default; pass no_header = true to suppress.
+output "users_csv" {
+  value = provider::burnham::csvencode(
+    [{ name = "alice", role = "admin" }, { name = "bob", role = "viewer" }],
+    { columns = ["name", "role"] },
+  )
+}
+```
 
 ## Signature
 

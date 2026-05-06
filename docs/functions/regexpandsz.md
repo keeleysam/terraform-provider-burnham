@@ -10,7 +10,14 @@ description: |-
 
 Returns a tagged object representing a REG_EXPAND_SZ (expandable string with %variables%) registry value for use with regencode.
 
+## Example Usage
 
+```terraform
+# Tagged REG_EXPAND_SZ (string with %VAR% expansion) for regencode.
+output "default_app_data" {
+  value = provider::burnham::regexpandsz("%APPDATA%\\MyApp")
+}
+```
 
 ## Signature
 

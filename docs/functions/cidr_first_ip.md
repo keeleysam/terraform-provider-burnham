@@ -10,7 +10,15 @@ description: |-
 
 Returns the network address of the CIDR (first IP, all host bits zero).
 
+## Example Usage
 
+```terraform
+# Network address (all host bits zero). Normalizes input.
+output "subnet_base" {
+  value = provider::burnham::cidr_first_ip("10.0.0.7/24")
+  # → "10.0.0.0"
+}
+```
 
 ## Signature
 

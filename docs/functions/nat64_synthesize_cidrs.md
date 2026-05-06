@@ -14,7 +14,17 @@ By default returns addresses in mixed `x:x:x:x:x:x:d.d.d.d/N` notation. Pass `tr
 
 **Common uses:** translating an entire IPv4 address plan into NAT64 IPv6 space in one call; generating the full set of IPv6 pool CIDRs for a NAT64 service; building dual-stack firewall allowlists that include both the IPv4 and NAT64-IPv6 forms of the same ranges.
 
+## Example Usage
 
+```terraform
+# Bulk operation: convert an IPv4 allowlist into NAT64 IPv6 ranges,
+# then concat() to get a dual-stack list.
+locals {
+  ipv4_allow = ["203.0.113.0/24", "198.51.100.0/24"]
+  ipv6_allow = provider::burnham::nat64_synthesize_cidrs(local.ipv4_allow, "64:ff9b::/96")
+  dual_stack = concat(local.ipv4_allow, local.ipv6_allow)
+}
+```
 
 ## Signature
 

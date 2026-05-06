@@ -10,7 +10,15 @@ description: |-
 
 Returns `true` if the IP address is within a private, loopback, link-local, or CGNAT range (RFC1918, RFC6598, RFC4193, loopback, link-local).
 
+## Example Usage
 
+```terraform
+# RFC 1918 + RFC 6598 (CGNAT) + RFC 4193 (ULA) + loopback + link-local.
+output "internal" {
+  value = provider::burnham::ip_is_private("100.64.0.1")  # CGNAT
+  # → true
+}
+```
 
 ## Signature
 

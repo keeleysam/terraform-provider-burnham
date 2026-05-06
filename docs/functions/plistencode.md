@@ -10,7 +10,18 @@ description: |-
 
 Encodes a Terraform value as an Apple property list (plist) string. Default format is XML. Tagged objects from plistdate() and plistdata() are converted to native plist <date> and <data> elements. Numbers with no fractional part become <integer>, otherwise <real>. When format is "binary", the output is base64-encoded. Pass an optional options object with "format" and/or "comments" keys.
 
+## Example Usage
 
+```terraform
+# Build a configuration profile / .mobileconfig payload.
+output "wifi_profile" {
+  value = provider::burnham::plistencode({
+    PayloadDisplayName = "WiFi"
+    PayloadIdentifier  = "com.example.wifi"
+    PayloadVersion     = 1
+  })
+}
+```
 
 ## Signature
 

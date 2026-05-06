@@ -12,7 +12,15 @@ Returns `a - b` as an integer: how many address positions separate the two IPs. 
 
 **Common uses:** asserting that two IPs are within N addresses of each other; computing the length of an arbitrary IP range; confirming an IP falls exactly at the expected offset from a base address; generating loop indices over a sparse range.
 
+## Example Usage
 
+```terraform
+# Number of address positions between two IPs (signed).
+output "diff" {
+  value = provider::burnham::ip_subtract("10.0.0.10", "10.0.0.1")
+  # → 9
+}
+```
 
 ## Signature
 

@@ -10,7 +10,15 @@ description: |-
 
 Returns every individual IP address within the given CIDR as a list of strings. Returns an error if the CIDR contains more than 65536 addresses to prevent accidental large expansions.
 
+## Example Usage
 
+```terraform
+# All individual IPs in a small CIDR. Capped at 65536 addresses.
+output "host_ips" {
+  value = provider::burnham::cidr_expand("10.0.0.0/30")
+  # → ["10.0.0.0", "10.0.0.1", "10.0.0.2", "10.0.0.3"]
+}
+```
 
 ## Signature
 

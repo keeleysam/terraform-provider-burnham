@@ -10,7 +10,16 @@ description: |-
 
 Converts an inclusive IP range `[first_ip, last_ip]` into the minimal list of CIDRs that exactly covers the range. Both IPs must be the same address family (IPv4 or IPv6).
 
+## Example Usage
 
+```terraform
+# Convert an inclusive IP range to the minimal CIDR list (cloud feeds
+# often publish ranges this way).
+output "range" {
+  value = provider::burnham::range_to_cidrs("10.0.0.1", "10.0.0.6")
+  # → ["10.0.0.1/32", "10.0.0.2/31", "10.0.0.4/31", "10.0.0.6/32"]
+}
+```
 
 ## Signature
 

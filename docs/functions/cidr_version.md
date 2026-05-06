@@ -10,7 +10,15 @@ description: |-
 
 Returns `4` for IPv4 prefixes and `6` for IPv6 prefixes.
 
+## Example Usage
 
+```terraform
+# 4 or 6 for a CIDR.
+output "family" {
+  value = provider::burnham::cidr_version("10.0.0.0/8")
+  # → 4
+}
+```
 
 ## Signature
 

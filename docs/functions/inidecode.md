@@ -10,7 +10,14 @@ description: |-
 
 Decodes an INI string into a Terraform object. The result is a map of section names to maps of key-value string pairs. Keys outside any section (global keys) are placed under the empty string key (""). All values are strings.
 
+## Example Usage
 
+```terraform
+# Parse INI into nested objects keyed by section.
+output "db_host" {
+  value = provider::burnham::inidecode(file("${path.module}/app.ini")).database.host
+}
+```
 
 ## Signature
 

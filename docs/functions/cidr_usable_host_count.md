@@ -12,7 +12,16 @@ Returns the number of usable host addresses in the CIDR. For IPv4, the network a
 
 **Common uses:** asserting a subnet is large enough for a given number of workloads without manually subtracting 2 everywhere; sizing auto-scaling groups or node pools based on the actual available IP space in the target subnet.
 
+## Example Usage
 
+```terraform
+# Usable host count: subtracts network + broadcast for IPv4.
+# RFC-correct edge cases: /31 = 2 (point-to-point), /32 = 1.
+output "usable" {
+  value = provider::burnham::cidr_usable_host_count("10.0.0.0/24")
+  # → 254
+}
+```
 
 ## Signature
 

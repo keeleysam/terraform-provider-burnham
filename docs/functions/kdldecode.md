@@ -10,7 +10,14 @@ description: |-
 
 Decodes a KDL document string into a Terraform list of node objects. Each node has "name" (string), "args" (list of values), "props" (map of values), and "children" (list of child nodes). Supports both KDL v1 and v2 input.
 
+## Example Usage
 
+```terraform
+# Parse a KDL document (https://kdl.dev) into a list of node objects.
+output "config" {
+  value = provider::burnham::kdldecode(file("${path.module}/config.kdl"))
+}
+```
 
 ## Signature
 

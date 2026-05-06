@@ -10,7 +10,16 @@ description: |-
 
 Encodes a Terraform object as a VDF string (used by Steam/Source engine). VDF is a nested key-value format — all values must be strings or nested objects.
 
+## Example Usage
 
+```terraform
+# Render an object as Valve VDF.
+output "appstate" {
+  value = provider::burnham::vdfencode({
+    AppState = { appid = "730", name = "Counter-Strike 2" }
+  })
+}
+```
 
 ## Signature
 

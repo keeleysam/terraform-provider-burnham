@@ -10,7 +10,19 @@ description: |-
 
 Encodes a Terraform object as a Windows Registry Editor export (.reg) file (Version 5). The input must be a map of registry key paths to maps of value names. Plain strings become REG_SZ values. Tagged objects from regdword(), regqword(), etc. are converted to their native registry types. Pass an optional options object with a "comments" key to add ; comments.
 
+## Example Usage
 
+```terraform
+# Build a .reg file. Use regdword / regbinary / regmulti / etc. for typed values.
+output "registry_export" {
+  value = provider::burnham::regencode({
+    "HKEY_LOCAL_MACHINE\\SOFTWARE\\MyApp" = {
+      DisplayName = "My Application"
+      Version     = provider::burnham::regdword(0x10203)
+    }
+  })
+}
+```
 
 ## Signature
 

@@ -10,7 +10,16 @@ description: |-
 
 Encodes a Terraform object as an INI string. The input must be a map of section names to maps of key-value pairs. The empty string key ("") renders as global keys before any section header. All values are converted to strings.
 
+## Example Usage
 
+```terraform
+# Render nested objects as INI. Top-level keys become sections.
+output "config" {
+  value = provider::burnham::iniencode({
+    database = { host = "localhost", port = "5432" }
+  })
+}
+```
 
 ## Signature
 

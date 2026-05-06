@@ -10,7 +10,16 @@ description: |-
 
 Encodes a Terraform list of node objects as a KDL document string. Each node object should have "name" (string), "args" (list), "props" (map), and "children" (list of child nodes). Default output is KDL v2; pass an options object with version="v1" for KDL v1 output.
 
+## Example Usage
 
+```terraform
+# Build KDL output. Default is KDL v2; pass version = "v1" for legacy.
+output "config" {
+  value = provider::burnham::kdlencode([
+    { name = "title", args = ["Hello"], props = {}, children = [] }
+  ])
+}
+```
 
 ## Signature
 

@@ -10,7 +10,17 @@ description: |-
 
 Encodes a Terraform value as a pretty-printed JSON string. Unlike the built-in jsonencode, this produces human-readable output. Pass an optional options object with an "indent" key to override the default tab indentation.
 
+## Example Usage
 
+```terraform
+# Pretty-printed JSON, configurable indent.
+output "policy" {
+  value = provider::burnham::jsonencode({
+    Version = "2012-10-17"
+    Statement = [{ Effect = "Allow", Action = ["s3:GetObject"] }]
+  })
+}
+```
 
 ## Signature
 

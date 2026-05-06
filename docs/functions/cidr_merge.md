@@ -10,7 +10,17 @@ description: |-
 
 Merges a list of CIDR strings into the smallest equivalent set by removing redundant prefixes and combining sibling pairs into supernets. Supports both IPv4 and IPv6.
 
+## Example Usage
 
+```terraform
+# Combine adjacent and redundant CIDRs into the smallest equivalent set.
+output "merged" {
+  value = provider::burnham::cidr_merge([
+    "10.0.0.0/24", "10.0.1.0/24", # → "10.0.0.0/23"
+    "10.0.0.0/25",                # redundant — already inside /24
+  ])
+}
+```
 
 ## Signature
 
