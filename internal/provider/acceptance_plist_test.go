@@ -201,4 +201,13 @@ func TestAcc_PlistRoundTrip_PreservesTypes(t *testing.T) {
 	)
 }
 
-// ─── inidecode ───────────────────────────────────────────────────
+// ─── Malformed-input tests ───────────────────────────────────────
+
+func TestAcc_PlistDecode_GarbageInput(t *testing.T) {
+	// User passes a non-plist string (e.g. forgot to read the file, or read
+	// the wrong file). Should be a clear parse error, not a panic.
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::plistdecode("this is not a plist") }`,
+		regexp.MustCompile(`(?i)plist|parse|invalid`),
+	)
+}

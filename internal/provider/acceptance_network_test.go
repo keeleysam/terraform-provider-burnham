@@ -392,3 +392,95 @@ func TestAcc_CIDRFilterVersion(t *testing.T) {
 		})),
 	)
 }
+
+// ─── Malformed-input tests ───────────────────────────────────────
+//
+// These exist to catch the common shapes of user mistakes — passing an IP
+// where a CIDR is expected, mixing IPv4 and IPv6, typos in addresses, etc.
+// Not adversarial fuzzing: each scenario is something a real Terraform user
+// is plausibly going to do at least once.
+
+func TestAcc_Errors_CIDRExpectedGotIP(t *testing.T) {
+	// User passes a bare IP where a CIDR is required — easy mistake when
+	// pasting addresses without their /N.
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::cidr_first_ip("10.0.0.1") }`,
+		regexp.MustCompile(`invalid CIDR`),
+	)
+}
+
+func TestAcc_Errors_IPExpectedGotCIDR(t *testing.T) {
+	// Reverse mistake: CIDR pasted into an IP-typed argument.
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::ip_in_cidr("10.0.0.1/24", "10.0.0.0/24") }`,
+		regexp.MustCompile(`invalid IP`),
+	)
+}
+
+func TestAcc_Errors_CIDRMissingPrefixLength(t *testing.T) {
+	// Forgot the /N when building a CIDR list.
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::cidr_merge(["10.0.0.0"]) }`,
+		regexp.MustCompile(`invalid CIDR`),
+	)
+}
+
+func TestAcc_Errors_TypoExtraDotInIP(t *testing.T) {
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::ip_add("10.0.0.0.1", 5) }`,
+		regexp.MustCompile(`invalid IP`),
+	)
+}
+
+func TestAcc_Errors_RangeMixedFamilies(t *testing.T) {
+	// Range where the first IP is IPv4 and the last is IPv6.
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::range_to_cidrs("10.0.0.1", "::1") }`,
+		regexp.MustCompile(`same address family`),
+	)
+}
+
+func TestAcc_Errors_IPSubtractMixedFamilies(t *testing.T) {
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::ip_subtract("10.0.0.1", "::1") }`,
+		regexp.MustCompile(`same family`),
+	)
+}
+
+func TestAcc_Errors_WildcardOnIPv6(t *testing.T) {
+	// cidr_wildcard is IPv4-only; passing an IPv6 prefix should be a clear
+	// error rather than a silent surprise.
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::cidr_wildcard("2001:db8::/32") }`,
+		regexp.MustCompile(`only defined for IPv4`),
+	)
+}
+
+func TestAcc_Errors_NAT64IPv6AsIPv4Arg(t *testing.T) {
+	// Argument-order mistake: the IPv4 slot received an IPv6 address.
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::nat64_synthesize("2001:db8::1", "64:ff9b::/96") }`,
+		regexp.MustCompile(`expected IPv4`),
+	)
+}
+
+func TestAcc_Errors_IPAddUnderflow(t *testing.T) {
+	// Subtracting from the lowest IPv4 address — should report underflow,
+	// not silently wrap.
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::ip_add("0.0.0.0", -1) }`,
+		regexp.MustCompile(`underflow`),
+	)
+}
+
+func TestAcc_Errors_CIDREnumerateZeroNewbits(t *testing.T) {
+	// `cidr_enumerate` with newbits=0 doesn't produce subnets — surface a
+	// clear error rather than returning the input prefix as a single-element
+	// list (which would be misleading).
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::cidr_enumerate("10.0.0.0/24", 0) }`,
+		// Terraform may wrap "must be positive" across a newline; match the
+		// contiguous prefix instead.
+		regexp.MustCompile(`newbits must be`),
+	)
+}

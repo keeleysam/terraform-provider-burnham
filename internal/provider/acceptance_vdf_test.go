@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
@@ -16,6 +17,18 @@ func TestAcc_VDFDecode_Basic(t *testing.T) {
 				output "val" { value = local.vdf.Config.key }
 			`,
 		statecheck.ExpectKnownOutputValue("val", knownvalue.StringExact("value")),
+	)
+}
+
+// ─── Malformed-input tests ───────────────────────────────────────
+
+func TestAcc_VDFDecode_MalformedInput(t *testing.T) {
+	// User passes a string that isn't VDF at all (e.g. plain text).
+	// The parser is lenient about unclosed braces, so this is a clearer
+	// "shape doesn't match" case.
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::vdfdecode("garbage no quotes no braces") }`,
+		regexp.MustCompile(`(?i)vdf|parse|expected`),
 	)
 }
 
