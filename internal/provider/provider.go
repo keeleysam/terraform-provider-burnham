@@ -2,12 +2,16 @@ package provider
 
 import (
 	"context"
+	"slices"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+
+	"github.com/keeleysam/terraform-burnham/internal/provider/dataformat"
+	"github.com/keeleysam/terraform-burnham/internal/provider/network"
 )
 
 var (
@@ -26,7 +30,9 @@ func (p *BurnhamProvider) Metadata(_ context.Context, _ provider.MetadataRequest
 }
 
 func (p *BurnhamProvider) Schema(_ context.Context, _ provider.SchemaRequest, resp *provider.SchemaResponse) {
-	resp.Schema = schema.Schema{}
+	resp.Schema = schema.Schema{
+		Description: "A pure provider-defined function provider for structured data formats and IP/CIDR operations. No resources, no data sources, no remote API calls — every function evaluates at plan time.",
+	}
 }
 
 func (p *BurnhamProvider) Configure(_ context.Context, _ provider.ConfigureRequest, _ *provider.ConfigureResponse) {
@@ -41,29 +47,8 @@ func (p *BurnhamProvider) Resources(_ context.Context) []func() resource.Resourc
 }
 
 func (p *BurnhamProvider) Functions(_ context.Context) []func() function.Function {
-	return []func() function.Function{
-		NewJSONEncodeFunction,
-		NewHuJSONDecodeFunction,
-		NewHuJSONEncodeFunction,
-		NewPlistDecodeFunction,
-		NewPlistEncodeFunction,
-		NewPlistDateFunction,
-		NewPlistDataFunction,
-		NewPlistRealFunction,
-		NewINIDecodeFunction,
-		NewINIEncodeFunction,
-		NewCSVEncodeFunction,
-		NewYAMLEncodeFunction,
-		NewRegDecodeFunction,
-		NewRegEncodeFunction,
-		NewRegDwordFunction,
-		NewRegQwordFunction,
-		NewRegBinaryFunction,
-		NewRegMultiFunction,
-		NewRegExpandSzFunction,
-		NewVDFDecodeFunction,
-		NewVDFEncodeFunction,
-		NewKDLDecodeFunction,
-		NewKDLEncodeFunction,
-	}
+	return slices.Concat(
+		dataformat.Functions(),
+		network.Functions(),
+	)
 }

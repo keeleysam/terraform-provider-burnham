@@ -10,6 +10,7 @@ require (
 	github.com/hashicorp/terraform-plugin-go v0.31.0
 	github.com/hashicorp/terraform-plugin-testing v1.16.0
 	github.com/tailscale/hujson v0.0.0-20260302212456-ecc657c15afd
+	go4.org/netipx v0.0.0-20231129151722-fdeea329fbba
 	gopkg.in/ini.v1 v1.67.2
 	gopkg.in/yaml.v3 v3.0.1
 	howett.net/plist v1.0.1
