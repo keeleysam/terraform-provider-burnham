@@ -23,3 +23,12 @@ jobs:
       - run: go build ./...
       - run: go vet ./...
       - run: go test ./... -count=1 -cover -v
+      # Guard: docs/ must be up-to-date with the function metadata in source. If a contributor edited a function's MarkdownDescription / Summary / parameter docs without running `make docs`, this step fails with the diff so the PR can be told to regenerate.
+      - name: Verify generated docs are up to date
+        run: |
+          go generate ./...
+          if ! git diff --quiet -- docs/; then
+            echo "::error::docs/ is out of sync with function metadata. Run 'make docs' and commit the result."
+            git diff -- docs/
+            exit 1
+          fi
