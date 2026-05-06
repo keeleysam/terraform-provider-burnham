@@ -891,7 +891,8 @@ Returns `true` if the prefix meets RFC 6052 requirements: valid length, IPv6, an
 ```hcl
 provider::burnham::nat64_prefix_valid("64:ff9b::/96")    # → true  (Well-Known Prefix)
 provider::burnham::nat64_prefix_valid("64:ff9b:1::/48")  # → true  (local-use, RFC 8215)
-provider::burnham::nat64_prefix_valid("2001:db8::/48")   # → false (wrong length)
+provider::burnham::nat64_prefix_valid("2001:db8::/44")   # → false (wrong length)
+provider::burnham::nat64_prefix_valid("10.0.0.0/24")     # → false (not IPv6)
 ```
 
 **When to use:** `variable` validation blocks when accepting an operator-supplied NAT64 prefix.
