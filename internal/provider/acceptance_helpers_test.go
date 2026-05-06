@@ -4,8 +4,11 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-framework/providerserver"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
+	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
 // runOutputTest applies a single Terraform config under the burnham provider
@@ -37,4 +40,12 @@ func runErrorTest(t *testing.T, config string, errPattern *regexp.Regexp) {
 			ExpectError: errPattern,
 		}},
 	})
+}
+
+var testAccProtoV6ProviderFactories = map[string]func() (tfprotov6.ProviderServer, error){
+	"burnham": providerserver.NewProtocol6WithError(New()),
+}
+
+var testAccTerraformVersionChecks = []tfversion.TerraformVersionCheck{
+	tfversion.SkipBelow(tfversion.Version1_8_0),
 }
