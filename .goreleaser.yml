@@ -36,20 +36,16 @@ builds:
 checksum:
   name_template: "{{ .ProjectName }}_{{ .Version }}_SHA256SUMS"
   algorithm: sha256
-# GPG signing is required for Terraform registry publication.
-# To enable, set up a GPG key and add the GPG_FINGERPRINT secret to your
-# GitHub repository, then uncomment the signs block below.
-#
-# signs:
-#   - artifacts: checksum
-#     args:
-#       - "--batch"
-#       - "--local-user"
-#       - "{{ .Env.GPG_FINGERPRINT }}"
-#       - "--output"
-#       - "${signature}"
-#       - "--detach-sign"
-#       - "${artifact}"
+signs:
+  - artifacts: checksum
+    args:
+      - "--batch"
+      - "--local-user"
+      - "{{ .Env.GPG_FINGERPRINT }}"
+      - "--output"
+      - "${signature}"
+      - "--detach-sign"
+      - "${artifact}"
 release:
   draft: false
   prerelease: true
