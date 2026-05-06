@@ -36,8 +36,6 @@ func TestAcc_INIEncode_Basic(t *testing.T) {
 	)
 }
 
-// ─── csvencode ───────────────────────────────────────────────────
-
 func TestAcc_INIRoundTrip(t *testing.T) {
 	runOutputTest(t,
 		`

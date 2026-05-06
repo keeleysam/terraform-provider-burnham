@@ -20,5 +20,3 @@ func TestAcc_JSONEncode_CustomIndent(t *testing.T) {
 		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("{\n  \"a\": 1\n}")),
 	)
 }
-
-// ─── hujsondecode ────────────────────────────────────────────────

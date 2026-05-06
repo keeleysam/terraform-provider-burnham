@@ -36,8 +36,6 @@ func TestAcc_YAMLEncode_WithComments(t *testing.T) {
 	)
 }
 
-// ─── regdecode / regencode ───────────────────────────────────────
-
 func TestAcc_YAMLEncode_MultilineScript(t *testing.T) {
 	runOutputTest(t,
 		`
@@ -50,5 +48,3 @@ func TestAcc_YAMLEncode_MultilineScript(t *testing.T) {
 		statecheck.ExpectKnownOutputValue("test", knownvalue.NotNull()),
 	)
 }
-
-// ─── Round-trips ─────────────────────────────────────────────────

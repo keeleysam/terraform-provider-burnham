@@ -58,8 +58,6 @@ func TestAcc_HuJSONEncode_WithComments(t *testing.T) {
 	)
 }
 
-// ─── plistdecode ─────────────────────────────────────────────────
-
 func TestAcc_HuJSONRoundTrip(t *testing.T) {
 	runOutputTest(t,
 		`

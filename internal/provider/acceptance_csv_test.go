@@ -48,9 +48,3 @@ func TestAcc_CSVEncode_TypeCoercion(t *testing.T) {
 		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("name,count,active\nalice,42,true\n")),
 	)
 }
-
-// ─── yamlencode ──────────────────────────────────────────────────
-
-// ─── vdfdecode / vdfencode ───────────────────────────────────────
-
-// ─── kdldecode / kdlencode ───────────────────────────────────────
