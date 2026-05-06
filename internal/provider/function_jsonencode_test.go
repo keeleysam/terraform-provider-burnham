@@ -50,6 +50,13 @@ func makeIndentOpts(indent string) attr.Value {
 	)
 }
 
+func makeBoolOpts(key string, value bool) attr.Value {
+	return types.ObjectValueMust(
+		map[string]attr.Type{key: types.BoolType},
+		map[string]attr.Value{key: types.BoolValue(value)},
+	)
+}
+
 func TestJSONEncode_SimpleObject(t *testing.T) {
 	obj := types.ObjectValueMust(
 		map[string]attr.Type{
