@@ -26,7 +26,7 @@ func (f *PlistDateFunction) Metadata(_ context.Context, _ function.MetadataReque
 func (f *PlistDateFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:     "Create a plist date value from an RFC 3339 timestamp",
-		Description: "Returns a tagged object representing an NSDate plist value. When passed to plistencode, this produces a <date> element. The same tagged object format is returned by plistdecode for <date> elements, enabling seamless round-trips.",
+		MarkdownDescription: "Returns a tagged object representing an NSDate plist value. When passed to plistencode, this produces a <date> element. The same tagged object format is returned by plistdecode for <date> elements, enabling seamless round-trips.",
 		Parameters: []function.Parameter{
 			function.StringParameter{
 				Name:        "rfc3339",
@@ -77,7 +77,7 @@ func (f *PlistDataFunction) Metadata(_ context.Context, _ function.MetadataReque
 func (f *PlistDataFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:     "Create a plist data value from a base64-encoded string",
-		Description: "Returns a tagged object representing an NSData plist value. When passed to plistencode, this produces a <data> element. The same tagged object format is returned by plistdecode for <data> elements, enabling seamless round-trips. Use with filebase64() to embed binary data such as certificates.",
+		MarkdownDescription: "Returns a tagged object representing an NSData plist value. When passed to plistencode, this produces a <data> element. The same tagged object format is returned by plistdecode for <data> elements, enabling seamless round-trips. Use with filebase64() to embed binary data such as certificates.",
 		Parameters: []function.Parameter{
 			function.StringParameter{
 				Name:        "base64",
@@ -128,7 +128,7 @@ func (f *PlistRealFunction) Metadata(_ context.Context, _ function.MetadataReque
 func (f *PlistRealFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:     "Create a plist real (floating-point) value",
-		Description: "Returns a tagged object representing a plist <real> value. Use this when you need to force a whole number to encode as <real> instead of <integer> in a plist. Fractional numbers like 3.14 are automatically encoded as <real> without needing this helper, but whole numbers like 2 would otherwise become <integer>. The same tagged object format is returned by plistdecode for whole-number <real> elements, enabling seamless round-trips.",
+		MarkdownDescription: "Returns a tagged object representing a plist <real> value. Use this when you need to force a whole number to encode as <real> instead of <integer> in a plist. Fractional numbers like 3.14 are automatically encoded as <real> without needing this helper, but whole numbers like 2 would otherwise become <integer>. The same tagged object format is returned by plistdecode for whole-number <real> elements, enabling seamless round-trips.",
 		Parameters: []function.Parameter{
 			function.NumberParameter{
 				Name:        "value",

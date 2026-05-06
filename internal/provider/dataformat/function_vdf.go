@@ -28,7 +28,7 @@ func (f *VDFDecodeFunction) Metadata(_ context.Context, _ function.MetadataReque
 func (f *VDFDecodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary: "Parse a Valve Data Format (VDF) string into a Terraform value",
-		Description: "Decodes a VDF string (used by Steam/Source engine) into a Terraform object. " +
+		MarkdownDescription: "Decodes a VDF string (used by Steam/Source engine) into a Terraform object. " +
 			"VDF is a nested key-value format with only strings and objects — all leaf values are strings. " +
 			"Comments (//) are stripped during parsing.",
 		Parameters: []function.Parameter{
@@ -80,7 +80,7 @@ func (f *VDFEncodeFunction) Metadata(_ context.Context, _ function.MetadataReque
 func (f *VDFEncodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary: "Encode a value as a Valve Data Format (VDF) string",
-		Description: "Encodes a Terraform object as a VDF string (used by Steam/Source engine). " +
+		MarkdownDescription: "Encodes a Terraform object as a VDF string (used by Steam/Source engine). " +
 			"VDF is a nested key-value format — all values must be strings or nested objects.",
 		Parameters: []function.Parameter{
 			function.DynamicParameter{

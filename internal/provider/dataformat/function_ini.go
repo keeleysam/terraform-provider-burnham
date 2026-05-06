@@ -26,7 +26,7 @@ func (f *INIDecodeFunction) Metadata(_ context.Context, _ function.MetadataReque
 func (f *INIDecodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:     "Parse an INI file into a Terraform value",
-		Description: "Decodes an INI string into a Terraform object. The result is a map of section names to maps of key-value string pairs. Keys outside any section (global keys) are placed under the empty string key (\"\"). All values are strings.",
+		MarkdownDescription: "Decodes an INI string into a Terraform object. The result is a map of section names to maps of key-value string pairs. Keys outside any section (global keys) are placed under the empty string key (\"\"). All values are strings.",
 		Parameters: []function.Parameter{
 			function.StringParameter{
 				Name:        "input",
@@ -190,7 +190,7 @@ func (f *INIEncodeFunction) Metadata(_ context.Context, _ function.MetadataReque
 func (f *INIEncodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:     "Encode a value as an INI file",
-		Description: "Encodes a Terraform object as an INI string. The input must be a map of section names to maps of key-value pairs. The empty string key (\"\") renders as global keys before any section header. All values are converted to strings.",
+		MarkdownDescription: "Encodes a Terraform object as an INI string. The input must be a map of section names to maps of key-value pairs. The empty string key (\"\") renders as global keys before any section header. All values are converted to strings.",
 		Parameters: []function.Parameter{
 			function.DynamicParameter{
 				Name:        "value",

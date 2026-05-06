@@ -23,7 +23,7 @@ func (f *JSONEncodeFunction) Metadata(_ context.Context, _ function.MetadataRequ
 func (f *JSONEncodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:     "Encode a value as pretty-printed JSON",
-		Description: "Encodes a Terraform value as a pretty-printed JSON string. Unlike the built-in jsonencode, this produces human-readable output. Pass an optional options object with an \"indent\" key to override the default tab indentation.",
+		MarkdownDescription: "Encodes a Terraform value as a pretty-printed JSON string. Unlike the built-in jsonencode, this produces human-readable output. Pass an optional options object with an \"indent\" key to override the default tab indentation.",
 		Parameters: []function.Parameter{
 			function.DynamicParameter{
 				Name:        "value",

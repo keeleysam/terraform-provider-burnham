@@ -27,7 +27,7 @@ func (f *KDLDecodeFunction) Metadata(_ context.Context, _ function.MetadataReque
 func (f *KDLDecodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary: "Parse a KDL document into a Terraform value",
-		Description: "Decodes a KDL document string into a Terraform list of node objects. " +
+		MarkdownDescription: "Decodes a KDL document string into a Terraform list of node objects. " +
 			"Each node has \"name\" (string), \"args\" (list of values), \"props\" (map of values), " +
 			"and \"children\" (list of child nodes). Supports both KDL v1 and v2 input.",
 		Parameters: []function.Parameter{
@@ -177,7 +177,7 @@ func (f *KDLEncodeFunction) Metadata(_ context.Context, _ function.MetadataReque
 func (f *KDLEncodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary: "Encode a value as a KDL document",
-		Description: "Encodes a Terraform list of node objects as a KDL document string. " +
+		MarkdownDescription: "Encodes a Terraform list of node objects as a KDL document string. " +
 			"Each node object should have \"name\" (string), \"args\" (list), \"props\" (map), " +
 			"and \"children\" (list of child nodes). Default output is KDL v2; " +
 			"pass an options object with version=\"v1\" for KDL v1 output.",

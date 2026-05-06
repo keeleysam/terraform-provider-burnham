@@ -30,7 +30,7 @@ func (f *HuJSONDecodeFunction) Metadata(_ context.Context, _ function.MetadataRe
 func (f *HuJSONDecodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:     "Parse a HuJSON (JWCC) string into a Terraform value",
-		Description: "Decodes a HuJSON string (JSON with comments and trailing commas) into a Terraform value. Comments are stripped during parsing.",
+		MarkdownDescription: "Decodes a HuJSON string (JSON with comments and trailing commas) into a Terraform value. Comments are stripped during parsing.",
 		Parameters: []function.Parameter{
 			function.StringParameter{
 				Name:        "input",
@@ -89,7 +89,7 @@ func (f *HuJSONEncodeFunction) Metadata(_ context.Context, _ function.MetadataRe
 func (f *HuJSONEncodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary: "Encode a value as a HuJSON (JWCC) string",
-		Description: "Encodes a Terraform value as a HuJSON string with trailing commas and pretty-printed formatting. " +
+		MarkdownDescription: "Encodes a Terraform value as a HuJSON string with trailing commas and pretty-printed formatting. " +
 			"By default every object member and array element is placed on its own line. " +
 			"Pass an optional options object with \"indent\" to override the default tab indentation, " +
 			"\"compact\" (bool) to opt in to hujson.Format's \"fit on one line if it can\" packing instead of the default expanded layout, " +

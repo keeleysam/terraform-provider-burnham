@@ -33,7 +33,7 @@ func (f *YAMLEncodeFunction) Metadata(_ context.Context, _ function.MetadataRequ
 func (f *YAMLEncodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary: "Encode a value as YAML with full formatting control",
-		Description: "Encodes a Terraform value as a YAML string. Unlike the built-in yamlencode, this defaults to block style, " +
+		MarkdownDescription: "Encodes a Terraform value as a YAML string. Unlike the built-in yamlencode, this defaults to block style, " +
 			"uses literal block scalars (|) for multi-line strings, and supports comments. " +
 			"Pass an optional options object to control indentation, style, quoting, null representation, key sorting, and comments.",
 		Parameters: []function.Parameter{

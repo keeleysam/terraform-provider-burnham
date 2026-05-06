@@ -43,7 +43,7 @@ func (f *RegDecodeFunction) Metadata(_ context.Context, _ function.MetadataReque
 func (f *RegDecodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary: "Parse a Windows .reg file into a Terraform value",
-		Description: "Decodes a Windows Registry Editor export (.reg) file into a Terraform object. " +
+		MarkdownDescription: "Decodes a Windows Registry Editor export (.reg) file into a Terraform object. " +
 			"Auto-detects Version 4 (REGEDIT4) and Version 5 (Windows Registry Editor Version 5.00). " +
 			"The result is a map of registry key paths to maps of value names. " +
 			"REG_SZ values become plain strings. Other types use tagged objects with __reg_type and value keys. " +
@@ -251,7 +251,7 @@ func (f *RegEncodeFunction) Metadata(_ context.Context, _ function.MetadataReque
 func (f *RegEncodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary: "Encode a value as a Windows .reg file",
-		Description: "Encodes a Terraform object as a Windows Registry Editor export (.reg) file (Version 5). " +
+		MarkdownDescription: "Encodes a Terraform object as a Windows Registry Editor export (.reg) file (Version 5). " +
 			"The input must be a map of registry key paths to maps of value names. " +
 			"Plain strings become REG_SZ values. Tagged objects from regdword(), regqword(), etc. " +
 			"are converted to their native registry types. " +

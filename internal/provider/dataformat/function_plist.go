@@ -28,7 +28,7 @@ func (f *PlistDecodeFunction) Metadata(_ context.Context, _ function.MetadataReq
 func (f *PlistDecodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:     "Parse an Apple property list into a Terraform value",
-		Description: "Decodes an Apple property list (plist) string into a Terraform value. Auto-detects XML, binary, and OpenStep formats. For binary plists, pass the output of filebase64() — the function auto-detects base64-encoded input. NSDate values become tagged objects with __plist_type=\"date\" and an RFC 3339 value; NSData values become tagged objects with __plist_type=\"data\" and a base64 value.",
+		MarkdownDescription: "Decodes an Apple property list (plist) string into a Terraform value. Auto-detects XML, binary, and OpenStep formats. For binary plists, pass the output of filebase64() — the function auto-detects base64-encoded input. NSDate values become tagged objects with __plist_type=\"date\" and an RFC 3339 value; NSData values become tagged objects with __plist_type=\"data\" and a base64 value.",
 		Parameters: []function.Parameter{
 			function.StringParameter{
 				Name:        "input",
@@ -111,7 +111,7 @@ func (f *PlistEncodeFunction) Metadata(_ context.Context, _ function.MetadataReq
 func (f *PlistEncodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary: "Encode a value as an Apple property list",
-		Description: "Encodes a Terraform value as an Apple property list (plist) string. Default format is XML. " +
+		MarkdownDescription: "Encodes a Terraform value as an Apple property list (plist) string. Default format is XML. " +
 			"Tagged objects from plistdate() and plistdata() are converted to native plist <date> and <data> elements. " +
 			"Numbers with no fractional part become <integer>, otherwise <real>. " +
 			"When format is \"binary\", the output is base64-encoded. " +

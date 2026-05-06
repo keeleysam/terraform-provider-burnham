@@ -24,7 +24,7 @@ func (f *RegDwordFunction) Metadata(_ context.Context, _ function.MetadataReques
 func (f *RegDwordFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:     "Create a REG_DWORD registry value",
-		Description: "Returns a tagged object representing a REG_DWORD (32-bit integer) registry value for use with regencode.",
+		MarkdownDescription: "Returns a tagged object representing a REG_DWORD (32-bit integer) registry value for use with regencode.",
 		Parameters:  []function.Parameter{function.NumberParameter{Name: "value", Description: "A 32-bit unsigned integer (0–4294967295)."}},
 		Return:      function.DynamicReturn{},
 	}
@@ -61,7 +61,7 @@ func (f *RegQwordFunction) Metadata(_ context.Context, _ function.MetadataReques
 func (f *RegQwordFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:     "Create a REG_QWORD registry value",
-		Description: "Returns a tagged object representing a REG_QWORD (64-bit integer) registry value for use with regencode.",
+		MarkdownDescription: "Returns a tagged object representing a REG_QWORD (64-bit integer) registry value for use with regencode.",
 		Parameters:  []function.Parameter{function.NumberParameter{Name: "value", Description: "A 64-bit unsigned integer."}},
 		Return:      function.DynamicReturn{},
 	}
@@ -98,7 +98,7 @@ func (f *RegBinaryFunction) Metadata(_ context.Context, _ function.MetadataReque
 func (f *RegBinaryFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:     "Create a REG_BINARY registry value",
-		Description: "Returns a tagged object representing a REG_BINARY registry value for use with regencode.",
+		MarkdownDescription: "Returns a tagged object representing a REG_BINARY registry value for use with regencode.",
 		Parameters:  []function.Parameter{function.StringParameter{Name: "hex", Description: "Hex-encoded binary data (e.g. \"48656c6c6f\")."}},
 		Return:      function.DynamicReturn{},
 	}
@@ -134,7 +134,7 @@ func (f *RegMultiFunction) Metadata(_ context.Context, _ function.MetadataReques
 func (f *RegMultiFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:     "Create a REG_MULTI_SZ registry value",
-		Description: "Returns a tagged object representing a REG_MULTI_SZ (multi-string) registry value for use with regencode.",
+		MarkdownDescription: "Returns a tagged object representing a REG_MULTI_SZ (multi-string) registry value for use with regencode.",
 		Parameters: []function.Parameter{
 			function.DynamicParameter{Name: "strings", Description: "A list of strings."},
 		},
@@ -195,7 +195,7 @@ func (f *RegExpandSzFunction) Metadata(_ context.Context, _ function.MetadataReq
 func (f *RegExpandSzFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:     "Create a REG_EXPAND_SZ registry value",
-		Description: "Returns a tagged object representing a REG_EXPAND_SZ (expandable string with %variables%) registry value for use with regencode.",
+		MarkdownDescription: "Returns a tagged object representing a REG_EXPAND_SZ (expandable string with %variables%) registry value for use with regencode.",
 		Parameters:  []function.Parameter{function.StringParameter{Name: "value", Description: "A string with %VARIABLE% references (e.g. \"%SystemRoot%\\\\system32\")."}},
 		Return:      function.DynamicReturn{},
 	}

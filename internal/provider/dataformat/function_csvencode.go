@@ -28,7 +28,7 @@ func (f *CSVEncodeFunction) Metadata(_ context.Context, _ function.MetadataReque
 func (f *CSVEncodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary: "Encode a list of objects as a CSV string",
-		Description: `Encodes a list of objects as a CSV string. Each object becomes a row, and object keys become columns. ` +
+		MarkdownDescription: `Encodes a list of objects as a CSV string. Each object becomes a row, and object keys become columns. ` +
 			`By default, columns are sorted alphabetically and a header row is written. ` +
 			`Pass an optional options object to control column order and header behavior. ` +
 			`All values are converted to strings: numbers render as their string representation, ` +
