@@ -21,8 +21,7 @@ Examples:
 ## Example Usage
 
 ```terraform
-// pi_approximate_digit — RFC 3091 §2.2 UDP reply for 22/7. Long division of
-// 22 by 7 gives 3.142857142857…, a period-6 cycle of "142857".
+// pi_approximate_digit — RFC 3091 §2.2 UDP reply for 22/7. Long division of 22 by 7 gives 3.142857142857…, a period-6 cycle of "142857".
 output "first_digit" {
   value = provider::burnham::pi_approximate_digit(1)
   // → "1:1"
