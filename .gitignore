@@ -11,3 +11,6 @@ terraform-provider-burnham
 *.tfplan
 crash.log
 .DS_Store
+
+# Per-function tfplugindocs templates are regenerated on every `go generate ./...` by cmd/gendoctemplates from each package's Functions() registry. The rendered docs/ output is committed; the intermediate templates aren't.
+/templates/functions/

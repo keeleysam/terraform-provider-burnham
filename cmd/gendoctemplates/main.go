@@ -1,9 +1,7 @@
 /*
-Command gendoctemplates writes per-function tfplugindocs templates whose frontmatter sets `subcategory:` to match the function's family.
+Command gendoctemplates writes per-function tfplugindocs templates whose frontmatter sets `subcategory:` based on which package's `Functions()` constructor registers the function. The package that returns a function from its `Functions()` is the function's family — same source of truth Burnham uses for everything else. No name-prefix matching, no template-side dispatch. A function moved between packages picks up the new family the next time `go generate ./...` runs.
 
-Family membership is determined by which package's `Functions()` constructor registers the function — same source of truth Burnham uses everywhere else. This avoids the maintenance hazard of pattern-matching on function name prefixes inside a shared template.
-
-Output layout: `templates/functions/<name>.md.tmpl` per function, plus deletion of any stale `.md.tmpl` files for functions that no longer exist.
+Output: one templates/functions/<name>.md.tmpl per function, written to the working tree but gitignored. tfplugindocs's per-function-template lookup picks them up automatically. Stale templates (for functions that no longer exist) are swept on each run so the directory stays in lockstep with `provider.Functions()`.
 
 Wired to `//go:generate` in main.go and runs *before* tfplugindocs so the templates exist when tfplugindocs reads them.
 */
@@ -26,7 +24,7 @@ import (
 	"github.com/keeleysam/terraform-burnham/internal/provider/transform"
 )
 
-// families pairs each of Burnham's function packages with the docs subcategory string that the Terraform Registry should display for its members. To add a new family: add a row here.
+// families pairs each of Burnham's function packages with the docs subcategory string the Terraform Registry should display for its members. To add a new family: add a row here.
 var families = []struct {
 	subcategory string
 	functions   []func() function.Function
@@ -83,7 +81,7 @@ func main() {
 
 	// Collect (name, subcategory) pairs by introspecting each package's Functions(). Using the framework's MetadataResponse path keeps us honest — we read whatever name the function publishes, not whatever we guess from the type name.
 	ctx := context.Background()
-	want := map[string]string{} // name -> subcategory
+	want := map[string]string{}
 	for _, fam := range families {
 		for _, ctor := range fam.functions {
 			f := ctor()
@@ -97,7 +95,7 @@ func main() {
 		}
 	}
 
-	// Sweep stale files: any *.md.tmpl in dst that isn't for a currently-registered function gets deleted. Keeps the directory in lockstep with what `provider.Functions()` actually returns.
+	// Sweep stale files: any *.md.tmpl in dst that isn't for a currently-registered function gets deleted. Keeps the directory in lockstep with what `provider.Functions()` actually returns. Not strictly needed (the directory is gitignored, so stale files don't pollute commits) but it keeps `ls templates/functions/` honest while debugging.
 	entries, err := os.ReadDir(dst)
 	if err != nil {
 		log.Fatalf("reading %s: %v", dst, err)
@@ -121,7 +119,6 @@ func main() {
 		}
 	}
 
-	// Write fresh templates. Sorted iteration so output ordering is deterministic if anyone needs to debug a partial run.
 	for name, sub := range want {
 		body := fmt.Sprintf(perFunctionTemplate, sub)
 		path := filepath.Join(dst, name+".md.tmpl")
@@ -129,7 +126,7 @@ func main() {
 			log.Fatalf("writing %s: %v", path, err)
 		}
 	}
-	log.Printf("wrote %d per-function templates under %s", len(want), dst)
+	log.Printf("wrote %d per-function templates to %s (gitignored)", len(want), dst)
 }
 
 // outputDir returns the absolute path to templates/functions/, anchored to this main.go's source location. Same trick cmd/genpi uses, for the same reason: works under `go generate ./...` and `go run ./cmd/gendoctemplates` from any cwd.
