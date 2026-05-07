@@ -17,11 +17,12 @@ Your configuration profiles, ACL policies, and structured documents become first
 
 The result is Terraform code that reads like a blueprint — clear, logical, and built to last.
 
-Burnham is organized into three families of functions:
+Burnham is organized into four families of functions:
 
 - **[Structured Data Functions](#structured-data-functions)** — encode/decode for JSON (pretty), HuJSON, plist, INI, CSV, YAML, .reg, VDF, KDL, NDJSON, MessagePack, CBOR, dotenv, Java .properties, Apple .strings, and general HCL.
 - **[Networking Functions](#networking-functions)** — CIDR set operations, queries, IP arithmetic, NAT64 (RFC 6052), NPTv6 (RFC 6296), and IPAM helpers.
 - **[Query and Patch Functions](#query-and-patch-functions)** — JMESPath, JSONPath (RFC 9535), JSON Patch (RFC 6902), and JSON Merge Patch (RFC 7396) over decoded structures.
+- **[Numerics Functions](#numerics-functions)** — RFC 3091 (Pi Digit Generation Protocol).
 
 ## Structured Data Functions
 
@@ -102,6 +103,19 @@ Pure functions for querying and patching decoded structures, so that manifest ov
 | `json_merge_patch` | `(value dynamic, patch dynamic)` | `dynamic` | [evanphx/json-patch](https://github.com/evanphx/json-patch), [RFC 7396](https://www.rfc-editor.org/rfc/rfc7396) |
 | `json_patch` | `(value dynamic, patch list(object))` | `dynamic` | [evanphx/json-patch](https://github.com/evanphx/json-patch), [RFC 6902](https://www.rfc-editor.org/rfc/rfc6902) |
 | `jsonpath_query` | `(value dynamic, expression string)` | `dynamic` (list) | [theory/jsonpath](https://github.com/theory/jsonpath), conformant with [RFC 9535](https://www.rfc-editor.org/rfc/rfc9535.html) |
+
+Per-function documentation lives under [`docs/functions/`](docs/functions/) and on [registry.terraform.io](https://registry.terraform.io/providers/keeleysam/burnham/latest/docs).
+
+## Numerics Functions
+
+Pure mathematical / standards-based functions that don't fit the other families. All deterministic, all evaluating at plan time. Today this is just [RFC 3091](https://www.rfc-editor.org/rfc/rfc3091) — the April Fools 2001 *Pi Digit Generation Protocol* — implemented faithfully against the data formats and ABNF specified in the RFC. Future numerics-flavored functions (other RFC-grounded mathematical protocols, etc.) live here too.
+
+| Function | Signature | Returns | Backed by |
+|---|---|---|---|
+| `pi_approximate_digit` | `(n number)` | `string` `"<n>:<digit>"` | RFC 3091 §2.2 UDP reply for 22/7. Unbounded `n`. |
+| `pi_approximate_digits` | `(count number)` | `string` (count chars) | RFC 3091 §1.1 TCP service for 22/7. Period-6 cycle `"142857"`. |
+| `pi_digit` | `(n number)` | `string` `"<n>:<digit>"` | RFC 3091 §2.1.2 UDP reply for π. Embedded table of the first ⌊π × 10⁶⌋ = 3,141,592 digits, IEEE 754-2008 DPD-packed. |
+| `pi_digits` | `(count number)` | `string` (count chars) | RFC 3091 §1 TCP service for π. Same packed table. |
 
 Per-function documentation lives under [`docs/functions/`](docs/functions/) and on [registry.terraform.io](https://registry.terraform.io/providers/keeleysam/burnham/latest/docs).
 
