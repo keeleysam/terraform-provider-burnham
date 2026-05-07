@@ -5,9 +5,7 @@ import (
 	"testing"
 )
 
-// BenchmarkPiDigitChar measures the raw single-digit lookup against the
-// embedded DPD-packed table. This is what `pi_digit(n)` calls under the
-// hood (plus a fmt.Sprintf for the "n:digit" framing).
+// BenchmarkPiDigitChar measures the raw single-digit lookup against the embedded DPD-packed table. This is what `pi_digit(n)` calls under the hood (plus a fmt.Sprintf for the "n:digit" framing).
 func BenchmarkPiDigitChar(b *testing.B) {
 	for _, n := range []int64{1, 100, 10_000, 100_000, 999_999, 3_141_592} {
 		b.Run("n="+itoaB(n), func(b *testing.B) {
@@ -21,8 +19,7 @@ func BenchmarkPiDigitChar(b *testing.B) {
 	}
 }
 
-// BenchmarkPiFirstNDigits measures the bulk-extract path used by
-// `pi_digits(count)`. The work scales linearly with count.
+// BenchmarkPiFirstNDigits measures the bulk-extract path used by `pi_digits(count)`. The work scales linearly with count.
 func BenchmarkPiFirstNDigits(b *testing.B) {
 	for _, n := range []int64{10, 100, 1_000, 10_000, 100_000, 1_000_000, 3_141_592} {
 		b.Run("count="+itoaB(n), func(b *testing.B) {
@@ -37,9 +34,7 @@ func BenchmarkPiFirstNDigits(b *testing.B) {
 	}
 }
 
-// BenchmarkApproximateDigitChar measures the 22/7 single-digit lookup.
-// Uses big.Int.Mod under the hood; we reuse the *big.Int across iterations
-// so we measure just the modular-arithmetic cost.
+// BenchmarkApproximateDigitChar measures the 22/7 single-digit lookup. Uses big.Int.Mod under the hood; we reuse the *big.Int across iterations so we measure just the modular-arithmetic cost.
 func BenchmarkApproximateDigitChar(b *testing.B) {
 	cases := []struct {
 		name string
@@ -63,8 +58,7 @@ func BenchmarkApproximateDigitChar(b *testing.B) {
 	}
 }
 
-// BenchmarkApproximateFirstNDigits measures bulk 22/7 generation. Pure
-// modulo-based loop — no I/O, no big.Int arithmetic.
+// BenchmarkApproximateFirstNDigits measures bulk 22/7 generation. Pure modulo-based loop — no I/O, no big.Int arithmetic.
 func BenchmarkApproximateFirstNDigits(b *testing.B) {
 	for _, n := range []int64{10, 100, 1_000, 10_000, 100_000, 1_000_000, 3_141_592} {
 		b.Run("count="+itoaB(n), func(b *testing.B) {
@@ -79,8 +73,7 @@ func BenchmarkApproximateFirstNDigits(b *testing.B) {
 	}
 }
 
-// itoaB is a tiny helper local to the benchmark file. Keeps benchmark
-// names readable without pulling strconv just for this.
+// itoaB is a tiny helper local to the benchmark file. Keeps benchmark names readable without pulling strconv just for this.
 func itoaB(n int64) string {
 	if n == 0 {
 		return "0"

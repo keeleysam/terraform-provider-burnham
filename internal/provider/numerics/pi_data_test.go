@@ -7,10 +7,7 @@ import (
 	"github.com/keeleysam/terraform-burnham/internal/provider/numerics/internal/dpd"
 )
 
-// piFirst100Reference is the canonical first 100 decimal digits of π
-// *following* the decimal point. Sourced from multiple independent
-// references (Wikipedia "Pi", OEIS A000796) and hard-coded so a corrupted
-// pi_packed.bin fails this test.
+// piFirst100Reference is the canonical first 100 decimal digits of π *following* the decimal point. Sourced from multiple independent references (Wikipedia "Pi", OEIS A000796) and hard-coded so a corrupted pi_packed.bin fails this test.
 const piFirst100Reference = "1415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679"
 
 func TestPiPacked_FileSize(t *testing.T) {

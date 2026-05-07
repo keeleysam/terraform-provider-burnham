@@ -178,8 +178,7 @@ func TestAcc_PiApproximateDigits_RejectsNegative(t *testing.T) {
 	)
 }
 
-// itoa is a tiny helper local to this file to avoid importing strconv just
-// to interpolate a small int.
+// itoa is a tiny helper local to this file to avoid importing strconv just to interpolate a small int.
 func itoa(n int) string {
 	if n == 0 {
 		return "0"

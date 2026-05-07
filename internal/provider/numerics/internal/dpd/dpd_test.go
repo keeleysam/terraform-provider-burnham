@@ -2,9 +2,7 @@ package dpd
 
 import "testing"
 
-// ieeeTestVectors are the encoding examples from Wikipedia's "Densely
-// packed decimal" article (which mirrors the IEEE 754-2008 spec). Used as
-// the primary correctness witness.
+// ieeeTestVectors are the encoding examples from Wikipedia's "Densely packed decimal" article (which mirrors the IEEE 754-2008 spec). Used as the primary correctness witness.
 var ieeeTestVectors = []struct {
 	digits [3]byte
 	dpd    uint16
@@ -22,11 +20,7 @@ var ieeeTestVectors = []struct {
 	{[3]byte{9, 9, 9}, 0b0011111111}, // "999" — all large
 }
 
-// Note on "888" / "999" / etc.: the all-large case has two don't-care bits
-// in the IEEE encoding, so each all-large digit triple has 4 valid DPD
-// aliases. Encode emits the canonical form with the don't-care bits set
-// to 0; Decode accepts any of the aliases (verified separately by
-// TestDecodeHandlesRedundantEncodings).
+// Note on "888" / "999" / etc.: the all-large case has two don't-care bits in the IEEE encoding, so each all-large digit triple has 4 valid DPD aliases. Encode emits the canonical form with the don't-care bits set to 0; Decode accepts any of the aliases (verified separately by TestDecodeHandlesRedundantEncodings).
 
 func TestEncode_IEEEVectors(t *testing.T) {
 	for _, tc := range ieeeTestVectors {
@@ -48,9 +42,7 @@ func TestDecode_IEEEVectors(t *testing.T) {
 	}
 }
 
-// TestRoundtrip exhaustively encodes every (d0, d1, d2) triple in [0,9]³
-// (1000 cases), decodes the result, and asserts equality. Catches any
-// asymmetry between the encoder and decoder.
+// TestRoundtrip exhaustively encodes every (d0, d1, d2) triple in [0,9]³ (1000 cases), decodes the result, and asserts equality. Catches any asymmetry between the encoder and decoder.
 func TestRoundtrip(t *testing.T) {
 	for d0 := byte(0); d0 < 10; d0++ {
 		for d1 := byte(0); d1 < 10; d1++ {
@@ -66,9 +58,7 @@ func TestRoundtrip(t *testing.T) {
 	}
 }
 
-// TestEncodeProducesValidDPDRange asserts that all 1000 valid 3-digit inputs
-// encode to values in [0, 1023] (10 bits). Defends against accidentally
-// setting bits outside the low 10.
+// TestEncodeProducesValidDPDRange asserts that all 1000 valid 3-digit inputs encode to values in [0, 1023] (10 bits). Defends against accidentally setting bits outside the low 10.
 func TestEncodeProducesValidDPDRange(t *testing.T) {
 	for d0 := byte(0); d0 < 10; d0++ {
 		for d1 := byte(0); d1 < 10; d1++ {
@@ -82,11 +72,7 @@ func TestEncodeProducesValidDPDRange(t *testing.T) {
 	}
 }
 
-// TestDecodeHandlesRedundantEncodings: per IEEE 754-2008, several 10-bit
-// patterns decode to digit triples that have a different canonical encoding
-// (because the all-large case has 4 don't-care bits → 8 redundant aliases).
-// Decode should still return the correct digit triple; only Encode is
-// canonical. This test exercises a few of those.
+// TestDecodeHandlesRedundantEncodings: per IEEE 754-2008, several 10-bit patterns decode to digit triples that have a different canonical encoding (because the all-large case has 2 don't-care bits → 4 redundant aliases per all-large triple). Decode should still return the correct digit triple; only Encode is canonical.
 func TestDecodeHandlesRedundantEncodings(t *testing.T) {
 	// All four aliases of "999" — DPD's all-large case has two don't-care
 	// bits (p9, p8), giving 2² = 4 valid encodings of the same digit triple.

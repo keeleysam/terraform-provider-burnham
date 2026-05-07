@@ -5,10 +5,7 @@ import (
 	"testing"
 )
 
-// piFirst100Reference is the canonical first 100 decimal digits of π
-// *following* the decimal point (the leading 3 is stripped). Sourced from
-// multiple independent references (Wikipedia "Pi", OEIS A000796, et al.) and
-// hard-coded here so a corrupted Chudnovsky implementation fails this test.
+// piFirst100Reference is the canonical first 100 decimal digits of π *following* the decimal point (the leading 3 is stripped). Sourced from multiple independent references (Wikipedia "Pi", OEIS A000796, et al.) and hard-coded here so a corrupted Chudnovsky implementation fails this test.
 const piFirst100Reference = "1415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679"
 
 func TestPiDigits_First100(t *testing.T) {

@@ -194,8 +194,7 @@ func TestPiDigits_RejectsBeyondCap(t *testing.T) {
 	}
 }
 
-// TestPiDigit_AgreesWithPiDigits is a consistency check: for any n in range,
-// pi_digit(n) should report the same character that pi_digits(n) ends in.
+// TestPiDigit_AgreesWithPiDigits is a consistency check: for any n in range, pi_digit(n) should report the same character that pi_digits(n) ends in.
 func TestPiDigit_AgreesWithPiDigits(t *testing.T) {
 	for _, n := range []int64{1, 10, 100, 1000, 10_000, 100_000} {
 		bulk, err := runPiDigits(t, n)

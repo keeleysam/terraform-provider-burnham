@@ -56,7 +56,7 @@ Pure functions for querying and patching decoded structures, so manifest overlay
 
 ## Numerics Functions
 
-Pure mathematical functions grounded in published standards. Currently a faithful implementation of [RFC 3091](https://www.rfc-editor.org/rfc/rfc3091) — the April Fools 2001 *Pi Digit Generation Protocol* — covering both the §1 TCP digit-stream and the §2.1.2 UDP `<n>:<digit>` reply format, for both π and the 22/7 approximate service.
+Pure mathematical functions grounded in published standards. Currently a faithful implementation of [RFC 3091](https://www.rfc-editor.org/rfc/rfc3091) — the *Pi Digit Generation Protocol* — covering both the §1 TCP digit-stream and the §2.1.2 UDP `<n>:<digit>` reply format, for both π and the 22/7 approximate service.
 
 - **π:** `pi_digit(n)` (UDP reply), `pi_digits(count)` (TCP stream). Backed by an embedded table of the first ⌊π × 10⁶⌋ = 3,141,592 digits, encoded as IEEE 754-2008 [Densely Packed Decimal](https://en.wikipedia.org/wiki/Densely_packed_decimal) — constant-time lookup.
 - **22/7:** `pi_approximate_digit(n)`, `pi_approximate_digits(count)`. Period-6 repeating cycle `"142857"`; unbounded `n`.

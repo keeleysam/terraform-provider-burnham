@@ -108,7 +108,7 @@ Per-function documentation lives under [`docs/functions/`](docs/functions/) and 
 
 ## Numerics Functions
 
-Pure mathematical / standards-based functions that don't fit the other families. All deterministic, all evaluating at plan time. Today this is just [RFC 3091](https://www.rfc-editor.org/rfc/rfc3091) — the April Fools 2001 *Pi Digit Generation Protocol* — implemented faithfully against the data formats and ABNF specified in the RFC. Future numerics-flavored functions (other RFC-grounded mathematical protocols, etc.) live here too.
+Pure mathematical / standards-based functions that don't fit the other families. All deterministic, all evaluating at plan time. Today this is just an exhaustively faithful implementation of [RFC 3091](https://www.rfc-editor.org/rfc/rfc3091) — the *Pi Digit Generation Protocol* — covering both the TCP and UDP service shapes for π and the 22/7 approximate service. Future numerics functions live here too.
 
 | Function | Signature | Returns | Backed by |
 |---|---|---|---|

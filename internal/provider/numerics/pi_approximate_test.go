@@ -12,8 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-// runPiApproximateDigit invokes pi_approximate_digit with n encoded as a
-// types.NumberValue so we can pass arbitrarily-large *big.Float values.
+// runPiApproximateDigit invokes pi_approximate_digit with n encoded as a types.NumberValue so we can pass arbitrarily-large *big.Float values.
 func runPiApproximateDigit(t *testing.T, n *big.Float) (string, *function.FuncError) {
 	t.Helper()
 	f := &PiApproximateDigitFunction{}
@@ -128,10 +127,7 @@ func TestPiApproximateDigit_AtMaxInt64(t *testing.T) {
 	}
 }
 
-// bigFloatExactInt builds a *big.Float that exactly represents the given
-// big.Int. Default-precision big.Float (53 bits) can't hold integers above
-// ~2^53, so we explicitly request precision wide enough for the value's
-// bit length.
+// bigFloatExactInt builds a *big.Float that exactly represents the given big.Int. Default-precision big.Float (53 bits) can't hold integers above ~2^53, so we explicitly request precision wide enough for the value's bit length.
 func bigFloatExactInt(i *big.Int) *big.Float {
 	prec := uint(i.BitLen() + 64)
 	if prec < 64 {

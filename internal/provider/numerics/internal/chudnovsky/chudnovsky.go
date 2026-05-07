@@ -1,16 +1,10 @@
 /*
-Package chudnovsky computes π to arbitrary precision using the Chudnovsky
-brothers' series with binary splitting in pure integer arithmetic.
+Package chudnovsky computes π to arbitrary precision using the Chudnovsky brothers' series with binary splitting in pure integer arithmetic.
 
-This package is internal: it's used by sibling cmd/genpi to produce the
-DPD-packed pi_packed.bin shipped with terraform-burnham, and by the
-numerics package's cross-validation test. Production code does not import
-it — Burnham's runtime path serves digits from the embedded packed table,
-not from a runtime computation.
+This package is internal: it's used by sibling cmd/genpi to produce the DPD-packed pi_packed.bin shipped with terraform-burnham, and by the numerics package's cross-validation test. Production code does not import it — Burnham's runtime path serves digits from the embedded packed table, not from a runtime computation.
 
 References:
-  - Chudnovsky, D. & Chudnovsky, G. (1988). Approximations and complex multiplication
-    according to Ramanujan.
+  - Chudnovsky, D. & Chudnovsky, G. (1988). Approximations and complex multiplication according to Ramanujan.
   - Wikipedia: https://en.wikipedia.org/wiki/Chudnovsky_algorithm
   - Binary splitting: https://en.wikipedia.org/wiki/Binary_splitting
   - Reference Python implementation: https://www.craig-wood.com/nick/articles/pi-chudnovsky/
@@ -18,28 +12,11 @@ References:
 
 Why this is hand-rolled rather than imported.
 
-We evaluated github.com/ericlagergren/decimal — a maintained BSD-3 library
-(v3.3.1 tagged 2019, master last touched April 2024) whose Context.Pi method
-implements the same Chudnovsky binary-splitting algorithm coded above.
-Performance head-to-head was a tie at our 1M-digit target (~3 s, both
-ultimately bottoming out on math/big.Int.Mul, which is what their decimal.Big
-calls under the hood anyway). The deciding factor was memory: at 10M digits
-their implementation peaked at 3.5 GB allocated vs. 250 MB for this one — a
-14× difference — driven by the per-call closure pattern in their Pi helpers
-(`var tmp Big; ... return &tmp`) and decimal.Big's per-instance Context
-overhead. The bloat is structural, not a one-line fix.
+We evaluated github.com/ericlagergren/decimal — a maintained BSD-3 library (v3.3.1 tagged 2019, master last touched April 2024) whose Context.Pi method implements the same Chudnovsky binary-splitting algorithm coded above. Performance head-to-head was a tie at our 1M-digit target (~3 s, both ultimately bottoming out on math/big.Int.Mul, which is what their decimal.Big calls under the hood anyway). The deciding factor was memory: at 10M digits their implementation peaked at 3.5 GB allocated vs. 250 MB for this one — a 14× difference — driven by the per-call closure pattern in their Pi helpers (`var tmp Big; ... return &tmp`) and decimal.Big's per-instance Context overhead. The bloat is structural, not a one-line fix.
 
-We don't actually hit that memory ceiling at our 1M cap, so the practical
-difference at our workload is negligible — but it tipped the choice to
-"100 lines we own" over "depend on a multi-thousand-line decimal arithmetic
-library to call the same Chudnovsky math we already have."
+We don't actually hit that memory ceiling at our 1M cap, so the practical difference at our workload is negligible — but it tipped the choice to "100 lines we own" over "depend on a multi-thousand-line decimal arithmetic library to call the same Chudnovsky math we already have."
 
-Follow-up worth doing eventually: contribute the memory fix upstream
-(rework the BinarySplit helpers to take pre-allocated state, drop per-call
-allocations from getPiA/P/Q). If that lands and tags a release, the
-calculus flips — we'd shed 100 lines of math we have to maintain in
-exchange for an upstream dep that does the same thing equally well. Until
-then, this stays.
+Follow-up worth doing eventually: contribute the memory fix upstream (rework the BinarySplit helpers to take pre-allocated state, drop per-call allocations from getPiA/P/Q). If that lands and tags a release, the calculus flips — we'd shed 100 lines of math we have to maintain in exchange for an upstream dep that does the same thing equally well. Until then, this stays.
 
 The series is
 
@@ -49,21 +26,17 @@ The series is
 
 Each term contributes about 14.181647 additional decimal digits.
 
-Binary splitting evaluates the partial sum Σ_{k=a..b-1} via three integer
-quantities P(a,b), Q(a,b), T(a,b) satisfying
+Binary splitting evaluates the partial sum Σ_{k=a..b-1} via three integer quantities P(a,b), Q(a,b), T(a,b) satisfying
 
     P(a,b)·P(b,c) = P(a,c)
     Q(a,b)·Q(b,c) = Q(a,c)
     T(a,c)        = Q(b,c)·T(a,b) + P(a,b)·T(b,c)
 
-with the partial sum equal to T(a,b)/Q(a,b). The base case (b - a == 1)
-plugs in the closed-form term values; the recursive case combines two
-halves. After combining, we recover π via the closed form
+with the partial sum equal to T(a,b)/Q(a,b). The base case (b - a == 1) plugs in the closed-form term values; the recursive case combines two halves. After combining, we recover π via the closed form
 
     π = (Q · 426880 · √10005) / T
 
-evaluated entirely in *big.Int by scaling: compute floor(π · 10^digits)
-using big.Int.Sqrt over (10005 · 10^(2·digits)).
+evaluated entirely in *big.Int by scaling: compute floor(π · 10^digits) using big.Int.Sqrt over (10005 · 10^(2·digits)).
 */
 
 package chudnovsky
@@ -74,9 +47,7 @@ import (
 	"strings"
 )
 
-// PiDigits returns the first `digits` decimal digits of π *following* the
-// decimal point (i.e. with the leading "3." stripped). The result is always
-// exactly `digits` characters long and contains only ASCII '0'-'9'.
+// PiDigits returns the first `digits` decimal digits of π *following* the decimal point (i.e. with the leading "3." stripped). The result is always exactly `digits` characters long and contains only ASCII '0'-'9'.
 //
 // digits must be >= 1.
 func PiDigits(digits int) string {
@@ -84,9 +55,7 @@ func PiDigits(digits int) string {
 		panic(fmt.Sprintf("chudnovsky.PiDigits: digits must be >= 1, got %d", digits))
 	}
 
-	// Number of Chudnovsky iterations needed. Each term contributes
-	// log10(640320^3 / (24·6·2·6)) ≈ 14.181647 digits; using 14 gives a
-	// safety buffer.
+	// Number of Chudnovsky iterations needed. Each term contributes log10(640320^3 / (24·6·2·6)) ≈ 14.181647 digits; using 14 gives a safety buffer.
 	n := int64(digits/14) + 2
 
 	P, Q, T := binarySplit(0, n)
@@ -105,12 +74,10 @@ func PiDigits(digits int) string {
 	// piScaled = floor(num / T) = floor(π · 10^digits)
 	piScaled := new(big.Int).Quo(num, T)
 
-	// piScaled prints as "3<digits>" (a (digits+1)-character integer).
-	// We want only the digits after the decimal point.
+	// piScaled prints as "3<digits>" (a (digits+1)-character integer). We want only the digits after the decimal point.
 	s := piScaled.String()
 	if len(s) < digits+1 {
-		// Shouldn't happen given the formulation, but be defensive: pad
-		// with leading zeros so the slicing below is safe.
+		// Shouldn't happen given the formulation, but be defensive: pad with leading zeros so the slicing below is safe.
 		s = strings.Repeat("0", digits+1-len(s)) + s
 	}
 	if s[0] != '3' {
@@ -121,12 +88,10 @@ func PiDigits(digits int) string {
 
 // constC3Over24 = 640320^3 / 24 = 10939058860032000.
 //
-// 640320^3 = 262537412640768000; dividing by 24 gives the integer constant
-// that appears in Q's base case (a^3 · C3/24).
+// 640320^3 = 262537412640768000; dividing by 24 gives the integer constant that appears in Q's base case (a^3 · C3/24).
 var constC3Over24 = big.NewInt(10939058860032000)
 
-// binarySplit computes (P, Q, T) for the half-open interval [a, b)
-// of Chudnovsky terms. Caller invokes with a=0 to capture the k=0 term.
+// binarySplit computes (P, Q, T) for the half-open interval [a, b) of Chudnovsky terms. Caller invokes with a=0 to capture the k=0 term.
 //
 // Base case (b - a == 1):
 //

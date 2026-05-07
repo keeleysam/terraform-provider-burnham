@@ -1,5 +1,8 @@
 package main
 
+// Order matters: gendoctemplates writes per-function templates under
+// templates/functions/ that tfplugindocs then reads to render docs/functions/.
+//go:generate go run ./cmd/gendoctemplates
 //go:generate go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs generate --provider-name burnham
 
 import (
