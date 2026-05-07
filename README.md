@@ -9,33 +9,41 @@
 
 In 1909, Daniel Burnham published the [Plan of Chicago](https://en.wikipedia.org/wiki/Burnham_Plan_of_Chicago) — a comprehensive blueprint that transformed a sprawling, chaotic city into something coherent and enduring. He believed that good planning wasn't just about what you build, but about making the plan itself clear, readable, and maintainable for generations to come.
 
-Terraform plans deserve the same treatment. But today, when your Terraform needs to work with structured data formats like property lists or human-edited JSON, or do real arithmetic on IP address space — set operations on CIDRs, NAT64 synthesis, range conversion — you're stuck with workarounds. Shelling out to external tools, embedding raw strings, pasting opaque expressions that obscure what the plan is actually doing.
+Terraform plans deserve the same treatment. But today, when your Terraform needs to work with structured data formats like property lists or human-edited JSON, do real arithmetic on IP address space, or apply environment overlays to a base manifest, you're stuck with workarounds. Shelling out to external tools, embedding raw strings, pasting opaque expressions that obscure what the plan is actually doing.
 
-Burnham fixes this. It's a pure function provider — no resources, no data sources, no API calls — that gives Terraform native fluency with the structured data formats and the network primitives it can't handle cleanly on its own.
+Burnham fixes this. It's a pure function provider — no resources, no data sources, no API calls — that gives Terraform native fluency with the structured data formats, network primitives, and data-manipulation idioms it can't handle cleanly on its own.
 
-Your configuration profiles, ACL policies, and structured documents become first-class citizens in your Terraform plans, not opaque blobs passed through `file()` and hoped for the best. Your network plans show set arithmetic on CIDRs in plain HCL instead of `templatefile()`-driven Python preprocessors.
+Your configuration profiles, ACL policies, and structured documents become first-class citizens in your Terraform plans, not opaque blobs passed through `file()` and hoped for the best. Your network plans show set arithmetic on CIDRs in plain HCL instead of `templatefile()`-driven Python preprocessors. Your manifest overlays apply RFC 7396 merge patches in one expression rather than a chain of `merge()` and `try()` calls.
 
 The result is Terraform code that reads like a blueprint — clear, logical, and built to last.
 
-Burnham is organized into two families of functions:
+Burnham is organized into three families of functions:
 
-- **[Structured Data Functions](#structured-data-functions)** — encode/decode for JSON (pretty), HuJSON, plist, INI, CSV, YAML, .reg, VDF, KDL.
+- **[Structured Data Functions](#structured-data-functions)** — encode/decode for JSON (pretty), HuJSON, plist, INI, CSV, YAML, .reg, VDF, KDL, NDJSON, MessagePack, CBOR, dotenv, Java .properties, Apple .strings, and general HCL.
 - **[Networking Functions](#networking-functions)** — CIDR set operations, queries, IP arithmetic, NAT64 (RFC 6052), NPTv6 (RFC 6296), and IPAM helpers.
+- **[Query and Patch Functions](#query-and-patch-functions)** — JMESPath, JSONPath (RFC 9535), JSON Patch (RFC 6902), and JSON Merge Patch (RFC 7396) over decoded structures.
 
 ## Structured Data Functions
 
 | Format | Encode | Decode | Notes |
 |--------|--------|--------|-------|
-| JSON (pretty-printed) | `jsonencode` | — | Terraform has `jsondecode` built-in |
-| HuJSON / JWCC | `hujsonencode` | `hujsondecode` | JSON with comments and trailing commas |
+| Apple .strings | `applestringsencode` | `applestringsdecode` | Localization files. UTF-8 / UTF-16 BOM auto-detect on decode |
 | Apple Property List | `plistencode` | `plistdecode` | XML (with comments), binary, and OpenStep formats |
-| INI | `iniencode` | `inidecode` | Standard `[section]` / `key = value` files |
+| CBOR | `cborencode` | `cbordecode` | RFC 8949, Core Deterministic Encoding; base64-wrapped on the HCL side |
 | CSV | `csvencode` | — | Terraform has `csvdecode` built-in |
-| YAML | `yamlencode` | — | Block style, literal scalars, comments. Terraform has `yamldecode` built-in |
-| Windows .reg | `regencode` | `regdecode` | Registry Editor export format with typed values and comments |
-| Valve VDF | `vdfencode` | `vdfdecode` | Steam/Source engine config format |
+| dotenv (.env) | `dotenvencode` | `dotenvdecode` | godotenv flavor: `KEY=value`, `"`/`'` quoting, `${VAR}` interpolation |
+| HCL (general) | `hclencode` | `hcldecode` | Attribute-only HCL documents; for `.tfvars` use the built-in `provider::terraform::*` |
+| HuJSON / JWCC | `hujsonencode` | `hujsondecode` | JSON with comments and trailing commas |
+| INI | `iniencode` | `inidecode` | Standard `[section]` / `key = value` files |
+| Java .properties | `javapropertiesencode` | `javapropertiesdecode` | `=`/`:`/whitespace separators, line continuation, `\uXXXX` escapes |
+| JSON (pretty-printed) | `jsonencode` | — | Terraform has `jsondecode` built-in |
 | KDL | `kdlencode` | `kdldecode` | Modern document language, v1 and v2 |
+| MessagePack | `msgpackencode` | `msgpackdecode` | Binary format ([msgpack.org spec](https://github.com/msgpack/msgpack/blob/master/spec.md)); base64-wrapped on the HCL side |
+| NDJSON / JSON Lines | `ndjsonencode` | `ndjsondecode` | One JSON value per line, trailing newline |
 | TOML | — | — | Use [Tobotimus/toml](https://registry.terraform.io/providers/Tobotimus/toml) instead |
+| Valve VDF | `vdfencode` | `vdfdecode` | Steam/Source engine config format |
+| Windows .reg | `regencode` | `regdecode` | Registry Editor export format with typed values and comments |
+| YAML | `yamlencode` | — | Block style, literal scalars, comments. Terraform has `yamldecode` built-in |
 
 Per-function documentation — including parameters, options, and return values — lives under [`docs/functions/`](docs/functions/) and on [registry.terraform.io](https://registry.terraform.io/providers/keeleysam/burnham/latest/docs). The pages there are auto-generated from the function metadata in source, so they always match the latest published version.
 
@@ -47,40 +55,53 @@ The **Backed by** column matters for understanding where bugs live. Functions ba
 
 | Function | Signature | Returns | Backed by |
 |---|---|---|---|
-| `cidr_merge` | `(cidrs list(string))` | `list(string)` | netipx `IPSetBuilder` + `Prefixes()` |
-| `cidr_subtract` | `(input list(string), exclude list(string))` | `list(string)` | netipx `IPSetBuilder` |
-| `cidr_intersect` | `(a list(string), b list(string))` | `list(string)` | netipx `IPSetBuilder.Intersect` |
-| `cidr_expand` | `(cidr string)` | `list(string)` | custom iterator |
-| `cidr_enumerate` | `(cidr string, newbits number)` | `list(string)` | custom iterator |
-| `range_to_cidrs` | `(first_ip string, last_ip string)` | `list(string)` | netipx `IPRange.Prefixes()` |
-| `cidr_find_free` | `(pool list(string), used list(string), prefix_len number)` | `string\|null` | netipx `IPSet.RemoveFreePrefix()` |
-| `ip_in_cidr` | `(ip string, cidr string)` | `bool` | `net/netip` `Prefix.Contains` |
-| `cidrs_containing_ip` | `(ip string, cidrs list(string))` | `list(string)` | `net/netip` `Prefix.Contains` |
 | `cidr_contains` | `(cidr string, other string)` | `bool` | netipx `IPSet.ContainsPrefix/Contains` |
-| `cidr_overlaps` | `(a string, b string)` | `bool` | `net/netip` `Prefix.Overlaps` |
-| `cidrs_overlap_any` | `(a list(string), b list(string))` | `bool` | netipx `IPSet.OverlapsPrefix` |
-| `cidrs_are_disjoint` | `(cidrs list(string))` | `bool` | netipx `IPSet.OverlapsPrefix` |
-| `cidr_host_count` | `(cidr string)` | `number` | custom (bit math) |
-| `cidr_usable_host_count` | `(cidr string)` | `number` | custom (bit math + RFC 3021) |
-| `cidr_first_ip` | `(cidr string)` | `string` | `net/netip` `Prefix.Addr` |
-| `cidr_last_ip` | `(cidr string)` | `string` | netipx `RangeOfPrefix().To()` |
-| `cidr_prefix_length` | `(cidr string)` | `number` | `net/netip` `Prefix.Bits` |
-| `cidr_wildcard` | `(cidr string)` | `string` | custom (bit math, IPv4 only) |
-| `ip_add` | `(ip string, n number)` | `string` | custom (overflow-safe arithmetic) |
-| `ip_subtract` | `(a string, b string)` | `number` | custom (overflow-safe arithmetic) |
-| `ip_version` | `(ip string)` | `number` | `net/netip` `Addr.Is4` |
-| `cidr_version` | `(cidr string)` | `number` | `net/netip` `Prefix.Addr.Is4` |
-| `ip_is_private` | `(ip string)` | `bool` | custom (RFC 1918/4193/6598 table) |
-| `cidr_is_private` | `(cidr string)` | `bool` | custom (RFC 1918/4193/6598 table) |
+| `cidr_enumerate` | `(cidr string, newbits number)` | `list(string)` | custom iterator |
+| `cidr_expand` | `(cidr string)` | `list(string)` | custom iterator |
 | `cidr_filter_version` | `(cidrs list(string), version number)` | `list(string)` | custom |
+| `cidr_find_free` | `(pool list(string), used list(string), prefix_len number)` | `string\|null` | netipx `IPSet.RemoveFreePrefix()` |
+| `cidr_first_ip` | `(cidr string)` | `string` | `net/netip` `Prefix.Addr` |
+| `cidr_host_count` | `(cidr string)` | `number` | custom (bit math) |
+| `cidr_intersect` | `(a list(string), b list(string))` | `list(string)` | netipx `IPSetBuilder.Intersect` |
+| `cidr_is_private` | `(cidr string)` | `bool` | custom (RFC 1918/4193/6598 table) |
+| `cidr_last_ip` | `(cidr string)` | `string` | netipx `RangeOfPrefix().To()` |
+| `cidr_merge` | `(cidrs list(string))` | `list(string)` | netipx `IPSetBuilder` + `Prefixes()` |
+| `cidr_overlaps` | `(a string, b string)` | `bool` | `net/netip` `Prefix.Overlaps` |
+| `cidr_prefix_length` | `(cidr string)` | `number` | `net/netip` `Prefix.Bits` |
+| `cidr_subtract` | `(input list(string), exclude list(string))` | `list(string)` | netipx `IPSetBuilder` |
+| `cidr_usable_host_count` | `(cidr string)` | `number` | custom (bit math + RFC 3021) |
+| `cidr_version` | `(cidr string)` | `number` | `net/netip` `Prefix.Addr.Is4` |
+| `cidr_wildcard` | `(cidr string)` | `string` | custom (bit math, IPv4 only) |
+| `cidrs_are_disjoint` | `(cidrs list(string))` | `bool` | netipx `IPSet.OverlapsPrefix` |
+| `cidrs_containing_ip` | `(ip string, cidrs list(string))` | `list(string)` | `net/netip` `Prefix.Contains` |
+| `cidrs_overlap_any` | `(a list(string), b list(string))` | `bool` | netipx `IPSet.OverlapsPrefix` |
+| `ip_add` | `(ip string, n number)` | `string` | custom (overflow-safe arithmetic) |
+| `ip_in_cidr` | `(ip string, cidr string)` | `bool` | `net/netip` `Prefix.Contains` |
+| `ip_is_private` | `(ip string)` | `bool` | custom (RFC 1918/4193/6598 table) |
+| `ip_subtract` | `(a string, b string)` | `number` | custom (overflow-safe arithmetic) |
+| `ip_to_mixed_notation` | `(ip string)` | `string` | custom (RFC 5952 mixed format) |
+| `ip_version` | `(ip string)` | `number` | `net/netip` `Addr.Is4` |
+| `ipv4_to_ipv4_mapped` | `(ipv4 string)` | `string` | custom (RFC 4291 §2.5.5.2) |
+| `nat64_extract` | `(ipv6 string [, nat64_prefix string])` | `string` | custom (RFC 6052 §2.2) |
 | `nat64_prefix_valid` | `(prefix string)` | `bool` | custom (RFC 6052 rules) |
 | `nat64_synthesize` | `(ipv4 string, prefix string [, use_hex bool])` | `string` | custom (RFC 6052 §2.2) |
-| `nat64_extract` | `(ipv6 string [, nat64_prefix string])` | `string` | custom (RFC 6052 §2.2) |
-| `nat64_synthesize_cidrs` | `(ipv4_cidrs list(string), prefix string [, use_hex bool])` | `list(string)` | custom (RFC 6052 §2.2) |
 | `nat64_synthesize_cidr` | `(ipv4_cidr string, prefix string [, use_hex bool])` | `string` | custom (RFC 6052 §2.2) |
+| `nat64_synthesize_cidrs` | `(ipv4_cidrs list(string), prefix string [, use_hex bool])` | `list(string)` | custom (RFC 6052 §2.2) |
 | `nptv6_translate` | `(ipv6 string, from_prefix string, to_prefix string)` | `string` | custom (RFC 6296 checksum-neutral) |
-| `ip_to_mixed_notation` | `(ip string)` | `string` | custom (RFC 5952 mixed format) |
-| `ipv4_to_ipv4_mapped` | `(ipv4 string)` | `string` | custom (RFC 4291 §2.5.5.2) |
+| `range_to_cidrs` | `(first_ip string, last_ip string)` | `list(string)` | netipx `IPRange.Prefixes()` |
+
+Per-function documentation lives under [`docs/functions/`](docs/functions/) and on [registry.terraform.io](https://registry.terraform.io/providers/keeleysam/burnham/latest/docs).
+
+## Query and Patch Functions
+
+Pure functions for querying and patching decoded structures, so that manifest overlays and field extractions can live in plain HCL instead of regex hacks or `templatefile()`-driven preprocessors. Every function is deterministic and evaluates at plan time.
+
+| Function | Signature | Returns | Backed by |
+|---|---|---|---|
+| `jmespath_query` | `(value dynamic, expression string)` | `dynamic` | [jmespath-community/go-jmespath](https://github.com/jmespath-community/go-jmespath) |
+| `json_merge_patch` | `(value dynamic, patch dynamic)` | `dynamic` | [evanphx/json-patch](https://github.com/evanphx/json-patch), [RFC 7396](https://www.rfc-editor.org/rfc/rfc7396) |
+| `json_patch` | `(value dynamic, patch list(object))` | `dynamic` | [evanphx/json-patch](https://github.com/evanphx/json-patch), [RFC 6902](https://www.rfc-editor.org/rfc/rfc6902) |
+| `jsonpath_query` | `(value dynamic, expression string)` | `dynamic` (list) | [theory/jsonpath](https://github.com/theory/jsonpath), conformant with [RFC 9535](https://www.rfc-editor.org/rfc/rfc9535.html) |
 
 Per-function documentation lives under [`docs/functions/`](docs/functions/) and on [registry.terraform.io](https://registry.terraform.io/providers/keeleysam/burnham/latest/docs).
 

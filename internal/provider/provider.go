@@ -12,6 +12,7 @@ import (
 
 	"github.com/keeleysam/terraform-burnham/internal/provider/dataformat"
 	"github.com/keeleysam/terraform-burnham/internal/provider/network"
+	"github.com/keeleysam/terraform-burnham/internal/provider/transform"
 )
 
 var (
@@ -31,7 +32,7 @@ func (p *BurnhamProvider) Metadata(_ context.Context, _ provider.MetadataRequest
 
 func (p *BurnhamProvider) Schema(_ context.Context, _ provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "A pure provider-defined function provider for structured data formats and IP/CIDR operations. No resources, no data sources, no remote API calls — every function evaluates at plan time.",
+		Description: "A pure provider-defined function provider for structured data formats, IP/CIDR operations, and query/patch transformations over decoded values. No resources, no data sources, no remote API calls — every function evaluates at plan time.",
 	}
 }
 
@@ -50,5 +51,6 @@ func (p *BurnhamProvider) Functions(_ context.Context) []func() function.Functio
 	return slices.Concat(
 		dataformat.Functions(),
 		network.Functions(),
+		transform.Functions(),
 	)
 }

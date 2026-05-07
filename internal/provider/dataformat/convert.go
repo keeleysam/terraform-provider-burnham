@@ -24,10 +24,17 @@ const (
 	plistTypeReal = "real"
 )
 
-// goToTerraformValue converts a Go interface{} (as returned by json.Unmarshal
-// or plist.Unmarshal) to a Terraform attr.Value suitable for use in a
-// DynamicReturn.
+// goToTerraformValue converts a Go interface{} (as returned by json.Unmarshal or a binary-format decoder) to a Terraform attr.Value, using the JSON value space: null, bool, string, number, list, object. []byte is rendered as a base64 string, time.Time as an RFC 3339 string, big.Int / *big.Int as an arbitrary-precision number. Use goToTerraformValuePlist when round-tripping plist-tagged types.
 func goToTerraformValue(v interface{}) (attr.Value, error) {
+	return goToTerraformValueImpl(v, false)
+}
+
+// goToTerraformValuePlist is the plist-aware variant: time.Time, []byte, and whole-number float64 emit __plist_type-tagged objects so plistencode can later round-trip them back to <date>, <data>, and <real> elements respectively. Use goToTerraformValue everywhere else — for non-plist callers, the tagged objects would look like garbage map members in their HCL output.
+func goToTerraformValuePlist(v interface{}) (attr.Value, error) {
+	return goToTerraformValueImpl(v, true)
+}
+
+func goToTerraformValueImpl(v interface{}, plist bool) (attr.Value, error) {
 	switch val := v.(type) {
 	case nil:
 		return types.DynamicNull(), nil
@@ -49,9 +56,8 @@ func goToTerraformValue(v interface{}) (attr.Value, error) {
 		return types.NumberValue(big.NewFloat(float64(val))), nil
 
 	case float64:
-		// Whole-number floats from plist <real> need a tagged object to
-		// distinguish them from <integer> during round-trips.
-		if val == math.Trunc(val) && !math.IsInf(val, 0) && !math.IsNaN(val) {
+		// In plist mode, whole-number floats need a tagged object to distinguish them from <integer> during round-trips. In default mode, they're just numbers.
+		if plist && val == math.Trunc(val) && !math.IsInf(val, 0) && !math.IsNaN(val) {
 			return makePlistTaggedObject(plistTypeReal, strconv.FormatFloat(val, 'f', -1, 64))
 		}
 		return types.NumberValue(big.NewFloat(val)), nil
@@ -86,17 +92,29 @@ func goToTerraformValue(v interface{}) (attr.Value, error) {
 	case uint64:
 		return types.NumberValue(new(big.Float).SetUint64(val)), nil
 
+	case big.Int:
+		return types.NumberValue(new(big.Float).SetInt(&val)), nil
+
+	case *big.Int:
+		return types.NumberValue(new(big.Float).SetInt(val)), nil
+
 	case time.Time:
-		return makePlistTaggedObject(plistTypeDate, val.UTC().Format(time.RFC3339))
+		if plist {
+			return makePlistTaggedObject(plistTypeDate, val.UTC().Format(time.RFC3339))
+		}
+		return types.StringValue(val.UTC().Format(time.RFC3339)), nil
 
 	case []byte:
-		return makePlistTaggedObject(plistTypeData, base64.StdEncoding.EncodeToString(val))
+		if plist {
+			return makePlistTaggedObject(plistTypeData, base64.StdEncoding.EncodeToString(val))
+		}
+		return types.StringValue(base64.StdEncoding.EncodeToString(val)), nil
 
 	case []interface{}:
-		return goSliceToTuple(val)
+		return goSliceToTupleImpl(val, plist)
 
 	case map[string]interface{}:
-		return goMapToObject(val)
+		return goMapToObjectImpl(val, plist)
 
 	default:
 		return nil, fmt.Errorf("unsupported Go type %T", v)
@@ -121,6 +139,10 @@ func makePlistTaggedObject(plistType, value string) (attr.Value, error) {
 }
 
 func goSliceToTuple(slice []interface{}) (attr.Value, error) {
+	return goSliceToTupleImpl(slice, false)
+}
+
+func goSliceToTupleImpl(slice []interface{}, plist bool) (attr.Value, error) {
 	if len(slice) == 0 {
 		return types.TupleValueMust([]attr.Type{}, []attr.Value{}), nil
 	}
@@ -129,7 +151,7 @@ func goSliceToTuple(slice []interface{}) (attr.Value, error) {
 	elemValues := make([]attr.Value, len(slice))
 
 	for i, item := range slice {
-		val, err := goToTerraformValue(item)
+		val, err := goToTerraformValueImpl(item, plist)
 		if err != nil {
 			return nil, fmt.Errorf("index %d: %w", i, err)
 		}
@@ -141,6 +163,10 @@ func goSliceToTuple(slice []interface{}) (attr.Value, error) {
 }
 
 func goMapToObject(m map[string]interface{}) (attr.Value, error) {
+	return goMapToObjectImpl(m, false)
+}
+
+func goMapToObjectImpl(m map[string]interface{}, plist bool) (attr.Value, error) {
 	if len(m) == 0 {
 		return types.ObjectValueMust(map[string]attr.Type{}, map[string]attr.Value{}), nil
 	}
@@ -149,7 +175,7 @@ func goMapToObject(m map[string]interface{}) (attr.Value, error) {
 	attrValues := make(map[string]attr.Value, len(m))
 
 	for k, v := range m {
-		val, err := goToTerraformValue(v)
+		val, err := goToTerraformValueImpl(v, plist)
 		if err != nil {
 			return nil, fmt.Errorf("key %q: %w", k, err)
 		}
@@ -343,6 +369,35 @@ func goValueForPlistEncode(v interface{}) interface{} {
 		result := make(map[string]interface{}, len(val))
 		for k, item := range val {
 			result[k] = goValueForPlistEncode(item)
+		}
+		return result
+
+	default:
+		return val
+	}
+}
+
+// goValueForBinaryEncode prepares a Go value for serializers (msgpack, CBOR) that don't honor orderedMap's MarshalJSON shortcut. Whole-number float64s are converted to int64 so encoded payloads use the integer family rather than IEEE-754 floats; map[string]interface{} is preserved (the encoder is responsible for sorting keys when determinism is required).
+func goValueForBinaryEncode(v interface{}) interface{} {
+	switch val := v.(type) {
+	case float64:
+		if val == math.Trunc(val) && !math.IsInf(val, 0) && !math.IsNaN(val) &&
+			val >= math.MinInt64 && val <= math.MaxInt64 {
+			return int64(val)
+		}
+		return val
+
+	case []interface{}:
+		result := make([]interface{}, len(val))
+		for i, item := range val {
+			result[i] = goValueForBinaryEncode(item)
+		}
+		return result
+
+	case map[string]interface{}:
+		result := make(map[string]interface{}, len(val))
+		for k, item := range val {
+			result[k] = goValueForBinaryEncode(item)
 		}
 		return result
 

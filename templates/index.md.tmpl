@@ -10,9 +10,9 @@ description: |-
 > *"Aim high in hope and work, remembering that a noble, logical diagram once recorded will never die."*
 > — Daniel Burnham
 
-A pure provider-defined function provider for structured data formats and IP/CIDR operations. No resources, no data sources, no remote API calls — every function evaluates at plan time.
+A pure provider-defined function provider for structured data formats, IP/CIDR operations, and query/patch transformations over decoded values. No resources, no data sources, no remote API calls — every function evaluates at plan time.
 
-Burnham is organized into two families. Per-function reference for both families lives in the sidebar.
+Burnham is organized into three families. Per-function reference for all families lives in the sidebar.
 
 ## Structured Data Functions
 
@@ -22,6 +22,7 @@ Encode/decode functions for formats Terraform's standard library doesn't cover n
 |--------|--------|--------|-------|
 | JSON (pretty-printed) | `jsonencode` | — | Terraform has `jsondecode` built-in |
 | HuJSON / JWCC | `hujsonencode` | `hujsondecode` | JSON with comments and trailing commas |
+| NDJSON / JSON Lines | `ndjsonencode` | `ndjsondecode` | One JSON value per line, trailing newline |
 | Apple Property List | `plistencode` | `plistdecode` | XML (with comments), binary, and OpenStep formats |
 | INI | `iniencode` | `inidecode` | Standard `[section]` / `key = value` files |
 | CSV | `csvencode` | — | Terraform has `csvdecode` built-in |
@@ -29,6 +30,12 @@ Encode/decode functions for formats Terraform's standard library doesn't cover n
 | Windows .reg | `regencode` | `regdecode` | Registry Editor export with typed values |
 | Valve VDF | `vdfencode` | `vdfdecode` | Steam/Source engine config format |
 | KDL | `kdlencode` | `kdldecode` | Modern document language, v1 and v2 |
+| MessagePack | `msgpackencode` | `msgpackdecode` | Binary; base64-wrapped on the HCL side |
+| CBOR | `cborencode` | `cbordecode` | RFC 8949, Core Deterministic Encoding; base64-wrapped |
+| dotenv (.env) | `dotenvencode` | `dotenvdecode` | godotenv flavor: `KEY=value`, quoting, `${VAR}` interpolation |
+| Java .properties | `javapropertiesencode` | `javapropertiesdecode` | `=`/`:`/whitespace separators, line continuation, `\uXXXX` escapes |
+| Apple .strings | `applestringsencode` | `applestringsdecode` | Localization files. UTF-8 / UTF-16 BOM auto-detect on decode |
+| HCL (general) | `hclencode` | `hcldecode` | Attribute-only HCL documents |
 
 ## Networking Functions
 
@@ -39,6 +46,13 @@ Common entry points:
 - **Query:** `ip_in_cidr`, `cidr_contains`, `cidrs_overlap_any`, `cidrs_are_disjoint`
 - **Arithmetic:** `ip_add`, `ip_subtract`, `cidr_first_ip`, `cidr_last_ip`, `cidr_host_count`
 - **NAT64 / NPTv6:** `nat64_synthesize`, `nat64_synthesize_cidrs`, `nat64_extract`, `nptv6_translate`
+
+## Query and Patch Functions
+
+Pure functions for querying and patching decoded structures, so manifest overlays and field extractions stay in plain HCL instead of regex hacks or `templatefile()`-driven preprocessors.
+
+- **Query:** `jmespath_query` (JMESPath), `jsonpath_query` ([RFC 9535](https://www.rfc-editor.org/rfc/rfc9535.html) JSONPath)
+- **Patch:** `json_patch` ([RFC 6902](https://www.rfc-editor.org/rfc/rfc6902)), `json_merge_patch` ([RFC 7396](https://www.rfc-editor.org/rfc/rfc7396))
 
 ## Usage
 

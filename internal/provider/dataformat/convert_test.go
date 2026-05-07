@@ -79,8 +79,8 @@ func TestGoToTerraformValue_UnsupportedType(t *testing.T) {
 }
 
 func TestGoToTerraformValue_WholeFloat64TaggedReal(t *testing.T) {
-	// Whole-number float64 should produce a tagged real object.
-	val, err := goToTerraformValue(float64(2))
+	// Whole-number float64 should produce a tagged real object in plist mode.
+	val, err := goToTerraformValuePlist(float64(2))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -139,7 +139,7 @@ func TestGoToTerraformValue_Numbers(t *testing.T) {
 
 func TestGoToTerraformValue_TimeTaggedObject(t *testing.T) {
 	ts := time.Date(2025, 6, 1, 0, 0, 0, 0, time.UTC)
-	val, err := goToTerraformValue(ts)
+	val, err := goToTerraformValuePlist(ts)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -160,7 +160,7 @@ func TestGoToTerraformValue_TimeTaggedObject(t *testing.T) {
 
 func TestGoToTerraformValue_BytesTaggedObject(t *testing.T) {
 	data := []byte("hello world")
-	val, err := goToTerraformValue(data)
+	val, err := goToTerraformValuePlist(data)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

@@ -74,7 +74,7 @@ func (f *PlistDecodeFunction) Run(ctx context.Context, req function.RunRequest, 
 		return
 	}
 
-	tfVal, err := goToTerraformValue(goVal)
+	tfVal, err := goToTerraformValuePlist(goVal)
 	if err != nil {
 		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Failed to convert plist value: "+err.Error()))
 		return
