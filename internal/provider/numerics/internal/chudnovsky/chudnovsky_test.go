@@ -32,10 +32,7 @@ func TestPiDigits_LengthMatchesRequest(t *testing.T) {
 }
 
 func TestPiDigits_PrefixesAreConsistent(t *testing.T) {
-	// Computing N digits should agree with the first M digits computed at a
-	// larger precision, for M < N. This guards against precision-bleed bugs
-	// where the lower-order digits of a higher-precision call can perturb
-	// the upper-order digits.
+	// Computing N digits should agree with the first M digits computed at a larger precision, for M < N. This guards against precision-bleed bugs where the lower-order digits of a higher-precision call can perturb the upper-order digits.
 	thousand := PiDigits(1000)
 	for _, m := range []int{10, 50, 100, 500} {
 		got := PiDigits(m)
@@ -46,9 +43,7 @@ func TestPiDigits_PrefixesAreConsistent(t *testing.T) {
 }
 
 func TestPiDigits_LeadingThreeIsStripped(t *testing.T) {
-	// The first character of the result must be the first digit *after* the
-	// decimal point — '1' (since π = 3.1415…). If we accidentally include
-	// the integer part, we'd see '3' here.
+	// The first character of the result must be the first digit *after* the decimal point — '1' (since π = 3.1415…). If we accidentally include the integer part, we'd see '3' here.
 	got := PiDigits(1)
 	if got != "1" {
 		t.Fatalf("PiDigits(1) = %q, want \"1\" (per RFC 3091's implied leading 3)", got)

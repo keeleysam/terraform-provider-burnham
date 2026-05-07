@@ -70,9 +70,7 @@ func TestPiDigit_BasicReplies(t *testing.T) {
 }
 
 func TestPiDigit_RFCReplyShape(t *testing.T) {
-	// Per RFC 3091 §2.1.2 ABNF: reply = nth_digit ":" DIGIT.
-	// Verify exactly one ':', the requested n is echoed exactly, and the
-	// trailing single character is a digit. No whitespace anywhere.
+	// Per RFC 3091 §2.1.2 ABNF: reply = nth_digit ":" DIGIT. Verify exactly one ':', the requested n is echoed exactly, and the trailing single character is a digit. No whitespace anywhere.
 	for _, n := range []int64{1, 7, 42, 999, 12345, 999_999} {
 		got, err := runPiDigit(t, n)
 		if err != nil {

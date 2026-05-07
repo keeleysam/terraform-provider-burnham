@@ -21,11 +21,7 @@ func TestPiPacked_FileSize(t *testing.T) {
 }
 
 func TestPiPacked_AllTriplesDecodeToValidDigits(t *testing.T) {
-	// Iterate every full triple in the packed table and assert each decodes
-	// to digits in [0, 9]. A nibble out of range would mean dpd.Decode has
-	// a bug; in practice this also catches "the file got truncated and we're
-	// reading past valid data into garbage". Partial last triple is skipped
-	// — its trailing positions are encoder-padding zeros, not real digits.
+	// Iterate every full triple in the packed table and assert each decodes to digits in [0, 9]. A nibble out of range would mean dpd.Decode has a bug; in practice this also catches "the file got truncated and we're reading past valid data into garbage". Partial last triple is skipped — its trailing positions are encoder-padding zeros, not real digits.
 	fullTriples := int64(piEmbeddedDigitCount / 3)
 	for t0 := int64(0); t0 < fullTriples; t0++ {
 		d0, d1, d2 := dpd.Decode(readDPDTriple(t0))
@@ -58,9 +54,7 @@ func TestPiDigitChar_KnownPositions(t *testing.T) {
 		{3, '1', "3.14[1]5…"},
 		{10, '5', "first 10 digits are 1415926535"},
 		{100, '9', "first 100 digits end in '79' — digit 100 is '9'"},
-		// The Feynman point: digits 762..767 of π are "999999". This is the
-		// most famous long run of repeating digits and a classic sanity check.
-		// See e.g. https://en.wikipedia.org/wiki/Six_nines_in_pi.
+		// The Feynman point: digits 762..767 of π are "999999". This is the most famous long run of repeating digits and a classic sanity check. See e.g. https://en.wikipedia.org/wiki/Six_nines_in_pi.
 		{762, '9', "Feynman point digit 1"},
 		{763, '9', "Feynman point digit 2"},
 		{764, '9', "Feynman point digit 3"},

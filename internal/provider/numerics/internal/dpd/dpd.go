@@ -133,8 +133,7 @@ func Decode(dpd uint16) (d0, d1, d2 byte) {
 	i := p0 // d2's low bit, always.
 
 	if p3 == 0 {
-		// All small: d0 = 0 a b c, d1 = 0 d e f, d2 = 0 g h i
-		// where a b c = p9 p8 p7, d e f = p6 p5 p4, g h i = p2 p1 p0.
+		// All small: d0 = 0 a b c, d1 = 0 d e f, d2 = 0 g h i — where a b c = p9 p8 p7, d e f = p6 p5 p4, g h i = p2 p1 p0.
 		d0 = (p9 << 2) | (p8 << 1) | c
 		d1 = (p6 << 2) | (p5 << 1) | f
 		d2 = (p2 << 2) | (p1 << 1) | i
