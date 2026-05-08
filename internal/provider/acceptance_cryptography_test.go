@@ -413,3 +413,11 @@ func TestAcc_ASN1Decode_BooleanFalse(t *testing.T) {
 		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("false")),
 	)
 }
+
+func TestAcc_ASN1Decode_BMPStringDecodesUTF16(t *testing.T) {
+	// BMPString "Hi" — DER 1e 04 00 48 00 69 → base64 "HgQASABp". Regression: previously this returned the raw UCS-2BE bytes as a Go string (mojibake); now it decodes to UTF-8 via utf16.Decode so the value is a real string.
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::asn1_decode("HgQASABp").value }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("Hi")),
+	)
+}

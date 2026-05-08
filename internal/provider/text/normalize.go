@@ -11,6 +11,7 @@ package text
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/function"
 	"golang.org/x/text/unicode/norm"
@@ -45,8 +46,9 @@ func (f *UnicodeNormalizeFunction) Run(ctx context.Context, req function.RunRequ
 		return
 	}
 
+	// Match case-insensitively so "nfc" / "Nfc" / "NFC" all work — UAX #15 itself doesn't prescribe casing for the form names, only the algorithms.
 	var form norm.Form
-	switch formName {
+	switch strings.ToUpper(formName) {
 	case "NFC":
 		form = norm.NFC
 	case "NFD":
@@ -56,7 +58,7 @@ func (f *UnicodeNormalizeFunction) Run(ctx context.Context, req function.RunRequ
 	case "NFKD":
 		form = norm.NFKD
 	default:
-		resp.Error = function.NewArgumentFuncError(1, fmt.Sprintf("form must be \"NFC\", \"NFD\", \"NFKC\", or \"NFKD\"; received %q", formName))
+		resp.Error = function.NewArgumentFuncError(1, fmt.Sprintf("form must be \"NFC\", \"NFD\", \"NFKC\", or \"NFKD\" (case-insensitive); received %q", formName))
 		return
 	}
 

@@ -72,13 +72,13 @@ func (f *GeohashEncodeFunction) Run(ctx context.Context, req function.RunRequest
 		resp.Error = function.NewArgumentFuncError(2, fmt.Sprintf("precision must be in [%d, %d]; received %d", geohashMinPrecision, geohashMaxPrecision, precision))
 		return
 	}
-	// The upstream encoder treats latitude as [-90, 90) and longitude as [-180, 180): exactly 90 / 180 wrap to the opposite corner. Reject so callers see the surprise instead of silently encoding the south-polar / antimeridian quadrant. (The decoder shrinks its corner-cell bbox edges below 90 / 180 so re-encoding `geohash_decode("zzz…z").lat_max` round-trips into the same cell rather than tripping this check.)
+	// The upstream encoder treats latitude as [-90, 90) and longitude as [-180, 180): exactly 90 / 180 wrap to the opposite corner. The negative corners (-90 and -180) DO encode and round-trip correctly — they are the geometric origin of cell "0" / "h" / "8" — so this asymmetric rejection is intentional. The decoder shrinks its corner-cell bbox edges below 90 / 180 so re-encoding `geohash_decode("zzz…z").lat_max` round-trips into the same cell rather than tripping this check.
 	if lat == 90 {
-		resp.Error = function.NewArgumentFuncError(0, "latitude == 90 wraps under the standard geohash encoder; pass a value strictly less than 90")
+		resp.Error = function.NewArgumentFuncError(0, "latitude == 90 wraps under the standard geohash encoder; pass a value strictly less than 90 (latitude == -90 is fine — only the upper bound wraps)")
 		return
 	}
 	if lon == 180 {
-		resp.Error = function.NewArgumentFuncError(1, "longitude == 180 wraps under the standard geohash encoder; pass a value strictly less than 180 (or -180, which is the same meridian)")
+		resp.Error = function.NewArgumentFuncError(1, "longitude == 180 wraps under the standard geohash encoder; pass a value strictly less than 180, or -180 (the same meridian) — only the upper bound wraps")
 		return
 	}
 	out := geohash.EncodeWithPrecision(lat, lon, uint(precision))

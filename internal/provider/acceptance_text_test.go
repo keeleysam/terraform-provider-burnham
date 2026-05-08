@@ -41,6 +41,14 @@ func TestAcc_UnicodeNormalize_RejectsBadForm(t *testing.T) {
 	)
 }
 
+func TestAcc_UnicodeNormalize_FormIsCaseInsensitive(t *testing.T) {
+	// Lowercase "nfc" should resolve identically to "NFC".
+	runOutputTest(t,
+		`output "test" { value = length(provider::burnham::unicode_normalize("é", "nfc")) }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.Int64Exact(1)),
+	)
+}
+
 // ─── slugify ────────────────────────────────────────────────────────────
 
 func TestAcc_Slugify_Basic(t *testing.T) {
@@ -116,6 +124,14 @@ func TestAcc_Levenshtein_Symmetric(t *testing.T) {
 		   value = provider::burnham::levenshtein("hello", "world") == provider::burnham::levenshtein("world", "hello")
 		 }`,
 		statecheck.ExpectKnownOutputValue("test", knownvalue.Bool(true)),
+	)
+}
+
+func TestAcc_Levenshtein_RejectsOversizedInput(t *testing.T) {
+	// 256 KiB + 1 byte exceeds the cap; the function rejects before running the O(n·m) DP.
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::levenshtein(format("%-262145s", "x"), "y") }`,
+		regexp.MustCompile(`(?is)a\s+exceeds\s+maximum\s+supported\s+length`),
 	)
 }
 

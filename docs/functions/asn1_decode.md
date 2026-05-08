@@ -19,7 +19,9 @@ Decodes ASN.1 DER (or BER) bytes — supplied base64-encoded — into a recursiv
   - INTEGER → decimal string
   - BOOLEAN → `"true"` / `"false"`
   - OBJECT IDENTIFIER → dotted form (`"1.3.6.1.5.5.7.3.1"`)
-  - UTF8String / PrintableString / IA5String / NumericString / VisibleString → the string value
+  - UTF8String / PrintableString / IA5String / NumericString / GeneralString → the string value
+  - BMPString → UTF-8 (decoded from UCS-2 big-endian)
+  - T61String → the string value when all bytes are ASCII; otherwise `"t61_hex:<hex>"` (full ISO 6937 transcoding is intentionally not bundled — pre-encode as UTF8String upstream if you need legible output)
   - BIT STRING / OCTET STRING → hex
   - UTCTime / GeneralizedTime → RFC 3339 timestamp
   - NULL → empty string

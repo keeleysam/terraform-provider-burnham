@@ -13,6 +13,8 @@ Returns the hex-encoded `algorithm` digest of the first `CERTIFICATE` block's DE
 
 `algorithm` is one of `"sha1"`, `"sha256"`, `"sha384"`, `"sha512"`. (`sha224` is not commonly used for fingerprints and is omitted.) `sha256` is the standard choice in 2026; `sha1` is supported only for compatibility with older systems.
 
+**Bundle order matters.** Like `x509_inspect`, this hashes the *first* `CERTIFICATE` block in the input, which is the leaf in a conventionally-ordered fullchain.pem but not in an intermediate-first bundle. Pre-split the bundle if you need to fingerprint a specific certificate.
+
 ## Example Usage
 
 ```terraform

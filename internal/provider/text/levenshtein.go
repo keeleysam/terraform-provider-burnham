@@ -10,9 +10,13 @@ package text
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/function"
 )
+
+// levenshteinMaxBytes caps the per-string input length. The DP runs in O(n·m) time and O(min(n, m)) space, so two megabyte-scale strings spend hours of CPU at plan time. 256 KiB is far above any realistic identifier or name (typical inputs are < 100 chars) but still bounds adversarial worst-case to a few seconds.
+const levenshteinMaxBytes = 256 * 1024
 
 var _ function.Function = (*LevenshteinFunction)(nil)
 
@@ -27,7 +31,7 @@ func (f *LevenshteinFunction) Metadata(_ context.Context, _ function.MetadataReq
 func (f *LevenshteinFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Levenshtein edit distance between two strings",
-		MarkdownDescription: "Returns the [Levenshtein distance](https://en.wikipedia.org/wiki/Levenshtein_distance) between `a` and `b` — the minimum number of single-character insertions, deletions, or substitutions needed to turn one string into the other.\n\nDistance is computed over Unicode codepoints, not bytes — so `levenshtein(\"café\", \"cafe\")` is `1` regardless of byte length. If your inputs may be in different normalization forms (NFC vs NFD), run `unicode_normalize(s, \"NFC\")` first.\n\nClassic uses: \"did-you-mean\" suggestions in dynamic config selection (`closest_match` over a list), spotting typos in resource names, deduplicating near-identical entries.",
+		MarkdownDescription: "Returns the [Levenshtein distance](https://en.wikipedia.org/wiki/Levenshtein_distance) between `a` and `b` — the minimum number of single-character insertions, deletions, or substitutions needed to turn one string into the other.\n\nDistance is computed over Unicode codepoints, not bytes — so `levenshtein(\"café\", \"cafe\")` is `1` regardless of byte length. If your inputs may be in different normalization forms (NFC vs NFD), run `unicode_normalize(s, \"NFC\")` first.\n\nClassic uses: \"did-you-mean\" suggestions in dynamic config selection (`closest_match` over a list), spotting typos in resource names, deduplicating near-identical entries.\n\nEach input is capped at 256 KiB; the underlying DP is O(n·m) so unbounded inputs would block plan-time evaluation for hours. Realistic inputs (identifiers, resource names, even paragraphs of prose) sit comfortably below the cap.",
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "a", Description: "First string."},
 			function.StringParameter{Name: "b", Description: "Second string."},
@@ -40,6 +44,14 @@ func (f *LevenshteinFunction) Run(ctx context.Context, req function.RunRequest, 
 	var a, b string
 	resp.Error = function.ConcatFuncErrors(resp.Error, req.Arguments.Get(ctx, &a, &b))
 	if resp.Error != nil {
+		return
+	}
+	if len(a) > levenshteinMaxBytes {
+		resp.Error = function.NewArgumentFuncError(0, fmt.Sprintf("a exceeds maximum supported length of %d bytes", levenshteinMaxBytes))
+		return
+	}
+	if len(b) > levenshteinMaxBytes {
+		resp.Error = function.NewArgumentFuncError(1, fmt.Sprintf("b exceeds maximum supported length of %d bytes", levenshteinMaxBytes))
 		return
 	}
 	d := int64(levenshteinDistance(a, b))

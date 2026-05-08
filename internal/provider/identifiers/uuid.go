@@ -14,6 +14,7 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -22,9 +23,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-// parseNamespace accepts either one of the four predefined RFC 4122 namespace short names — "dns", "url", "oid", "x500" — or any well-formed UUID string.
+// parseNamespace accepts either one of the four predefined RFC 4122 namespace short names — "dns", "url", "oid", "x500" — or any well-formed UUID string. Short-name matching is case-insensitive so "DNS" and "Dns" both work.
 func parseNamespace(s string) (uuid.UUID, error) {
-	switch s {
+	switch strings.ToLower(s) {
 	case "dns":
 		return uuid.NameSpaceDNS, nil
 	case "url":

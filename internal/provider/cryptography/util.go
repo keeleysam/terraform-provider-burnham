@@ -29,6 +29,8 @@ func diagsToString(d diag.Diagnostics) string {
 }
 
 // firstPEMBlockBytes walks the PEM-armoured input until it finds a block whose Type matches one of the supplied labels, and returns that block's body bytes. Other block types are skipped silently so a mixed bundle (cert + key + CSR + …) works without the caller pre-filtering. Returns an error when no matching block exists.
+//
+// **Order matters.** This returns the *first* matching block in input order, not the leaf, the most-recent, or any semantically-distinguished block. For a typical fullchain.pem (leaf, intermediate(s), root) the leaf wins by convention, but a reordered or intermediate-only bundle would silently bind to a non-leaf certificate without any error signal. Callers that need leaf-vs-chain semantics must split the bundle upstream.
 func firstPEMBlockBytes(input string, accept ...string) ([]byte, error) {
 	rest := []byte(input)
 	for {

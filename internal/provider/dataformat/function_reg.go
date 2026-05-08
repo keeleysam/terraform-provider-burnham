@@ -309,6 +309,12 @@ func (f *RegEncodeFunction) Run(ctx context.Context, req function.RunRequest, re
 			return
 		}
 
+		// Registry paths are written between `[` and `]` followed by a newline. Upstream regis3 does not escape these, so a path containing `]`, `\r`, `\n`, or NUL would terminate or split the bracket-line and produce a corrupt or attacker-controllable .reg file. Reject these characters explicitly.
+		if i := strings.IndexAny(path, "\x00\r\n]"); i >= 0 {
+			resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError(fmt.Sprintf("Key %q contains a forbidden character (%q at position %d); registry paths cannot contain NUL, CR, LF, or `]`.", path, path[i], i)))
+			return
+		}
+
 		key := root.FindOrCreateKey(path)
 
 		for vName, vAttr := range valuesObj.Attributes() {

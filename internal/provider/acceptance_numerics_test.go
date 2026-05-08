@@ -379,13 +379,19 @@ func TestAcc_Mode_Bimodal(t *testing.T) {
 }
 
 func TestAcc_Mode_AllUnique(t *testing.T) {
-	// All values appear once → every value is a mode → ascending list of all of them.
+	// All values appear once → no mode → empty list. (Echoing the input would mislead callers using `mode` to detect repetition.)
 	runOutputTest(t,
 		`output "test" { value = provider::burnham::mode([3, 1, 2]) }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.ListExact([]knownvalue.Check{})),
+	)
+}
+
+func TestAcc_Mode_SingleElement(t *testing.T) {
+	// Degenerate one-element case: the value is trivially "the mode".
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::mode([5]) }`,
 		statecheck.ExpectKnownOutputValue("test", knownvalue.ListExact([]knownvalue.Check{
-			knownvalue.NumberExact(bigF("1")),
-			knownvalue.NumberExact(bigF("2")),
-			knownvalue.NumberExact(bigF("3")),
+			knownvalue.NumberExact(bigF("5")),
 		})),
 	)
 }

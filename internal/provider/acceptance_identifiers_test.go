@@ -21,6 +21,19 @@ func TestAcc_UUIDv5_DNSExample(t *testing.T) {
 	)
 }
 
+func TestAcc_UUIDv5_NamespaceIsCaseInsensitive(t *testing.T) {
+	// "DNS", "Dns", "dns" all resolve to NAMESPACE_DNS.
+	runOutputTest(t,
+		`output "test" {
+		   value = (
+		     provider::burnham::uuid_v5("DNS", "example.com") == provider::burnham::uuid_v5("dns", "example.com") &&
+		     provider::burnham::uuid_v5("Dns", "example.com") == provider::burnham::uuid_v5("dns", "example.com")
+		   )
+		 }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.Bool(true)),
+	)
+}
+
 func TestAcc_UUIDv5_URLNamespace(t *testing.T) {
 	// uuid5(NAMESPACE_URL, "https://example.com").
 	// Python: uuid.uuid5(uuid.NAMESPACE_URL, "https://example.com")

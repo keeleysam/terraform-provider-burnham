@@ -382,7 +382,7 @@ func (f *ModeFunction) Metadata(_ context.Context, _ function.MetadataRequest, r
 func (f *ModeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Most-frequent value(s) in a list of numbers",
-		MarkdownDescription: "Returns the value(s) appearing most frequently in `numbers`, as a sorted ascending list. The result is always a list because the data may be **multimodal** — e.g. `mode([1, 1, 2, 2, 3])` is `[1, 2]`, not just one of them. For unimodal data the list has length 1.\n\nTwo numeric values are considered equal here when they compare equal as `*big.Float` (`Cmp == 0`), so `mode([1, 1.0])` collapses to `[1]`. Errors when `numbers` is empty.",
+		MarkdownDescription: "Returns the value(s) appearing most frequently in `numbers`, as a sorted ascending list. The result is always a list because the data may be **multimodal** — e.g. `mode([1, 1, 2, 2, 3])` is `[1, 2]`, not just one of them. For unimodal data the list has length 1.\n\n**No mode for all-unique data.** When every value occurs exactly once and the list has more than one element (`mode([1, 2, 3])`), the function returns an empty list rather than echoing the input — having a \"mode\" requires at least one value to repeat. Single-element input `mode([5])` returns `[5]` (degenerate but unambiguous).\n\nTwo numeric values are considered equal here when they compare equal as `*big.Float` (`Cmp == 0`), so `mode([1, 1.0])` collapses to `[1]`. Errors when `numbers` is empty.",
 		Parameters: []function.Parameter{
 			function.ListParameter{
 				Name:        "numbers",
@@ -421,9 +421,14 @@ func (f *ModeFunction) Run(ctx context.Context, req function.RunRequest, resp *f
 		}
 	}
 	var modes []*big.Float
-	for _, b := range buckets {
-		if b.count == maxCount {
-			modes = append(modes, b.value)
+	// All-unique data with more than one element has no mode — returning every input would mislead callers using `mode` to detect repetition. Single-element input is the degenerate case where the value is trivially "the mode".
+	if maxCount == 1 && len(buckets) > 1 {
+		modes = []*big.Float{}
+	} else {
+		for _, b := range buckets {
+			if b.count == maxCount {
+				modes = append(modes, b.value)
+			}
 		}
 	}
 	resp.Error = function.ConcatFuncErrors(resp.Error, resp.Result.Set(ctx, modes))

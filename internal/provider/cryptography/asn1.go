@@ -23,11 +23,13 @@ import (
 	"context"
 	"encoding/asn1"
 	"encoding/base64"
+	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"math/big"
 	"strings"
 	"time"
+	"unicode/utf16"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/function"
@@ -47,7 +49,7 @@ func (f *ASN1DecodeFunction) Metadata(_ context.Context, _ function.MetadataRequ
 func (f *ASN1DecodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary: "Walk an ASN.1 DER byte string into a structural tree",
-		MarkdownDescription: "Decodes ASN.1 DER (or BER) bytes — supplied base64-encoded — into a recursive object tree. Each node has the same shape:\n\n- `tag` — the BER tag number (`2` for INTEGER, `6` for OBJECT IDENTIFIER, `16` for SEQUENCE, …).\n- `class` — `\"universal\"`, `\"application\"`, `\"context\"`, or `\"private\"`.\n- `compound` — `true` for constructed values that hold child nodes; `false` for primitive values.\n- `type` — human-readable name for universal-class tags (`\"INTEGER\"`, `\"SEQUENCE\"`, `\"OBJECT IDENTIFIER\"`, …); empty string for non-universal classes.\n- `value` — primitive payload as a string. Tag-specific encoding:\n  - INTEGER → decimal string\n  - BOOLEAN → `\"true\"` / `\"false\"`\n  - OBJECT IDENTIFIER → dotted form (`\"1.3.6.1.5.5.7.3.1\"`)\n  - UTF8String / PrintableString / IA5String / NumericString / VisibleString → the string value\n  - BIT STRING / OCTET STRING → hex\n  - UTCTime / GeneralizedTime → RFC 3339 timestamp\n  - NULL → empty string\n  - other primitives → hex of the raw value bytes\n\n  Always `\"\"` when `compound = true`.\n- `children` — a list of decoded children when `compound = true`; an empty list otherwise (because the framework forbids null lists of objects in a recursive-feeling tree).\n\nInput is base64-encoded DER bytes — the same shape `pem_decode` returns in `base64_body`. This keeps inputs ASCII-safe inside HCL strings.\n\n**`value` is always a string, regardless of tag.** Even INTEGER and BOOLEAN nodes return their value as a textual representation (`\"42\"`, `\"true\"`). Consumers that need a number or bool convert per-tag with `tonumber(node.value)` / `node.value == \"true\"`. The single-typed field keeps the recursive schema buildable in Terraform (the framework can't express a recursive object type with per-node varying value types).\n\nResource limits to bound adversarial input:\n\n- The decoded DER may be at most 8 MiB. Larger inputs are rejected before parsing.\n- Nesting may be at most 64 levels deep. RFC 5280 X.509 nesting fits comfortably under this limit.\n- A single decode may produce at most 100,000 nodes. The largest realistic certs sit around 1,000.\n\nErrors when the bytes are not well-formed BER/DER, when an INTEGER won't fit in `*big.Int`, when a date stamp can't be parsed, or when any of the above limits are exceeded.",
+		MarkdownDescription: "Decodes ASN.1 DER (or BER) bytes — supplied base64-encoded — into a recursive object tree. Each node has the same shape:\n\n- `tag` — the BER tag number (`2` for INTEGER, `6` for OBJECT IDENTIFIER, `16` for SEQUENCE, …).\n- `class` — `\"universal\"`, `\"application\"`, `\"context\"`, or `\"private\"`.\n- `compound` — `true` for constructed values that hold child nodes; `false` for primitive values.\n- `type` — human-readable name for universal-class tags (`\"INTEGER\"`, `\"SEQUENCE\"`, `\"OBJECT IDENTIFIER\"`, …); empty string for non-universal classes.\n- `value` — primitive payload as a string. Tag-specific encoding:\n  - INTEGER → decimal string\n  - BOOLEAN → `\"true\"` / `\"false\"`\n  - OBJECT IDENTIFIER → dotted form (`\"1.3.6.1.5.5.7.3.1\"`)\n  - UTF8String / PrintableString / IA5String / NumericString / GeneralString → the string value\n  - BMPString → UTF-8 (decoded from UCS-2 big-endian)\n  - T61String → the string value when all bytes are ASCII; otherwise `\"t61_hex:<hex>\"` (full ISO 6937 transcoding is intentionally not bundled — pre-encode as UTF8String upstream if you need legible output)\n  - BIT STRING / OCTET STRING → hex\n  - UTCTime / GeneralizedTime → RFC 3339 timestamp\n  - NULL → empty string\n  - other primitives → hex of the raw value bytes\n\n  Always `\"\"` when `compound = true`.\n- `children` — a list of decoded children when `compound = true`; an empty list otherwise (because the framework forbids null lists of objects in a recursive-feeling tree).\n\nInput is base64-encoded DER bytes — the same shape `pem_decode` returns in `base64_body`. This keeps inputs ASCII-safe inside HCL strings.\n\n**`value` is always a string, regardless of tag.** Even INTEGER and BOOLEAN nodes return their value as a textual representation (`\"42\"`, `\"true\"`). Consumers that need a number or bool convert per-tag with `tonumber(node.value)` / `node.value == \"true\"`. The single-typed field keeps the recursive schema buildable in Terraform (the framework can't express a recursive object type with per-node varying value types).\n\nResource limits to bound adversarial input:\n\n- The decoded DER may be at most 8 MiB. Larger inputs are rejected before parsing.\n- Nesting may be at most 64 levels deep. RFC 5280 X.509 nesting fits comfortably under this limit.\n- A single decode may produce at most 100,000 nodes. The largest realistic certs sit around 1,000.\n\nErrors when the bytes are not well-formed BER/DER, when an INTEGER won't fit in `*big.Int`, when a date stamp can't be parsed, or when any of the above limits are exceeded.",
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "der_base64", Description: "Base64-encoded DER bytes."},
 		},
@@ -270,7 +272,26 @@ func decodePrimitive(raw asn1.RawValue) (string, error) {
 		return oid.String(), nil
 	case asn1.TagNull:
 		return "", nil
-	case asn1.TagUTF8String, asn1.TagPrintableString, asn1.TagIA5String, asn1.TagNumericString, asn1.TagGeneralString, asn1.TagT61String, asn1.TagBMPString:
+	case asn1.TagUTF8String, asn1.TagPrintableString, asn1.TagIA5String, asn1.TagNumericString, asn1.TagGeneralString:
+		// These encodings are all ASCII-compatible (PrintableString / IA5String / NumericString are strict ASCII subsets; UTF8String is UTF-8; GeneralString is registered-charset-tagged but in practice ASCII for X.509). Pass the bytes through as a Go string verbatim.
+		return string(raw.Bytes), nil
+	case asn1.TagBMPString:
+		// BMPString is UCS-2 big-endian — two bytes per Unicode codepoint, BMP only. Decode to a UTF-8 Go string so consumers get a real string instead of mojibake.
+		if len(raw.Bytes)%2 != 0 {
+			return "", fmt.Errorf("BMPString length %d is not a multiple of 2", len(raw.Bytes))
+		}
+		runes := make([]uint16, len(raw.Bytes)/2)
+		for i := range runes {
+			runes[i] = binary.BigEndian.Uint16(raw.Bytes[2*i:])
+		}
+		return string(utf16.Decode(runes)), nil
+	case asn1.TagT61String:
+		// T61String (Teletex) is the ISO 6937 character set with shifts; mapping it to UTF-8 requires a full charset table that golang.org/x/text doesn't ship. The ASCII range round-trips cleanly, so try a UTF-8 decode and fall back to hex for anything outside ASCII.
+		for _, b := range raw.Bytes {
+			if b >= 0x80 {
+				return "t61_hex:" + hex.EncodeToString(raw.Bytes), nil
+			}
+		}
 		return string(raw.Bytes), nil
 	case asn1.TagBitString:
 		var bs asn1.BitString

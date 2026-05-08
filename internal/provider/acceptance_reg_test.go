@@ -103,3 +103,42 @@ func TestAcc_RegQword_RejectsAboveMax(t *testing.T) {
 		regexp.MustCompile(`(?is)value\s+must\s+be\s+in\s+\[0,\s*18446744073709551615\]`),
 	)
 }
+
+// ─── regencode injection / regbinary / regmulti edge cases ─────────
+
+func TestAcc_RegEncode_RejectsBracketInPath(t *testing.T) {
+	// A `]` in the registry path would close the bracket-line in the .reg output and let an attacker append arbitrary registry directives. Reject explicitly.
+	runErrorTest(t,
+		`output "test" {
+		   value = provider::burnham::regencode({
+		     "HKEY_LOCAL_MACHINE\\Bad]Path" = { "Name" = "x" }
+		   })
+		 }`,
+		regexp.MustCompile(`(?is)forbidden\s+character`),
+	)
+}
+
+func TestAcc_RegEncode_RejectsNewlineInPath(t *testing.T) {
+	runErrorTest(t,
+		`output "test" {
+		   value = provider::burnham::regencode({
+		     "HKEY_LOCAL_MACHINE\nInjected" = { "Name" = "x" }
+		   })
+		 }`,
+		regexp.MustCompile(`(?is)forbidden\s+character`),
+	)
+}
+
+func TestAcc_RegBinary_RejectsEmptyHex(t *testing.T) {
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::regbinary("") }`,
+		regexp.MustCompile(`(?is)hex\s+must\s+not\s+be\s+empty`),
+	)
+}
+
+func TestAcc_RegMulti_RejectsEmptyList(t *testing.T) {
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::regmulti([]) }`,
+		regexp.MustCompile(`(?is)at\s+least\s+one\s+entry`),
+	)
+}

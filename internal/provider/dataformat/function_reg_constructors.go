@@ -91,8 +91,8 @@ func (f *RegQwordFunction) Metadata(_ context.Context, _ function.MetadataReques
 func (f *RegQwordFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary: "Create a REG_QWORD registry value",
-		MarkdownDescription: "Returns a tagged object representing a `REG_QWORD` (64-bit unsigned integer) registry value, for use inside a `regencode` payload.\n\n**Common uses:** large numeric values in registry-driven config — file size limits, byte offsets, or any integer that exceeds `REG_DWORD`'s 32-bit range.",
-		Parameters: []function.Parameter{function.NumberParameter{Name: "value", Description: "A 64-bit unsigned integer."}},
+		MarkdownDescription: "Returns a tagged object representing a `REG_QWORD` (64-bit unsigned integer) registry value, for use inside a `regencode` payload.\n\nPass the value as a decimal integer between `0` and `18446744073709551615`. HCL's number type (a 512-bit big.Float) carries the full range exactly. HCL doesn't accept `0x...` literals; convert to decimal manually or use `parseint(\"...\", 16)`.\n\n**Common uses:** large numeric values in registry-driven config — file size limits, byte offsets, or any integer that exceeds `REG_DWORD`'s 32-bit range.",
+		Parameters: []function.Parameter{function.NumberParameter{Name: "value", Description: "A 64-bit unsigned integer (0–18446744073709551615)."}},
 		Return:     function.DynamicReturn{},
 	}
 }
@@ -137,6 +137,11 @@ func (f *RegBinaryFunction) Run(ctx context.Context, req function.RunRequest, re
 	var input string
 	resp.Error = function.ConcatFuncErrors(resp.Error, req.Arguments.Get(ctx, &input))
 	if resp.Error != nil {
+		return
+	}
+	if input == "" {
+		// An empty REG_BINARY value is technically valid in Windows but is almost always a bug at the Terraform layer (the user usually intended a missing or unset value, not a zero-byte payload). Reject explicitly so the mistake is loud.
+		resp.Error = function.NewArgumentFuncError(0, "hex must not be empty; use a non-empty hex string or omit the value entirely")
 		return
 	}
 	if _, err := hex.DecodeString(input); err != nil {
@@ -187,6 +192,11 @@ func (f *RegMultiFunction) Run(ctx context.Context, req function.RunRequest, res
 		elements = v.Elements()
 	default:
 		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Argument must be a list of strings."))
+		return
+	}
+	if len(elements) == 0 {
+		// An empty REG_MULTI_SZ is legal in Windows but signals "I want no entries", which the encoder cannot distinguish from "I forgot to populate this list". Reject so the caller is forced to be explicit.
+		resp.Error = function.NewArgumentFuncError(0, "strings must contain at least one entry; use an explicit empty registry value if you really want a zero-entry REG_MULTI_SZ")
 		return
 	}
 

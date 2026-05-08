@@ -18,8 +18,27 @@ The transform package only operates on JSON-shaped values: null, bool, string, n
 The converter here is intentionally separate from internal/provider/dataformat/convert.go rather than shared. dataformat's converter has accumulated plist-aware behavior (it tags []byte and time.Time as `{"__plist_type": ...}` objects so plist round-trips preserve type), which is exactly what we DON'T want for query/patch operations defined against the JSON data model. Sharing would either pull plist semantics into transform or require option-flagging the shared code in two directions; the duplication is small and bounded, and behavior on overlapping inputs (the JSON value space) is verified by parallel unit tests in convert_test.go and dataformat/convert_test.go.
 */
 
+const (
+	// transformMaxDepth caps recursion in terraformToJSON / jsonToTerraform. JMESPath and JSONPath query engines have no internal depth bound; without this an adversarial input nested 10k+ levels would stack-OOM the goroutine. 1024 is generous — real configs rarely exceed 30.
+	transformMaxDepth = 1024
+	// transformMaxNodes caps the total node count traversed by terraformToJSON in a single call. JMESPath/JSONPath wildcards plus a million-element array can spend minutes searching at plan time. 1,000,000 is far above any realistic config; below that, query cost is bounded by the engine's internal complexity.
+	transformMaxNodes = 1_000_000
+)
+
 // terraformToJSON converts a Terraform attr.Value to a Go interface{} drawn from the JSON value space (nil, bool, string, json.Number, []interface{}, map[string]interface{}). Numbers are returned as json.Number to preserve precision.
 func terraformToJSON(v attr.Value) (interface{}, error) {
+	nodes := 0
+	return terraformToJSONImpl(v, 0, &nodes)
+}
+
+func terraformToJSONImpl(v attr.Value, depth int, nodes *int) (interface{}, error) {
+	if depth >= transformMaxDepth {
+		return nil, fmt.Errorf("input exceeds maximum supported nesting depth of %d", transformMaxDepth)
+	}
+	*nodes++
+	if *nodes > transformMaxNodes {
+		return nil, fmt.Errorf("input exceeds maximum supported node count of %d", transformMaxNodes)
+	}
 	if v == nil || v.IsNull() || v.IsUnknown() {
 		return nil, nil
 	}
@@ -39,7 +58,7 @@ func terraformToJSON(v attr.Value) (interface{}, error) {
 		elements := val.Elements()
 		out := make([]interface{}, len(elements))
 		for i, elem := range elements {
-			conv, err := terraformToJSON(elem)
+			conv, err := terraformToJSONImpl(elem, depth+1, nodes)
 			if err != nil {
 				return nil, fmt.Errorf("index %d: %w", i, err)
 			}
@@ -51,7 +70,7 @@ func terraformToJSON(v attr.Value) (interface{}, error) {
 		elements := val.Elements()
 		out := make([]interface{}, len(elements))
 		for i, elem := range elements {
-			conv, err := terraformToJSON(elem)
+			conv, err := terraformToJSONImpl(elem, depth+1, nodes)
 			if err != nil {
 				return nil, fmt.Errorf("index %d: %w", i, err)
 			}
@@ -63,7 +82,7 @@ func terraformToJSON(v attr.Value) (interface{}, error) {
 		elements := val.Elements()
 		out := make([]interface{}, len(elements))
 		for i, elem := range elements {
-			conv, err := terraformToJSON(elem)
+			conv, err := terraformToJSONImpl(elem, depth+1, nodes)
 			if err != nil {
 				return nil, fmt.Errorf("index %d: %w", i, err)
 			}
@@ -75,7 +94,7 @@ func terraformToJSON(v attr.Value) (interface{}, error) {
 		attrs := val.Attributes()
 		out := make(map[string]interface{}, len(attrs))
 		for k, av := range attrs {
-			conv, err := terraformToJSON(av)
+			conv, err := terraformToJSONImpl(av, depth+1, nodes)
 			if err != nil {
 				return nil, fmt.Errorf("key %q: %w", k, err)
 			}
@@ -87,7 +106,7 @@ func terraformToJSON(v attr.Value) (interface{}, error) {
 		elems := val.Elements()
 		out := make(map[string]interface{}, len(elems))
 		for k, av := range elems {
-			conv, err := terraformToJSON(av)
+			conv, err := terraformToJSONImpl(av, depth+1, nodes)
 			if err != nil {
 				return nil, fmt.Errorf("key %q: %w", k, err)
 			}
@@ -96,7 +115,7 @@ func terraformToJSON(v attr.Value) (interface{}, error) {
 		return out, nil
 
 	case basetypes.DynamicValue:
-		return terraformToJSON(val.UnderlyingValue())
+		return terraformToJSONImpl(val.UnderlyingValue(), depth, nodes)
 
 	default:
 		return nil, fmt.Errorf("unsupported Terraform type %T", v)
