@@ -26,6 +26,7 @@ Burnham is organized into five families of functions:
 - **[Identifiers Functions](#identifiers-functions)** — deterministic UUIDs (v5, v7), Nano ID, and petname.
 - **[Text Functions](#text-functions)** — Unicode normalization, transliterating slugify, Levenshtein distance, word-wrap, cowsay, ASCII QR.
 - **[Cryptography Functions](#cryptography-functions)** — HMAC (RFC 2104), HKDF (RFC 5869), PEM block decoding, X.509 / CSR inspection and fingerprinting, generic ASN.1 BER/DER decoding.
+- **[Geographic Functions](#geographic-functions)** — geohash and Open Location Code (Plus codes), encode and decode.
 
 ## Structured Data Functions
 
@@ -188,6 +189,21 @@ Pure functions for keyed hashing, key derivation, and certificate / CSR / ASN.1 
 | `x509_inspect` | `(pem string)` | object | stdlib `crypto/x509` (`ParseCertificate`) |
 
 `hmac` and `hkdf` accept inputs as raw bytes (the framework hands the function a UTF-8 string verbatim). HCL string literals only support `\uNNNN` escape sequences for non-ASCII bytes, and those are emitted as their UTF-8 encoding rather than as raw byte values — so RFC test vectors that exercise high-byte inputs aren't directly representable in HCL. ASCII-only inputs round-trip cleanly; for arbitrary-byte inputs, base64-encode and `base64decode(...)` first.
+
+Per-function documentation lives under [`docs/functions/`](docs/functions/) and on [registry.terraform.io](https://registry.terraform.io/providers/keeleysam/burnham/latest/docs).
+
+## Geographic Functions
+
+Pure functions for geocoding — turning `(latitude, longitude)` pairs into short alphanumeric strings and back. Geohash and Open Location Code (Plus codes) are the two formats actually used in production: the former for spatial indexing in datastores, the latter for human-shareable location strings.
+
+| Function | Signature | Returns | Backed by |
+|---|---|---|---|
+| `geohash_decode` | `(hash string)` | `object` | [`mmcloughlin/geohash`](https://pkg.go.dev/github.com/mmcloughlin/geohash) `Decode`+`BoundingBox` |
+| `geohash_encode` | `(latitude number, longitude number, precision number)` | `string` | [`mmcloughlin/geohash`](https://pkg.go.dev/github.com/mmcloughlin/geohash) `EncodeWithPrecision` |
+| `pluscode_decode` | `(code string)` | `object` | [Google `open-location-code`](https://github.com/google/open-location-code/tree/main/go) `CheckFull`+`Decode` |
+| `pluscode_encode` | `(latitude number, longitude number, length number)` | `string` | Google `open-location-code` `Encode` |
+
+Both decoders return `{latitude, longitude, lat_min, lat_max, lon_min, lon_max, …}` so callers can use either the centre or the cell extents. Plus code decoder additionally returns the code's `length`.
 
 Per-function documentation lives under [`docs/functions/`](docs/functions/) and on [registry.terraform.io](https://registry.terraform.io/providers/keeleysam/burnham/latest/docs).
 

@@ -8,6 +8,7 @@ require (
 	github.com/evanphx/json-patch/v5 v5.9.11
 	github.com/fxamacker/cbor/v2 v2.9.2
 	github.com/gersonkurz/go-regis3 v0.0.0-20260204141052-9cc701fe149b
+	github.com/google/open-location-code/go v0.0.0-20250620134813-83986da0156b
 	github.com/google/uuid v1.6.0
 	github.com/gosimple/slug v1.15.0
 	github.com/hashicorp/hcl/v2 v2.24.0
@@ -19,6 +20,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/magiconair/properties v1.8.10
 	github.com/mitchellh/go-wordwrap v1.0.1
+	github.com/mmcloughlin/geohash v0.10.0
 	github.com/tailscale/hujson v0.0.0-20260302212456-ecc657c15afd
 	github.com/theory/jsonpath v0.12.0
 	github.com/vmihailenco/msgpack/v5 v5.4.1

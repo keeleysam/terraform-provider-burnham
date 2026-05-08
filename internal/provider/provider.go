@@ -12,6 +12,7 @@ import (
 
 	"github.com/keeleysam/terraform-burnham/internal/provider/cryptography"
 	"github.com/keeleysam/terraform-burnham/internal/provider/dataformat"
+	"github.com/keeleysam/terraform-burnham/internal/provider/geographic"
 	"github.com/keeleysam/terraform-burnham/internal/provider/identifiers"
 	"github.com/keeleysam/terraform-burnham/internal/provider/network"
 	"github.com/keeleysam/terraform-burnham/internal/provider/numerics"
@@ -55,6 +56,7 @@ func (p *BurnhamProvider) Functions(_ context.Context) []func() function.Functio
 	return slices.Concat(
 		cryptography.Functions(),
 		dataformat.Functions(),
+		geographic.Functions(),
 		identifiers.Functions(),
 		network.Functions(),
 		numerics.Functions(),
