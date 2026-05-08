@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 
+	"github.com/keeleysam/terraform-burnham/internal/provider/cryptography"
 	"github.com/keeleysam/terraform-burnham/internal/provider/dataformat"
 	"github.com/keeleysam/terraform-burnham/internal/provider/identifiers"
 	"github.com/keeleysam/terraform-burnham/internal/provider/network"
@@ -52,6 +53,7 @@ func (p *BurnhamProvider) Resources(_ context.Context) []func() resource.Resourc
 
 func (p *BurnhamProvider) Functions(_ context.Context) []func() function.Function {
 	return slices.Concat(
+		cryptography.Functions(),
 		dataformat.Functions(),
 		identifiers.Functions(),
 		network.Functions(),

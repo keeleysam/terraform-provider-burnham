@@ -25,6 +25,7 @@ Burnham is organized into five families of functions:
 - **[Numerics Functions](#numerics-functions)** — RFC 3091 (Pi Digit Generation Protocol), statistics, and small math helpers.
 - **[Identifiers Functions](#identifiers-functions)** — deterministic UUIDs (v5, v7), Nano ID, and petname.
 - **[Text Functions](#text-functions)** — Unicode normalization, transliterating slugify, Levenshtein distance, word-wrap, cowsay, ASCII QR.
+- **[Cryptography Functions](#cryptography-functions)** — HMAC (RFC 2104), HKDF (RFC 5869), PEM block decoding, X.509 / CSR inspection and fingerprinting, generic ASN.1 BER/DER decoding.
 
 ## Structured Data Functions
 
@@ -169,6 +170,24 @@ Pure functions for string manipulation and small text-rendering tasks. Carefully
 | `slugify` | `(s string [, options object])` | `string` | [`gosimple/slug`](https://github.com/gosimple/slug) — Unicode → ASCII transliteration |
 | `unicode_normalize` | `(s string, form string)` | `string` | [`golang.org/x/text/unicode/norm`](https://pkg.go.dev/golang.org/x/text/unicode/norm); UAX #15 |
 | `wrap` | `(s string, width number)` | `string` | [`mitchellh/go-wordwrap`](https://github.com/mitchellh/go-wordwrap) |
+
+Per-function documentation lives under [`docs/functions/`](docs/functions/) and on [registry.terraform.io](https://registry.terraform.io/providers/keeleysam/burnham/latest/docs).
+
+## Cryptography Functions
+
+Pure functions for keyed hashing, key derivation, and certificate / CSR / ASN.1 inspection. The headline wins are `x509_inspect` and `csr_inspect`: cert metadata becomes first-class HCL instead of a thing you regex out of a `tls_*.crt`. `hmac` and `hkdf` close another long-standing gap — webhook signing and per-tenant key derivation no longer need an `external` data source.
+
+| Function | Signature | Returns | Backed by |
+|---|---|---|---|
+| `asn1_decode` | `(der_base64 string)` | recursive object | `encoding/asn1.RawValue` walked by hand |
+| `csr_inspect` | `(pem string)` | object | stdlib `crypto/x509` (`ParseCertificateRequest`) |
+| `hkdf` | `(algorithm string, secret string, salt string, info string, length number)` | `string` (hex) | [`golang.org/x/crypto/hkdf`](https://pkg.go.dev/golang.org/x/crypto/hkdf), RFC 5869 |
+| `hmac` | `(algorithm string, key string, message string)` | `string` (hex) | stdlib `crypto/hmac`, RFC 2104 |
+| `pem_decode` | `(pem string)` | `list(object)` | stdlib `encoding/pem`, RFC 7468 |
+| `x509_fingerprint` | `(pem string, algorithm string)` | `string` (hex) | stdlib SHA-1/SHA-2 over the cert's DER bytes |
+| `x509_inspect` | `(pem string)` | object | stdlib `crypto/x509` (`ParseCertificate`) |
+
+`hmac` and `hkdf` accept inputs as raw bytes (the framework hands the function a UTF-8 string verbatim). HCL string literals only support `\uNNNN` escape sequences for non-ASCII bytes, and those are emitted as their UTF-8 encoding rather than as raw byte values — so RFC test vectors that exercise high-byte inputs aren't directly representable in HCL. ASCII-only inputs round-trip cleanly; for arbitrary-byte inputs, base64-encode and `base64decode(...)` first.
 
 Per-function documentation lives under [`docs/functions/`](docs/functions/) and on [registry.terraform.io](https://registry.terraform.io/providers/keeleysam/burnham/latest/docs).
 
