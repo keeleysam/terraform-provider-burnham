@@ -8,14 +8,14 @@ permissions:
   contents: read
 
 # Two parallel jobs:
-#   - test:     build, vet, the full -race -count=1 TF_ACC=1 acceptance suite, coverage.
+#   - test:     build, vet, the full TF_ACC=1 acceptance suite, coverage.
 #   - generate: regenerate docs/ and pi_packed.bin, fail if either drifts.
-# The Chudnovsky regen for pi_packed.bin takes ~80s on Actions runners — splitting it off keeps the generate-drift feedback loop separate from the slower acceptance pass.
-# The test job's 15-minute timeout is a generous ceiling: locally the race-enabled acceptance suite runs in ~110 seconds, but Actions runners are roughly 2–3× slower for race-detector workloads, and the suite walks the framework protocol per-test. Don't tighten without re-measuring on a runner.
+# The Chudnovsky regen for pi_packed.bin takes ~80s on Actions runners — splitting it off keeps the generate-drift feedback loop separate from the acceptance pass.
+# `-race` is intentionally not enabled here. On `ubuntu-latest` (2-core) runners with the per-test Terraform-subprocess overhead, race-detector wall time blew through Go's default 10-minute per-binary `-timeout`. The provider's real concurrency surface is tiny (slugify's mutex around gosimple/slug's package globals is essentially the whole story) and is well-covered by local dev runs. Add a separate periodic race-detector job if regression risk becomes a concern.
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-go@v6
@@ -26,8 +26,8 @@ jobs:
       - run: go build ./...
       - run: go vet ./...
       # `-coverpkg=./internal/...` captures cross-package coverage. The acceptance tests live in package provider but exercise package dataformat and package network through the protocol layer; without -coverpkg, that work doesn't count toward those packages and the per-package numbers look much worse than they actually are. We then write all per-package profiles into one merged file and report a single combined coverage figure, which is the number worth tracking.
-      # `TF_ACC=1` opts in to running the `TestAcc_*` acceptance tests (terraform-plugin-testing skips them by default — without this every TestAcc_* call is a no-op). `-race` catches data-race regressions in the few places we hold shared state across goroutines (slugify's mutex around gosimple/slug's package globals is the load-bearing example); cheap insurance even though most of the code is pure functions.
-      - run: go test ./... -count=1 -race -coverpkg=./internal/... -coverprofile=coverage.out -v
+      # `TF_ACC=1` opts in to running the `TestAcc_*` acceptance tests (terraform-plugin-testing skips them by default — without this every TestAcc_* call is a no-op). `-p 1` runs test *packages* serially — the long pole is `internal/provider` (~100s; everything else is <3s), and serialising avoids the parallel-package contention that surprised us on Actions runners.
+      - run: go test ./... -count=1 -p 1 -coverpkg=./internal/... -coverprofile=coverage.out
         env:
           TF_ACC: "1"
       - name: Combined coverage across all internal packages
