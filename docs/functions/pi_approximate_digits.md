@@ -14,7 +14,7 @@ Returns the first `count` decimal digits of 22/7 *following* the decimal point a
 Example:
 - `pi_approximate_digits(12)` → `"142857142857"` (the 6-digit cycle, twice)
 
-Because 22/7 is a period-6 repeating decimal, output for any count `c` is just `"142857"` repeated and truncated. Count is bounded only by what Go's `int` and your machine's memory can hold.
+Because 22/7 is a period-6 repeating decimal, output for any count `c` is just `"142857"` repeated and truncated. **Implementation cap.** `count` > 3,141,592 (= ⌊π × 10⁶⌋) errors — matching `pi_digits` so neither function can be coaxed into materialising a multi-GB string at plan time.
 
 ## Example Usage
 

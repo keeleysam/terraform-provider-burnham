@@ -191,7 +191,7 @@ func (f *UUIDInspectFunction) Metadata(_ context.Context, _ function.MetadataReq
 
 func (f *UUIDInspectFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
-		Summary: "Decode an RFC 4122 / RFC 9562 UUID into version, variant, and timestamp",
+		Summary:             "Decode an RFC 4122 / RFC 9562 UUID into version, variant, and timestamp",
 		MarkdownDescription: "Parses any UUID and returns a fixed-shape object with these attributes:\n\n- `version` — integer in `[0, 15]`. Typically 1, 3, 4, 5, 6, 7, or 8.\n- `variant` — one of `\"RFC 4122\"` (covers RFC 9562), `\"NCS\"`, `\"Microsoft\"`, `\"Future\"`, `\"Invalid\"`.\n- `timestamp` — RFC 3339 timestamp encoded in the UUID for v1, v6, and v7. `null` for other versions, where no timestamp is encoded.\n- `unix_ts_ms` — the raw 48-bit Unix-millisecond field for v7 UUIDs. `null` for other versions.\n\nErrors when the input is not a valid UUID string.",
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "uuid", Description: "The UUID to inspect, in canonical form (with hyphens) or compact form."},

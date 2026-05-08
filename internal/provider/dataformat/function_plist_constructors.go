@@ -25,7 +25,7 @@ func (f *PlistDateFunction) Metadata(_ context.Context, _ function.MetadataReque
 
 func (f *PlistDateFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
-		Summary: "Create a plist date value from an RFC 3339 timestamp",
+		Summary:             "Create a plist date value from an RFC 3339 timestamp",
 		MarkdownDescription: "Returns a tagged object representing an [`NSDate`](https://developer.apple.com/documentation/foundation/nsdate) plist value. When passed to `plistencode`, this produces a `<date>` XML element with the given timestamp. `plistdecode` returns the same tagged-object shape for `<date>` elements, so encode/decode round-trips preserve the type.\n\nThe input must be an [RFC 3339](https://www.rfc-editor.org/rfc/rfc3339) timestamp string (e.g. `\"2026-06-01T00:00:00Z\"`).\n\n**Common uses:** setting `RemovalDate`, `ExpirationDate`, or other date-typed fields in Apple configuration profiles.",
 		Parameters: []function.Parameter{
 			function.StringParameter{
@@ -76,7 +76,7 @@ func (f *PlistDataFunction) Metadata(_ context.Context, _ function.MetadataReque
 
 func (f *PlistDataFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
-		Summary: "Create a plist data value from a base64-encoded string",
+		Summary:             "Create a plist data value from a base64-encoded string",
 		MarkdownDescription: "Returns a tagged object representing an [`NSData`](https://developer.apple.com/documentation/foundation/nsdata) plist value. When passed to `plistencode`, this produces a `<data>` XML element with the given binary payload. `plistdecode` returns the same tagged-object shape for `<data>` elements, so encode/decode round-trips preserve the type.\n\nThe input must be a base64-encoded string. Pair with `filebase64(\"path/to/file\")` to embed file contents like certificates, profile-signing material, or images.\n\n**Common uses:** embedding signing certificates, custom icons, or other binary blobs into Apple configuration profiles.",
 		Parameters: []function.Parameter{
 			function.StringParameter{
@@ -127,7 +127,7 @@ func (f *PlistRealFunction) Metadata(_ context.Context, _ function.MetadataReque
 
 func (f *PlistRealFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
-		Summary: "Create a plist real (floating-point) value",
+		Summary:             "Create a plist real (floating-point) value",
 		MarkdownDescription: "Returns a tagged object representing a plist `<real>` (floating-point) value. `plistencode` would normally encode whole numbers as `<integer>` and only fractional numbers as `<real>` — this helper forces a whole number into `<real>` form when the consumer expects a floating-point type. `plistdecode` returns the same tagged-object shape for whole-number `<real>` elements, preserving the type across round-trips.\n\nFractional values like `3.14` already encode as `<real>` automatically — this helper is only needed for whole-number reals.\n\n**Common uses:** profile fields that demand a floating-point type even when the value happens to be a whole number (e.g. some `Rating`, `Score`, or version fields in MDM payloads).",
 		Parameters: []function.Parameter{
 			function.NumberParameter{

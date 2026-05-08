@@ -211,9 +211,9 @@ func TestCIDRUsableHostCount(t *testing.T) {
 		{"10.0.0.0/24", 254},
 		{"10.0.0.0/16", 65534},
 		{"10.0.0.0/30", 2},
-		{"10.0.0.0/31", 2},            // RFC 3021 point-to-point
-		{"10.0.0.1/32", 1},            // host route
-		{"10.0.0.0/32", 1},            // host route (network address form)
+		{"10.0.0.0/31", 2},                        // RFC 3021 point-to-point
+		{"10.0.0.1/32", 1},                        // host route
+		{"10.0.0.0/32", 1},                        // host route (network address form)
 		{"2001:db8::/64", int64(^uint64(0) >> 1)}, // IPv6: all addresses usable (2^64, capped)
 	}
 	for _, tc := range tests {
@@ -309,10 +309,10 @@ func TestNAT64PrefixValid(t *testing.T) {
 	}
 
 	invalid := []string{
-		"10.0.0.0/8",              // IPv4
-		"2001:db8::/33",           // wrong length
-		"2001:db8::/128",          // wrong length
-		"2001:db8:0:0:100::/64",   // u-octet non-zero
+		"10.0.0.0/8",            // IPv4
+		"2001:db8::/33",         // wrong length
+		"2001:db8::/128",        // wrong length
+		"2001:db8:0:0:100::/64", // u-octet non-zero
 	}
 	for _, p := range invalid {
 		t.Run("invalid_"+p, func(t *testing.T) {
@@ -496,16 +496,26 @@ func TestIPv4ToIPv4Mapped(t *testing.T) {
 // ---- Parse error handling ---------------------------------------------------
 
 func TestParseErrors(t *testing.T) {
-	_, err := ParsePrefix("not-a-cidr");    wantErr(t, err)
-	_, err = ParseAddr("not-an-ip");        wantErr(t, err)
-	_, err = MergeCIDRs([]string{"bad"});   wantErr(t, err)
-	_, err = SubtractCIDRs([]string{"bad"}, []string{}); wantErr(t, err)
-	_, err = RangeToCIDRs("bad", "10.0.0.1"); wantErr(t, err)
-	_, err = CIDRWildcard("bad");           wantErr(t, err)
-	_, err = IPAdd("bad", 1);               wantErr(t, err)
-	_, err = NAT64Synthesize("bad", "64:ff9b::/96", false); wantErr(t, err)
-	_, err = NAT64Extract("bad", ""); wantErr(t, err)
-	_, err = NPTv6Translate("bad", "fd00::/48", "2001:db8::/48"); wantErr(t, err)
+	_, err := ParsePrefix("not-a-cidr")
+	wantErr(t, err)
+	_, err = ParseAddr("not-an-ip")
+	wantErr(t, err)
+	_, err = MergeCIDRs([]string{"bad"})
+	wantErr(t, err)
+	_, err = SubtractCIDRs([]string{"bad"}, []string{})
+	wantErr(t, err)
+	_, err = RangeToCIDRs("bad", "10.0.0.1")
+	wantErr(t, err)
+	_, err = CIDRWildcard("bad")
+	wantErr(t, err)
+	_, err = IPAdd("bad", 1)
+	wantErr(t, err)
+	_, err = NAT64Synthesize("bad", "64:ff9b::/96", false)
+	wantErr(t, err)
+	_, err = NAT64Extract("bad", "")
+	wantErr(t, err)
+	_, err = NPTv6Translate("bad", "fd00::/48", "2001:db8::/48")
+	wantErr(t, err)
 }
 
 // ---- ExpandCIDR -------------------------------------------------------------
@@ -679,15 +689,15 @@ func TestVersionFunctions(t *testing.T) {
 
 func TestPrivateFunctions(t *testing.T) {
 	privateIPs := []string{
-		"10.0.0.1",       // RFC1918
-		"172.16.0.1",     // RFC1918
-		"192.168.0.1",    // RFC1918
-		"127.0.0.1",      // loopback
-		"169.254.1.1",    // link-local
-		"100.64.0.1",     // RFC6598 CGNAT
-		"::1",            // IPv6 loopback
-		"fc00::1",        // IPv6 ULA
-		"fe80::1",        // IPv6 link-local
+		"10.0.0.1",    // RFC1918
+		"172.16.0.1",  // RFC1918
+		"192.168.0.1", // RFC1918
+		"127.0.0.1",   // loopback
+		"169.254.1.1", // link-local
+		"100.64.0.1",  // RFC6598 CGNAT
+		"::1",         // IPv6 loopback
+		"fc00::1",     // IPv6 ULA
+		"fe80::1",     // IPv6 link-local
 	}
 	for _, ip := range privateIPs {
 		t.Run("private_"+ip, func(t *testing.T) {
@@ -809,7 +819,7 @@ func TestIPSubtract(t *testing.T) {
 		{"10.0.0.10", "10.0.0.1", 9},
 		{"10.0.0.1", "10.0.0.10", -9},
 		{"10.0.0.5", "10.0.0.5", 0},
-		{"10.0.1.0", "10.0.0.255", 1},   // crosses byte boundary
+		{"10.0.1.0", "10.0.0.255", 1}, // crosses byte boundary
 		{"255.255.255.255", "0.0.0.0", 4294967295},
 		{"::10", "::1", 15},
 		{"::1", "::10", -15},

@@ -227,4 +227,3 @@ func renderCow(action, eyes, tongue string) string {
                 ||     ||
 `, connector, connector, eyes, tongue)
 }
-

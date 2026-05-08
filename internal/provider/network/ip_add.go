@@ -17,7 +17,7 @@ func (f *IPAddFunction) Metadata(_ context.Context, _ function.MetadataRequest, 
 
 func (f *IPAddFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
-		Summary: "Offset an IP address by an integer",
+		Summary:             "Offset an IP address by an integer",
 		MarkdownDescription: "Returns the IP address shifted by `n` (positive to advance, negative to go back). Supports both IPv4 and IPv6. Returns an error if the result would overflow the address space.\n\n**Common uses:** computing gateway addresses (`ip_add(cidr_first_ip(var.subnet), 1)`), deriving DNS server IPs, enumerating specific host addresses without needing a full CIDR context.",
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "ip", Description: "The base IP address."},

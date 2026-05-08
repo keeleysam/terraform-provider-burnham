@@ -46,8 +46,8 @@ func (f *QRAsciiFunction) Definition(_ context.Context, _ function.DefinitionReq
 }
 
 type qrOpts struct {
-	level      qr.Level
-	quietZone  int
+	level       qr.Level
+	quietZone   int
 	lightOnDark bool
 }
 

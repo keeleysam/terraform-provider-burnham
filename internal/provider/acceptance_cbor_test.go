@@ -55,3 +55,19 @@ func TestAcc_CBORDecode_InvalidBase64(t *testing.T) {
 		regexp.MustCompile(`(?i)base64|invalid`),
 	)
 }
+
+func TestAcc_CBORDecode_NaNFloatRejected(t *testing.T) {
+	// CBOR float64 NaN (major type 7, additional info 27, payload 0x7ff8000000000000) → base64 "+3/4AAAAAAAA". Regression: previously this hit `big.NewFloat(NaN)` in `goToTerraformValueImpl` which panics. Now it returns an explicit "non-finite number" error.
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::cbordecode("+3/4AAAAAAAA") }`,
+		regexp.MustCompile(`(?is)non-finite\s+number`),
+	)
+}
+
+func TestAcc_CBORDecode_RejectsOversizedInput(t *testing.T) {
+	// 16 MiB + 1 byte exceeds dataformatMaxInputBytes; the function rejects on length before attempting base64 decode.
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::cbordecode(format("%-16777217s", " ")) }`,
+		regexp.MustCompile(`(?is)input\s+exceeds\s+maximum\s+supported\s+length`),
+	)
+}

@@ -42,7 +42,7 @@ func (f *RegDecodeFunction) Metadata(_ context.Context, _ function.MetadataReque
 
 func (f *RegDecodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
-		Summary: "Parse a Windows .reg file into a Terraform value",
+		Summary:             "Parse a Windows .reg file into a Terraform value",
 		MarkdownDescription: "Parses a [Windows Registry Editor export (`.reg`) file](https://learn.microsoft.com/en-us/windows/win32/sysinfo/regedit) into a Terraform object. Auto-detects Version 4 (`REGEDIT4`, ANSI) and Version 5 (`Windows Registry Editor Version 5.00`, UTF-16-as-text) headers.\n\nThe result is a two-level map: registry key paths at the outer level, value names at the inner level. The default value (`@`) is keyed as `\"@\"`. `REG_SZ` values become plain strings; other types (`REG_DWORD`, `REG_QWORD`, `REG_BINARY`, `REG_MULTI_SZ`, `REG_EXPAND_SZ`) decode as tagged objects with `__reg_type` and `value` keys, round-trippable through `regencode`.\n\n**Common uses:** importing existing `.reg` exports from a reference machine, normalizing them into a typed Terraform value, or staging registry policy snapshots for diff review before redeployment.",
 		Parameters: []function.Parameter{
 			function.StringParameter{
@@ -62,6 +62,10 @@ func (f *RegDecodeFunction) Run(ctx context.Context, req function.RunRequest, re
 		return
 	}
 
+	if len(input) > dataformatMaxInputBytes {
+		resp.Error = function.NewArgumentFuncError(0, fmt.Sprintf("input exceeds maximum supported length of %d bytes", dataformatMaxInputBytes))
+		return
+	}
 	root, err := regis3.Parse(input, &regis3.ParseOptions{
 		AllowHashtagComments:   true,
 		AllowSemicolonComments: true,
@@ -246,7 +250,7 @@ func (f *RegEncodeFunction) Metadata(_ context.Context, _ function.MetadataReque
 
 func (f *RegEncodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
-		Summary: "Encode a value as a Windows .reg file",
+		Summary:             "Encode a value as a Windows .reg file",
 		MarkdownDescription: "Encodes a Terraform object as a [Windows Registry Editor export (`.reg`) file](https://learn.microsoft.com/en-us/windows/win32/sysinfo/regedit) in Version 5 format.\n\nThe input must be a two-level map: registry key paths at the outer level, value names at the inner level. Plain strings become `REG_SZ` values; tagged objects from `regdword()`, `regqword()`, `regbinary()`, `regmulti()`, and `regexpandsz()` are converted to their native registry types. The default value uses the key name `\"@\"`.\n\nPass an optional `comments` key in `options` (mirroring the data structure) to inject `;` comments above specific keys.\n\n**Common uses:** generating `.reg` files for endpoint management — Group Policy alternatives, app preferences, security baselines, or developer-tooling defaults — and committing them to a managed config repo.",
 		Parameters: []function.Parameter{
 			function.DynamicParameter{
@@ -255,7 +259,7 @@ func (f *RegEncodeFunction) Definition(_ context.Context, _ function.DefinitionR
 			},
 		},
 		VariadicParameter: function.DynamicParameter{
-			Name: "options",
+			Name:        "options",
 			Description: "An optional options object. Supported keys: \"comments\" (object) — mirrored structure where string values become ; comments above the matching key or value. Pass at most one.",
 		},
 		Return: function.StringReturn{},

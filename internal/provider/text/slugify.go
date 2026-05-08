@@ -95,6 +95,10 @@ func (f *SlugifyFunction) Run(ctx context.Context, req function.RunRequest, resp
 	if resp.Error != nil {
 		return
 	}
+	if len(s) > textMaxInputBytes {
+		resp.Error = function.NewArgumentFuncError(0, fmt.Sprintf("input exceeds maximum supported length of %d bytes", textMaxInputBytes))
+		return
+	}
 	opts, ferr := parseSlugifyOptions(optsArgs)
 	if ferr != nil {
 		resp.Error = ferr

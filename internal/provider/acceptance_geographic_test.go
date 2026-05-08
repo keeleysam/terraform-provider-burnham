@@ -194,4 +194,3 @@ func TestAcc_PluscodeDecode_RejectsBadCode(t *testing.T) {
 		regexp.MustCompile(`(?is)full\s+Open\s+Location\s+Code`),
 	)
 }
-

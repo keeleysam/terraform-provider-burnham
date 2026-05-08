@@ -138,6 +138,14 @@ func TestAcc_PEMDecode_BlockCount(t *testing.T) {
 	)
 }
 
+func TestAcc_PEMDecode_RejectsOversizedInput(t *testing.T) {
+	// 16 MiB + 1 byte exceeds pemMaxInputBytes; the function rejects before walking pem.Decode.
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::pem_decode(format("%-16777217s", " ")) }`,
+		regexp.MustCompile(`(?is)pem\s+input\s+exceeds\s+maximum\s+supported\s+length`),
+	)
+}
+
 func TestAcc_PEMDecode_NoBlocksReturnsEmptyList(t *testing.T) {
 	runOutputTest(t,
 		`output "test" { value = length(provider::burnham::pem_decode("not a pem block")) }`,

@@ -22,7 +22,7 @@ func (f *JSONEncodeFunction) Metadata(_ context.Context, _ function.MetadataRequ
 
 func (f *JSONEncodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
-		Summary: "Encode a value as pretty-printed JSON",
+		Summary:             "Encode a value as pretty-printed JSON",
 		MarkdownDescription: "Encodes a Terraform value as a pretty-printed JSON string with newlines and indentation. Unlike Terraform's built-in `jsonencode`, which produces a single compact line, this function returns output that's reviewable in pull requests and diff-friendly when written to a file.\n\nPass an optional `options` object with an `indent` key (string) to override the default tab indentation — e.g. `{ indent = \"  \" }` for two-space indent. Object keys are sorted alphabetically; whole numbers render without a decimal point.\n\n**Common uses:** rendering IAM policies, OpenAPI specs, or any structured JSON document that gets reviewed in PRs or written to disk via `local_file`.",
 		Parameters: []function.Parameter{
 			function.DynamicParameter{
@@ -78,4 +78,3 @@ func (f *JSONEncodeFunction) Run(ctx context.Context, req function.RunRequest, r
 
 	resp.Error = function.ConcatFuncErrors(resp.Error, resp.Result.Set(ctx, string(result)))
 }
-

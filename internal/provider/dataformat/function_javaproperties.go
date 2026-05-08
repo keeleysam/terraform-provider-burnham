@@ -26,7 +26,7 @@ func (f *JavaPropertiesDecodeFunction) Metadata(_ context.Context, _ function.Me
 
 func (f *JavaPropertiesDecodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
-		Summary: "Parse a Java .properties file into a string-keyed object",
+		Summary:             "Parse a Java .properties file into a string-keyed object",
 		MarkdownDescription: "Parses a Java [`.properties`](https://en.wikipedia.org/wiki/.properties) file body into an object. Comments (`#` and `!`), `=`/`:`/whitespace separators, line continuation via trailing `\\`, and `\\uXXXX` Unicode escapes are all handled per the standard `java.util.Properties` semantics.\n\nBy default property expansion (`${other.key}` substitution) is disabled — values are returned exactly as written. All values are returned as strings.\n\nBacked by [magiconair/properties](https://github.com/magiconair/properties), an actively-maintained Go implementation.\n\n**Common uses:** ingesting Spring/Quarkus `application.properties`, JBoss/WildFly server config, or any JVM-shop runtime configuration.",
 		Parameters: []function.Parameter{
 			function.StringParameter{
@@ -45,6 +45,10 @@ func (f *JavaPropertiesDecodeFunction) Run(ctx context.Context, req function.Run
 		return
 	}
 
+	if len(input) > dataformatMaxInputBytes {
+		resp.Error = function.NewArgumentFuncError(0, fmt.Sprintf("input exceeds maximum supported length of %d bytes", dataformatMaxInputBytes))
+		return
+	}
 	loader := &properties.Loader{Encoding: properties.UTF8, DisableExpansion: true}
 	props, err := loader.LoadBytes([]byte(input))
 	if err != nil {
@@ -82,7 +86,7 @@ func (f *JavaPropertiesEncodeFunction) Metadata(_ context.Context, _ function.Me
 
 func (f *JavaPropertiesEncodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
-		Summary: "Encode a string-keyed object as a Java .properties file body",
+		Summary:             "Encode a string-keyed object as a Java .properties file body",
 		MarkdownDescription: "Encodes a flat string-keyed object as `key=value` lines in alphabetical key order, ready to write to disk. Numeric and boolean values are stringified. Keys and values are escaped according to `java.util.Properties` rules: leading whitespace, `=`, `:`, `#`, `!`, `\\`, and control characters are backslash-escaped; non-ASCII characters are emitted as `\\uXXXX` escapes for portability across legacy ISO-8859-1 readers.\n\nOutput is hand-formatted rather than written via the magiconair/properties library writer, so that keys are sorted (the library preserves insertion order) and the output has no leading metadata block. Nested objects and lists are not allowed.",
 		Parameters: []function.Parameter{
 			function.DynamicParameter{

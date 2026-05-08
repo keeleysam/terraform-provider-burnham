@@ -28,7 +28,7 @@ func (f *HCLDecodeFunction) Metadata(_ context.Context, _ function.MetadataReque
 
 func (f *HCLDecodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
-		Summary: "Parse an arbitrary HCL document into a value",
+		Summary:             "Parse an arbitrary HCL document into a value",
 		MarkdownDescription: "Parses an arbitrary [HCL2](https://github.com/hashicorp/hcl) document — a sequence of `key = value` attribute statements — and returns it as a Terraform object. Values are evaluated as static literals: numbers, strings, booleans, lists/tuples, and objects/maps work; references to variables, data sources, or function calls do **not** (there is no eval context).\n\nBlock syntax (`block_type \"label\" { ... }`) is **not** supported. Inputs containing top-level blocks are rejected with an error rather than silently dropped — use `hcldecode` only for attribute-only documents. For `.tfvars` files (which are themselves attribute-only HCL), `hcldecode` works fine; the built-in `provider::terraform::decode_tfvars` is an alternative tuned for that specific case.\n\n**Common uses:** parsing simple HCL configs vendored alongside Terraform modules, reading attribute-only config files, or round-tripping HCL fragments emitted by other tooling.",
 		Parameters: []function.Parameter{
 			function.StringParameter{
@@ -47,6 +47,10 @@ func (f *HCLDecodeFunction) Run(ctx context.Context, req function.RunRequest, re
 		return
 	}
 
+	if len(input) > dataformatMaxInputBytes {
+		resp.Error = function.NewArgumentFuncError(0, fmt.Sprintf("input exceeds maximum supported length of %d bytes", dataformatMaxInputBytes))
+		return
+	}
 	parser := hclparse.NewParser()
 	file, diags := parser.ParseHCL([]byte(input), "input.hcl")
 	if diags.HasErrors() {
@@ -113,7 +117,7 @@ func (f *HCLEncodeFunction) Metadata(_ context.Context, _ function.MetadataReque
 
 func (f *HCLEncodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
-		Summary: "Encode an object as an HCL attribute body",
+		Summary:             "Encode an object as an HCL attribute body",
 		MarkdownDescription: "Encodes a Terraform object as a sequence of HCL attribute statements (`key = value` lines), one per object member, in alphabetical key order. Nested objects render as HCL object literals (`{ ... }`); lists render as bracketed sequences; primitives render as their natural HCL representation.\n\nThis is **not** the same as `provider::terraform::encode_tfvars` — that built-in is `.tfvars`-specific. Use `hclencode` for emitting general-purpose HCL config files.\n\nOutput is formatted with `hclwrite.Format`, matching Terraform's canonical formatting.",
 		Parameters: []function.Parameter{
 			function.DynamicParameter{

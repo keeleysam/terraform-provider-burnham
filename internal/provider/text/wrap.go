@@ -49,6 +49,10 @@ func (f *WrapFunction) Run(ctx context.Context, req function.RunRequest, resp *f
 		resp.Error = function.NewArgumentFuncError(1, fmt.Sprintf("width must be >= 1; received %d", width))
 		return
 	}
+	if len(s) > textMaxInputBytes {
+		resp.Error = function.NewArgumentFuncError(0, fmt.Sprintf("s exceeds maximum supported length of %d bytes", textMaxInputBytes))
+		return
+	}
 	out := wordwrap.WrapString(s, uint(width))
 	resp.Error = function.ConcatFuncErrors(resp.Error, resp.Result.Set(ctx, &out))
 }

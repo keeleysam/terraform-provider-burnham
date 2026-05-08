@@ -111,7 +111,7 @@ func (f *GeohashDecodeFunction) Metadata(_ context.Context, _ function.MetadataR
 
 func (f *GeohashDecodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
-		Summary: "Decode a geohash into the centre point and bounding box of its cell",
+		Summary:             "Decode a geohash into the centre point and bounding box of its cell",
 		MarkdownDescription: "Parses `code` and returns:\n\n- `latitude` / `longitude` — the centre of the cell, in degrees.\n- `lat_min` / `lat_max` / `lon_min` / `lon_max` — the cell's bounding box (the points the code *might* have been encoded from).\n\n`code` is case-insensitive but must use the standard geohash alphabet `0-9 b-z` minus `a i l o`. Errors on any other character.\n\nFor the corner cell `zzz…z` the geometric upper edges are exactly `(90, 180)`, but the upstream encoder wraps those values; the decoder shrinks `lat_max` / `lon_max` for that cell to the nearest representable float strictly below the wrap threshold (~one ULP off the geometric edge) so round-tripping `lat_max` / `lon_max` back through `geohash_encode` lands on the same cell.",
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "code", Description: "Geohash string to decode."},

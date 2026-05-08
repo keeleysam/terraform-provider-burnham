@@ -45,6 +45,10 @@ func (f *UnicodeNormalizeFunction) Run(ctx context.Context, req function.RunRequ
 	if resp.Error != nil {
 		return
 	}
+	if len(s) > textMaxInputBytes {
+		resp.Error = function.NewArgumentFuncError(0, fmt.Sprintf("s exceeds maximum supported length of %d bytes", textMaxInputBytes))
+		return
+	}
 
 	// Match case-insensitively so "nfc" / "Nfc" / "NFC" all work — UAX #15 itself doesn't prescribe casing for the form names, only the algorithms.
 	var form norm.Form

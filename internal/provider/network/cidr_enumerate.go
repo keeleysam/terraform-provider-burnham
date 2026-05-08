@@ -18,7 +18,7 @@ func (f *CIDREnumerateFunction) Metadata(_ context.Context, _ function.MetadataR
 
 func (f *CIDREnumerateFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
-		Summary: "Enumerate all sub-CIDRs of a given size within a CIDR",
+		Summary:             "Enumerate all sub-CIDRs of a given size within a CIDR",
 		MarkdownDescription: "Returns every possible subnet of size `(parent prefix length + newbits)` within `cidr`. For example, `cidr_enumerate(\"10.0.0.0/24\", 2)` returns all four /26 subnets within the /24. Returns an error if the result would exceed 65536 subnets.\n\n**Common uses:** pre-computing all AZ-sized subnets within a region block for later `element()` selection; generating candidate subnets to feed into an IP address management workflow.",
 		Parameters: []function.Parameter{
 			function.StringParameter{

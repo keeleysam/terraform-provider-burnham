@@ -62,11 +62,19 @@ func goToTerraformValueImpl(v interface{}, plist bool, depth int) (attr.Value, e
 		return types.NumberValue(f), nil
 
 	case float32:
-		return types.NumberValue(big.NewFloat(float64(val))), nil
+		f := float64(val)
+		if math.IsNaN(f) || math.IsInf(f, 0) {
+			return nil, fmt.Errorf("non-finite number %g cannot be represented", f)
+		}
+		return types.NumberValue(big.NewFloat(f)), nil
 
 	case float64:
+		if math.IsNaN(val) || math.IsInf(val, 0) {
+			// big.NewFloat panics on NaN. Adversarial CBOR / msgpack inputs can carry NaN or ±Inf in their float payloads; reject explicitly so the provider returns an error instead of crashing.
+			return nil, fmt.Errorf("non-finite number %g cannot be represented", val)
+		}
 		// In plist mode, whole-number floats need a tagged object to distinguish them from <integer> during round-trips. In default mode, they're just numbers.
-		if plist && val == math.Trunc(val) && !math.IsInf(val, 0) && !math.IsNaN(val) {
+		if plist && val == math.Trunc(val) {
 			return makePlistTaggedObject(plistTypeReal, strconv.FormatFloat(val, 'f', -1, 64))
 		}
 		return types.NumberValue(big.NewFloat(val)), nil

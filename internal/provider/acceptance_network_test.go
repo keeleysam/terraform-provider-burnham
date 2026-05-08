@@ -484,4 +484,3 @@ func TestAcc_Errors_CIDREnumerateZeroNewbits(t *testing.T) {
 		regexp.MustCompile(`newbits must be`),
 	)
 }
-

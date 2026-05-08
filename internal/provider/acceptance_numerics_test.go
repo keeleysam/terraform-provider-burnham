@@ -179,6 +179,14 @@ func TestAcc_PiApproximateDigits_RejectsNegative(t *testing.T) {
 	)
 }
 
+func TestAcc_PiApproximateDigits_RejectsAboveCap(t *testing.T) {
+	// Regression: previously `pi_approximate_digits(MaxInt64)` would `make([]byte, MaxInt)` and OOM. Now capped at piApproximateMaxDigits (= ⌊π × 10⁶⌋ = 3,141,592) — same as `pi_digits`.
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::pi_approximate_digits(3141593) }`,
+		regexp.MustCompile(`(?is)count\s+must\s+be\s+<=\s+3141592`),
+	)
+}
+
 // itoa is a tiny helper local to this file to avoid importing strconv just to interpolate a small int.
 func itoa(n int) string {
 	if n == 0 {

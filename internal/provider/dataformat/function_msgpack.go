@@ -23,7 +23,7 @@ func (f *MsgpackDecodeFunction) Metadata(_ context.Context, _ function.MetadataR
 
 func (f *MsgpackDecodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
-		Summary: "Decode a base64-encoded MessagePack blob into a value",
+		Summary:             "Decode a base64-encoded MessagePack blob into a value",
 		MarkdownDescription: "Decodes [MessagePack](https://msgpack.org/) bytes — provided as a standard base64 string, since HCL strings are UTF-8 only — into a Terraform value.\n\nMessagePack maps become objects, arrays become tuples, integers and floats become numbers. Binary blobs (msgpack `bin` format) are decoded to base64 strings. Extension types are not supported.\n\n**Common uses:** consuming msgpack-encoded payloads from caches (Redis, etcd), inspecting `kubectl get --raw` output, or round-tripping fixtures.",
 		Parameters: []function.Parameter{
 			function.StringParameter{
@@ -105,7 +105,7 @@ func (f *MsgpackEncodeFunction) Metadata(_ context.Context, _ function.MetadataR
 
 func (f *MsgpackEncodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
-		Summary: "Encode a value as base64 MessagePack",
+		Summary:             "Encode a value as base64 MessagePack",
 		MarkdownDescription: "Encodes a Terraform value as [MessagePack](https://msgpack.org/) and returns the result as a standard base64 string. Object keys are written in sorted order for stable output. Whole-number floats are emitted as integers (matching the conventions of `jsonencode` here).\n\n**Common uses:** generating msgpack payloads to seed Redis fixtures, write to disk via `local_file`, or feed external tooling.",
 		Parameters: []function.Parameter{
 			function.DynamicParameter{

@@ -18,7 +18,7 @@ func (f *CIDRFindFreeFunction) Metadata(_ context.Context, _ function.MetadataRe
 
 func (f *CIDRFindFreeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
-		Summary: "Find the first available subnet of a given prefix length within a pool",
+		Summary:             "Find the first available subnet of a given prefix length within a pool",
 		MarkdownDescription: "Returns the first prefix of length `prefix_len` that is available within `pool` after removing all `used` CIDRs. Returns `null` if no prefix of that size is available.\n\n**Common uses:** IPAM-style subnet allocation — given a VPC CIDR as the pool and a list of already-allocated subnets as used, find the next free subnet to assign to a new workload. Useful in `locals` blocks to compute the next available AZ subnet without hardcoding offsets.",
 		Parameters: []function.Parameter{
 			function.ListParameter{

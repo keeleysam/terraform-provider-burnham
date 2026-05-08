@@ -18,7 +18,7 @@ func (f *NAT64SynthesizeFunction) Metadata(_ context.Context, _ function.Metadat
 
 func (f *NAT64SynthesizeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
-		Summary: "Synthesize a NAT64 IPv6 address from an IPv4 address (RFC 6052)",
+		Summary:             "Synthesize a NAT64 IPv6 address from an IPv4 address (RFC 6052)",
 		MarkdownDescription: "Embeds `ipv4` into the given NAT64 `prefix` following the RFC 6052 byte layout to produce the corresponding IPv6 address. The prefix must be /32, /40, /48, /56, /64, or /96.\n\nBy default returns the address in mixed `x:x:x:x:x:x:d.d.d.d` notation (e.g. `64:ff9b::192.0.2.1`). Pass `true` as the optional third argument to get standard hex notation instead.\n\n**Common uses:** pre-computing NAT64 pool members for DNS64 AAAA records, configuring NAT64 gateway address pools, generating IPv6 addresses for IPv4-only services.",
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "ipv4", Description: "The IPv4 address to embed."},
@@ -60,7 +60,7 @@ func (f *NAT64SynthesizeCIDRFunction) Metadata(_ context.Context, _ function.Met
 
 func (f *NAT64SynthesizeCIDRFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
-		Summary: "Convert a single IPv4 CIDR to its NAT64 IPv6 CIDR equivalent",
+		Summary:             "Convert a single IPv4 CIDR to its NAT64 IPv6 CIDR equivalent",
 		MarkdownDescription: "Returns the IPv6 CIDR that corresponds to `ipv4_cidr` under the given NAT64 `prefix`. Only /64 and /96 NAT64 prefixes are supported (those where IPv4 bits occupy a contiguous range in the IPv6 address).\n\nBy default returns the result in mixed `x:x:x:x:x:x:d.d.d.d/N` notation. Pass `true` as the optional third argument to use standard hex notation.\n\n**Common uses:** pre-computing the IPv6 pool CIDR for a NAT64 gateway configuration; expressing IPv4 address allocations in IPv6 space for dual-stack firewall rules.",
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "ipv4_cidr", Description: "The IPv4 CIDR to convert."},
@@ -102,7 +102,7 @@ func (f *NAT64SynthesizeCIDRsFunction) Metadata(_ context.Context, _ function.Me
 
 func (f *NAT64SynthesizeCIDRsFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
-		Summary: "Convert a list of IPv4 CIDRs to NAT64 IPv6 CIDRs",
+		Summary:             "Convert a list of IPv4 CIDRs to NAT64 IPv6 CIDRs",
 		MarkdownDescription: "Returns each IPv4 CIDR in `ipv4_cidrs` converted to its IPv6 equivalent under `nat64_prefix`. Only /64 and /96 NAT64 prefixes are supported.\n\nBy default returns addresses in mixed `x:x:x:x:x:x:d.d.d.d/N` notation. Pass `true` as the optional third argument to use standard hex notation.\n\n**Common uses:** translating an entire IPv4 address plan into NAT64 IPv6 space in one call; generating the full set of IPv6 pool CIDRs for a NAT64 service; building dual-stack firewall allowlists that include both the IPv4 and NAT64-IPv6 forms of the same ranges.",
 		Parameters: []function.Parameter{
 			function.ListParameter{

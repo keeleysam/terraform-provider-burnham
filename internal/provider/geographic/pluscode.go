@@ -107,7 +107,7 @@ var pluscodeDecodeAttrs = map[string]attr.Type{
 
 func (f *PluscodeDecodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
-		Summary: "Decode a Plus code into centre point, bounding box, and length",
+		Summary:             "Decode a Plus code into centre point, bounding box, and length",
 		MarkdownDescription: "Parses a full Open Location Code and returns its centre, bounding box, and original length. Errors on short codes (those that need a reference location); pre-extend short codes with `olc.RecoverNearest` upstream of Terraform if you need to ingest them.",
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "code", Description: "The Plus code to decode (full code, including the `+`)."},

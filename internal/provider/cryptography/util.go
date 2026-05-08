@@ -125,4 +125,3 @@ func extKeyUsageNames(usages []x509.ExtKeyUsage) []string {
 	}
 	return out
 }
-

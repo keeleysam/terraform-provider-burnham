@@ -5,9 +5,9 @@ import (
 	"context"
 	"encoding/json"
 
+	jsonpatch "github.com/evanphx/json-patch/v5"
 	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	jsonpatch "github.com/evanphx/json-patch/v5"
 )
 
 var _ function.Function = (*JSONPatchFunction)(nil)
@@ -16,15 +16,13 @@ type JSONPatchFunction struct{}
 
 func NewJSONPatchFunction() function.Function { return &JSONPatchFunction{} }
 
-
-
 func (f *JSONPatchFunction) Metadata(_ context.Context, _ function.MetadataRequest, resp *function.MetadataResponse) {
 	resp.Name = "json_patch"
 }
 
 func (f *JSONPatchFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
-		Summary: "Apply an RFC 6902 JSON Patch to a value",
+		Summary:             "Apply an RFC 6902 JSON Patch to a value",
 		MarkdownDescription: "Applies an [RFC 6902](https://www.rfc-editor.org/rfc/rfc6902) JSON Patch document to a Terraform value and returns the patched result. The patch is a tuple of operation objects — each with an `op` (`\"add\"`, `\"remove\"`, `\"replace\"`, `\"move\"`, `\"copy\"`, or `\"test\"`), a `path` (an [RFC 6901](https://www.rfc-editor.org/rfc/rfc6901) JSON Pointer), and operation-specific fields (`value`, `from`).\n\nOperations are applied in order. If any operation fails (including a failed `test`), the function returns an error and no partial state is produced.\n\nBacked by [evanphx/json-patch](https://github.com/evanphx/json-patch).",
 		Parameters: []function.Parameter{
 			function.DynamicParameter{

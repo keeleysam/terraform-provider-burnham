@@ -43,7 +43,7 @@ func (f *PiDigitFunction) Metadata(_ context.Context, _ function.MetadataRequest
 
 func (f *PiDigitFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
-		Summary: "Return the n-th digit of π in the [RFC 3091](https://www.rfc-editor.org/rfc/rfc3091) UDP reply format",
+		Summary:             "Return the n-th digit of π in the [RFC 3091](https://www.rfc-editor.org/rfc/rfc3091) UDP reply format",
 		MarkdownDescription: "Returns the n-th decimal digit of π *following* the decimal point, formatted as the [RFC 3091 §2.1.2](https://www.rfc-editor.org/rfc/rfc3091#section-2.1.2) UDP reply payload `reply = nth_digit \":\" DIGIT`. No whitespace, no newline, leading 3 implied per the RFC's \"Note\" section.\n\nExamples:\n- `pi_digit(1)` → `\"1:1\"` (the first digit of π after the decimal is 1)\n- `pi_digit(100)` → `\"100:9\"`\n\n**Indexing.** `n` is 1-indexed per the RFC; `n < 1` errors.\n\n**Implementation cap.** This function is backed by an embedded table of the first 3,141,592 = ⌊π × 10⁶⌋ digits of π, encoded as IEEE 754-2008 [Densely Packed Decimal](https://en.wikipedia.org/wiki/Densely_packed_decimal) (3 digits per 10 bits, ≈3.33 bits/digit). Constant-time lookup, no plan-time computation. `n` > 3,141,592 errors. RFC 3091 imposes no upper bound, but a Terraform provider that shipped more digits would either bloat the binary or silently compute on every plan; this implementation does neither.\n\n**Floor, not round.** The cap is `floor(π × 10⁶) = 3,141,592` — *not* `round(π × 10⁶) = 3,141,593`. Rounding up would require shipping a digit we haven't actually computed and verified; [RFC 3091 §5](https://www.rfc-editor.org/rfc/rfc3091#section-5) is unequivocal that returning incorrect digits is unacceptable: \"*The imminent collapse of the Internet is assured if this guideline is not strictly followed.*\" So we floor.",
 		Parameters: []function.Parameter{
 			function.Int64Parameter{
@@ -91,7 +91,7 @@ func (f *PiDigitsFunction) Metadata(_ context.Context, _ function.MetadataReques
 
 func (f *PiDigitsFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
-		Summary: "Return the first `count` digits of π, modeled on the [RFC 3091](https://www.rfc-editor.org/rfc/rfc3091) §1 TCP service",
+		Summary:             "Return the first `count` digits of π, modeled on the [RFC 3091](https://www.rfc-editor.org/rfc/rfc3091) §1 TCP service",
 		MarkdownDescription: "Returns the first `count` decimal digits of π *following* the decimal point as a single ASCII string. Models the [RFC 3091 §1](https://www.rfc-editor.org/rfc/rfc3091#section-1) TCP service, which always streams \"starting with the most significant digit following the decimal point\" — there is no seek operation in the protocol, so this function takes only `count`, not a starting position.\n\nExample:\n- `pi_digits(10)` → `\"1415926535\"` (the leading 3 is implied per RFC §Note and never emitted)\n\n**Implementation cap.** `count` > 3,141,592 (= ⌊π × 10⁶⌋) errors. See `pi_digit` for the rationale.",
 		Parameters: []function.Parameter{
 			function.Int64Parameter{

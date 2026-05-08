@@ -9,7 +9,12 @@ output "bimodal" {
   // → [1, 2]
 }
 
-output "all_unique_each_appears_once" {
+output "all_unique_no_mode" {
   value = provider::burnham::mode([3, 1, 2])
-  // → [1, 2, 3]   (every value is a mode; sorted ascending)
+  // → []   (no value repeats; mode is undefined)
+}
+
+output "single_element" {
+  value = provider::burnham::mode([5])
+  // → [5]   (degenerate one-element case: the value is trivially the mode)
 }

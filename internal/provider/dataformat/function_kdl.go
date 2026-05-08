@@ -26,7 +26,7 @@ func (f *KDLDecodeFunction) Metadata(_ context.Context, _ function.MetadataReque
 
 func (f *KDLDecodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
-		Summary: "Parse a KDL document into a Terraform value",
+		Summary:             "Parse a KDL document into a Terraform value",
 		MarkdownDescription: "Parses a [KDL document](https://kdl.dev/) string into a Terraform list of node objects. Each node has these keys: `name` (string), `args` (list of values), `props` (map of values), and `children` (list of child nodes).\n\nBoth KDL v1 and v2 input are accepted; the parser auto-detects the version.\n\n**Common uses:** reading KDL-based configuration files such as the [`kdl-org/kdl`](https://github.com/kdl-org/kdl) specification documents, Cargo-style nested configuration, or any tool that's adopted KDL as its config format.",
 		Parameters: []function.Parameter{
 			function.StringParameter{
@@ -178,7 +178,7 @@ func (f *KDLEncodeFunction) Metadata(_ context.Context, _ function.MetadataReque
 
 func (f *KDLEncodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
-		Summary: "Encode a value as a KDL document",
+		Summary:             "Encode a value as a KDL document",
 		MarkdownDescription: "Encodes a Terraform list of node objects as a [KDL document](https://kdl.dev/) string. Each node object should have these keys: `name` (string), `args` (list), `props` (map), and `children` (list of child nodes).\n\nDefault output is KDL v2. Pass `options = { version = \"v1\" }` for the legacy KDL v1 grammar.\n\n**Common uses:** generating KDL configuration for tools that have adopted the format, or producing structured-document artifacts where KDL's terse syntax is more readable than YAML or JSON.",
 		Parameters: []function.Parameter{
 			function.DynamicParameter{
@@ -187,7 +187,7 @@ func (f *KDLEncodeFunction) Definition(_ context.Context, _ function.DefinitionR
 			},
 		},
 		VariadicParameter: function.DynamicParameter{
-			Name: "options",
+			Name:        "options",
 			Description: "An optional options object. Supported keys: \"version\" (string) — \"v2\" (default) or \"v1\". Pass at most one.",
 		},
 		Return: function.StringReturn{},

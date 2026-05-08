@@ -23,6 +23,9 @@ import (
 // approximateCycle is the 6-digit repeat of 22/7 = 3.142857142857….
 const approximateCycle = "142857"
 
+// piApproximateMaxDigits caps the count for pi_approximate_digits at the same value pi_digits uses (= ⌊π × 10⁶⌋ = 3,141,592). The cycle-repeat would let us go arbitrarily large per-character cost, but materialising the resulting string still allocates one byte per digit, so an unbounded `count` would OOM the provider. The cap is well above any realistic plan-time use.
+const piApproximateMaxDigits = piEmbeddedDigitCount
+
 // approximateDigitChar returns the n-th decimal digit of 22/7 *following* the decimal point. n must be >= 1; out-of-range is the caller's job.
 //
 // Computes (n - 1) mod 6 via big.Int.Mod so n can be arbitrarily large.
@@ -61,7 +64,7 @@ func (f *PiApproximateDigitFunction) Metadata(_ context.Context, _ function.Meta
 
 func (f *PiApproximateDigitFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
-		Summary: "Return the n-th digit of 22/7 in the [RFC 3091](https://www.rfc-editor.org/rfc/rfc3091) UDP reply format",
+		Summary:             "Return the n-th digit of 22/7 in the [RFC 3091](https://www.rfc-editor.org/rfc/rfc3091) UDP reply format",
 		MarkdownDescription: "Returns the n-th decimal digit of 22/7 *following* the decimal point, formatted as the [RFC 3091 §2.1.2](https://www.rfc-editor.org/rfc/rfc3091#section-2.1.2) UDP reply payload `reply = nth_digit \":\" DIGIT`. This is the \"approximate service\" of RFC 3091 §1.1/§2.2 — long division of 22 by 7 gives `3.142857142857…`, a period-6 repeating cycle of `\"142857\"`.\n\nExamples:\n- `pi_approximate_digit(1)` → `\"1:1\"`\n- `pi_approximate_digit(7)` → `\"7:1\"` (cycle wraps to start of `\"142857\"`)\n- `pi_approximate_digit(100)` → `\"100:8\"`\n\n**No upper bound on n.** Because 22/7 cycles with period 6, the n-th digit is just `\"142857\"[(n-1) mod 6]` — a constant-time lookup. n can be arbitrarily large (up to ~10^150 in Terraform's 512-bit number type) and the function returns instantly.",
 		Parameters: []function.Parameter{
 			function.NumberParameter{
@@ -115,8 +118,8 @@ func (f *PiApproximateDigitsFunction) Metadata(_ context.Context, _ function.Met
 
 func (f *PiApproximateDigitsFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
-		Summary: "Return the first `count` digits of 22/7, modeled on the [RFC 3091](https://www.rfc-editor.org/rfc/rfc3091) §1.1 TCP approximate service",
-		MarkdownDescription: "Returns the first `count` decimal digits of 22/7 *following* the decimal point as a single ASCII string. Models the [RFC 3091 §1.1](https://www.rfc-editor.org/rfc/rfc3091#section-1.1) TCP approximate service, which streams `\"starting with the most significant digit following the decimal point\"` — no seek operation, so this function takes only `count`.\n\nExample:\n- `pi_approximate_digits(12)` → `\"142857142857\"` (the 6-digit cycle, twice)\n\nBecause 22/7 is a period-6 repeating decimal, output for any count `c` is just `\"142857\"` repeated and truncated. Count is bounded only by what Go's `int` and your machine's memory can hold.",
+		Summary:             "Return the first `count` digits of 22/7, modeled on the [RFC 3091](https://www.rfc-editor.org/rfc/rfc3091) §1.1 TCP approximate service",
+		MarkdownDescription: "Returns the first `count` decimal digits of 22/7 *following* the decimal point as a single ASCII string. Models the [RFC 3091 §1.1](https://www.rfc-editor.org/rfc/rfc3091#section-1.1) TCP approximate service, which streams `\"starting with the most significant digit following the decimal point\"` — no seek operation, so this function takes only `count`.\n\nExample:\n- `pi_approximate_digits(12)` → `\"142857142857\"` (the 6-digit cycle, twice)\n\nBecause 22/7 is a period-6 repeating decimal, output for any count `c` is just `\"142857\"` repeated and truncated. **Implementation cap.** `count` > 3,141,592 (= ⌊π × 10⁶⌋) errors — matching `pi_digits` so neither function can be coaxed into materialising a multi-GB string at plan time.",
 		Parameters: []function.Parameter{
 			function.Int64Parameter{
 				Name:        "count",
@@ -136,6 +139,11 @@ func (f *PiApproximateDigitsFunction) Run(ctx context.Context, req function.RunR
 
 	if count < 0 {
 		resp.Error = function.NewArgumentFuncError(0, fmt.Sprintf("count must be >= 0; received %d", count))
+		return
+	}
+	// Materialising the digit string allocates `count` bytes in one go. Without a cap, `pi_approximate_digits(math.MaxInt64)` would call `make([]byte, MaxInt)` and OOM the provider. Match `pi_digits`'s `piMaxDigits` cap (= ⌊π × 10⁶⌋ ≈ 3.14 M) — well above any realistic plan-time use, but bounded.
+	if count > piApproximateMaxDigits {
+		resp.Error = function.NewArgumentFuncError(0, fmt.Sprintf("count must be <= %d (≈ ⌊π × 10⁶⌋); received %d. Materialising more would allocate hundreds of MB at plan time, which this implementation will not do.", piApproximateMaxDigits, count))
 		return
 	}
 

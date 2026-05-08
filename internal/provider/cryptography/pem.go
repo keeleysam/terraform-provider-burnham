@@ -10,10 +10,17 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/pem"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+)
+
+// pemMaxInputBytes / pemMaxBlocks bound the resources `pem_decode` will allocate. A multi-MB string of tiny `-----BEGIN X-----\n\n-----END X-----\n` blocks decodes to one Object + Map + handful of Strings per block; without a cap, a few hundred MB of input could allocate millions of attr.Value wrappers and OOM the provider. 16 MiB / 100k blocks is generous compared to anything realistic (a fullchain.pem is ≤ 16 KiB and ≤ 5 blocks).
+const (
+	pemMaxInputBytes = 16 * 1024 * 1024
+	pemMaxBlocks     = 100_000
 )
 
 var _ function.Function = (*PEMDecodeFunction)(nil)
@@ -35,7 +42,7 @@ var pemBlockAttrs = map[string]attr.Type{
 
 func (f *PEMDecodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
-		Summary: "Decode one or more PEM (RFC 7468) blocks into a list of {type, headers, base64_body} objects",
+		Summary:             "Decode one or more PEM (RFC 7468) blocks into a list of {type, headers, base64_body} objects",
 		MarkdownDescription: "Walks `pem` and returns a list, one entry per PEM block, of:\n\n- `type` — the block label between `-----BEGIN ` / `-----END ` (e.g. `\"CERTIFICATE\"`, `\"PRIVATE KEY\"`, `\"CERTIFICATE REQUEST\"`).\n- `headers` — `map(string)` of any RFC 1421 / 7468 header lines (often empty for modern PEM).\n- `base64_body` — the body, kept base64-encoded so the bytes round-trip exactly through `base64decode`. The body is the standard base64 alphabet, no line breaks.\n\nReturns an empty list when the input contains no PEM blocks. Garbage between blocks is silently skipped — same behaviour as `openssl` and most consumers.",
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "pem", Description: "The PEM-armoured input. May contain multiple concatenated blocks."},
@@ -50,6 +57,10 @@ func (f *PEMDecodeFunction) Run(ctx context.Context, req function.RunRequest, re
 	if resp.Error != nil {
 		return
 	}
+	if len(input) > pemMaxInputBytes {
+		resp.Error = function.NewArgumentFuncError(0, fmt.Sprintf("pem input exceeds maximum supported length of %d bytes", pemMaxInputBytes))
+		return
+	}
 
 	var blocks []attr.Value
 	rest := []byte(input)
@@ -57,6 +68,10 @@ func (f *PEMDecodeFunction) Run(ctx context.Context, req function.RunRequest, re
 		block, next := pem.Decode(rest)
 		if block == nil {
 			break
+		}
+		if len(blocks) >= pemMaxBlocks {
+			resp.Error = function.NewArgumentFuncError(0, fmt.Sprintf("pem input contains more than %d blocks", pemMaxBlocks))
+			return
 		}
 		headers := map[string]attr.Value{}
 		for k, v := range block.Headers {

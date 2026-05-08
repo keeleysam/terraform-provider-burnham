@@ -79,6 +79,14 @@ func TestAcc_Slugify_CustomSeparator(t *testing.T) {
 	)
 }
 
+func TestAcc_Slugify_RejectsOversizedInput(t *testing.T) {
+	// 4 MiB + 1 byte exceeds textMaxInputBytes; the function rejects before hitting the gosimple/slug mutex (otherwise multi-MB input would block every other concurrent slugify call at plan time).
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::slugify(format("%-4194305s", "x")) }`,
+		regexp.MustCompile(`(?is)input\s+exceeds\s+maximum\s+supported\s+length`),
+	)
+}
+
 func TestAcc_Slugify_RejectsUnknownOption(t *testing.T) {
 	runErrorTest(t,
 		`output "test" { value = provider::burnham::slugify("x", { color = "blue" }) }`,
