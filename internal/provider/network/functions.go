@@ -50,5 +50,7 @@ func Functions() []func() function.Function {
 		NewIPv4ToIPv4MappedFunction,
 		// IPAM
 		NewCIDRFindFreeFunction,
+		// IP over Avian Carriers (RFC 1149 / RFC 2549)
+		NewPigeonThroughputFunction,
 	}
 }
