@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 
 	"github.com/keeleysam/terraform-burnham/internal/provider/dataformat"
+	"github.com/keeleysam/terraform-burnham/internal/provider/identifiers"
 	"github.com/keeleysam/terraform-burnham/internal/provider/network"
 	"github.com/keeleysam/terraform-burnham/internal/provider/numerics"
 	"github.com/keeleysam/terraform-burnham/internal/provider/transform"
@@ -51,6 +52,7 @@ func (p *BurnhamProvider) Resources(_ context.Context) []func() resource.Resourc
 func (p *BurnhamProvider) Functions(_ context.Context) []func() function.Function {
 	return slices.Concat(
 		dataformat.Functions(),
+		identifiers.Functions(),
 		network.Functions(),
 		numerics.Functions(),
 		transform.Functions(),

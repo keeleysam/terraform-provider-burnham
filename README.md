@@ -17,12 +17,13 @@ Your configuration profiles, ACL policies, and structured documents become first
 
 The result is Terraform code that reads like a blueprint — clear, logical, and built to last.
 
-Burnham is organized into four families of functions:
+Burnham is organized into five families of functions:
 
 - **[Structured Data Functions](#structured-data-functions)** — encode/decode for JSON (pretty), HuJSON, plist, INI, CSV, YAML, .reg, VDF, KDL, NDJSON, MessagePack, CBOR, dotenv, Java .properties, Apple .strings, and general HCL.
 - **[Networking Functions](#networking-functions)** — CIDR set operations, queries, IP arithmetic, NAT64 (RFC 6052), NPTv6 (RFC 6296), and IPAM helpers.
 - **[Query and Patch Functions](#query-and-patch-functions)** — JMESPath, JSONPath (RFC 9535), JSON Patch (RFC 6902), and JSON Merge Patch (RFC 7396) over decoded structures.
-- **[Numerics Functions](#numerics-functions)** — RFC 3091 (Pi Digit Generation Protocol).
+- **[Numerics Functions](#numerics-functions)** — RFC 3091 (Pi Digit Generation Protocol), statistics, and small math helpers.
+- **[Identifiers Functions](#identifiers-functions)** — deterministic UUIDs (v5, v7), Nano ID, and petname.
 
 ## Structured Data Functions
 
@@ -138,6 +139,20 @@ Operate on `list(number)`. Empty input is always an error — a statistic of zer
 |---|---|---|---|
 | `clamp` | `(value number, min_val number, max_val number)` | `number` | comparison; errors when `min_val > max_val` |
 | `mod_floor` | `(a number, b number)` | `number` | floor-modulo: `a − b·⌊a/b⌋`. Sign of divisor, not dividend (unlike Terraform's built-in `%`). |
+
+Per-function documentation lives under [`docs/functions/`](docs/functions/) and on [registry.terraform.io](https://registry.terraform.io/providers/keeleysam/burnham/latest/docs).
+
+## Identifiers Functions
+
+Pure functions that produce stable, plan-time identifiers. **Determinism is the point**: same inputs always produce the same output, so a Terraform plan that references these functions does not churn on re-apply. Useful for naming resources, deriving database keys from logical names, and generating sortable IDs without leaning on a random provider that would force every plan to reseed.
+
+| Function | Signature | Returns | Backed by |
+|---|---|---|---|
+| `nanoid` | `(seed string [, options object])` | `string` | HMAC-SHA-256 in counter mode, deterministic from `seed`. Default 21-char URL-safe alphabet. |
+| `petname` | `(seed string [, options object])` | `string` | HMAC-SHA-256(`seed`) → indices into embedded 64-entry adjective / adverb / noun lists. Heroku-style names. |
+| `uuid_inspect` | `(uuid string)` | `object` | [google/uuid](https://github.com/google/uuid). Returns `{version, variant, timestamp, unix_ts_ms}`. |
+| `uuid_v5` | `(namespace string, name string)` | `string` | [google/uuid](https://github.com/google/uuid) `NewSHA1` per [RFC 9562 §5.5](https://www.rfc-editor.org/rfc/rfc9562#name-uuid-version-5). Namespace accepts `"dns"` / `"url"` / `"oid"` / `"x500"` shorthands or any UUID. |
+| `uuid_v7` | `(timestamp string, entropy string)` | `string` | Custom [RFC 9562 §5.7](https://www.rfc-editor.org/rfc/rfc9562#name-uuid-version-7) implementation. 48-bit Unix-ms timestamp + 74 HMAC-derived bits keyed by `entropy`, so `(timestamp, entropy)` is deterministic. |
 
 Per-function documentation lives under [`docs/functions/`](docs/functions/) and on [registry.terraform.io](https://registry.terraform.io/providers/keeleysam/burnham/latest/docs).
 

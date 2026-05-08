@@ -8,6 +8,7 @@ require (
 	github.com/evanphx/json-patch/v5 v5.9.11
 	github.com/fxamacker/cbor/v2 v2.9.2
 	github.com/gersonkurz/go-regis3 v0.0.0-20260204141052-9cc701fe149b
+	github.com/google/uuid v1.6.0
 	github.com/hashicorp/hcl/v2 v2.24.0
 	github.com/hashicorp/terraform-plugin-docs v0.25.0
 	github.com/hashicorp/terraform-plugin-framework v1.19.0
@@ -42,7 +43,6 @@ require (
 	github.com/fatih/color v1.19.0 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
-	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/cli v1.1.7 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-checkpoint v0.5.0 // indirect
