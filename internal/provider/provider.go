@@ -14,6 +14,7 @@ import (
 	"github.com/keeleysam/terraform-burnham/internal/provider/identifiers"
 	"github.com/keeleysam/terraform-burnham/internal/provider/network"
 	"github.com/keeleysam/terraform-burnham/internal/provider/numerics"
+	"github.com/keeleysam/terraform-burnham/internal/provider/text"
 	"github.com/keeleysam/terraform-burnham/internal/provider/transform"
 )
 
@@ -55,6 +56,7 @@ func (p *BurnhamProvider) Functions(_ context.Context) []func() function.Functio
 		identifiers.Functions(),
 		network.Functions(),
 		numerics.Functions(),
+		text.Functions(),
 		transform.Functions(),
 	)
 }

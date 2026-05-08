@@ -24,6 +24,7 @@ Burnham is organized into five families of functions:
 - **[Query and Patch Functions](#query-and-patch-functions)** — JMESPath, JSONPath (RFC 9535), JSON Patch (RFC 6902), and JSON Merge Patch (RFC 7396) over decoded structures.
 - **[Numerics Functions](#numerics-functions)** — RFC 3091 (Pi Digit Generation Protocol), statistics, and small math helpers.
 - **[Identifiers Functions](#identifiers-functions)** — deterministic UUIDs (v5, v7), Nano ID, and petname.
+- **[Text Functions](#text-functions)** — Unicode normalization, transliterating slugify, Levenshtein distance, word-wrap, cowsay, ASCII QR.
 
 ## Structured Data Functions
 
@@ -153,6 +154,21 @@ Pure functions that produce stable, plan-time identifiers. **Determinism is the 
 | `uuid_inspect` | `(uuid string)` | `object` | [google/uuid](https://github.com/google/uuid). Returns `{version, variant, timestamp, unix_ts_ms}`. |
 | `uuid_v5` | `(namespace string, name string)` | `string` | [google/uuid](https://github.com/google/uuid) `NewSHA1` per [RFC 9562 §5.5](https://www.rfc-editor.org/rfc/rfc9562#name-uuid-version-5). Namespace accepts `"dns"` / `"url"` / `"oid"` / `"x500"` shorthands or any UUID. |
 | `uuid_v7` | `(timestamp string, entropy string)` | `string` | Custom [RFC 9562 §5.7](https://www.rfc-editor.org/rfc/rfc9562#name-uuid-version-7) implementation. 48-bit Unix-ms timestamp + 74 HMAC-derived bits keyed by `entropy`, so `(timestamp, entropy)` is deterministic. |
+
+Per-function documentation lives under [`docs/functions/`](docs/functions/) and on [registry.terraform.io](https://registry.terraform.io/providers/keeleysam/burnham/latest/docs).
+
+## Text Functions
+
+Pure functions for string manipulation and small text-rendering tasks. Carefully scoped to *not* duplicate Terraform core (which has `lower`, `upper`, `replace`, etc.) or [`northwood-labs/corefunc`](https://registry.terraform.io/providers/northwood-labs/corefunc/latest) (which owns case-conversion). Text-rendering is included here too — `cowsay` and `qr_ascii` produce text artefacts and feel at home next to text manipulation.
+
+| Function | Signature | Returns | Backed by |
+|---|---|---|---|
+| `cowsay` | `(message string [, options object])` | `string` | self-contained; no external `cowsay` binary involved |
+| `levenshtein` | `(a string, b string)` | `number` | classic two-row DP, codepoint-aware |
+| `qr_ascii` | `(payload string [, options object])` | `string` | [`rsc.io/qr`](https://pkg.go.dev/rsc.io/qr) + half-block Unicode rendering |
+| `slugify` | `(s string [, options object])` | `string` | [`gosimple/slug`](https://github.com/gosimple/slug) — Unicode → ASCII transliteration |
+| `unicode_normalize` | `(s string, form string)` | `string` | [`golang.org/x/text/unicode/norm`](https://pkg.go.dev/golang.org/x/text/unicode/norm); UAX #15 |
+| `wrap` | `(s string, width number)` | `string` | [`mitchellh/go-wordwrap`](https://github.com/mitchellh/go-wordwrap) |
 
 Per-function documentation lives under [`docs/functions/`](docs/functions/) and on [registry.terraform.io](https://registry.terraform.io/providers/keeleysam/burnham/latest/docs).
 
