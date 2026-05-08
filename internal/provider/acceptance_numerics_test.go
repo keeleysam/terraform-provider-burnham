@@ -303,6 +303,14 @@ func TestAcc_Percentile_OutOfRange(t *testing.T) {
 	)
 }
 
+func TestAcc_Percentile_RejectsNegative(t *testing.T) {
+	// Lock the lower bound — `p < 0` must error symmetrically with `p > 100`.
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::percentile([1, 2, 3], -1) }`,
+		regexp.MustCompile(`(?is)p\s+must\s+be\s+in\s+\[0,\s*100\]`),
+	)
+}
+
 func TestAcc_Percentile_RejectsEmpty(t *testing.T) {
 	runErrorTest(t,
 		`output "test" { value = provider::burnham::percentile([], 50) }`,

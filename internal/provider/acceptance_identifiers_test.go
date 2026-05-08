@@ -126,6 +126,19 @@ func TestAcc_UUIDInspect_V4(t *testing.T) {
 	)
 }
 
+func TestAcc_UUIDInspect_V1_HasTimestamp(t *testing.T) {
+	// Fixed v1 UUID whose embedded 60-bit Gregorian timestamp decodes to 2022-02-22T19:22:22Z (cross-checked against google/uuid `(uuid.UUID).Time()`).
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::uuid_inspect("c232ab00-9414-11ec-b3c8-9f6bdeced846") }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.ObjectExact(map[string]knownvalue.Check{
+			"version":    knownvalue.Int64Exact(1),
+			"variant":    knownvalue.StringExact("RFC 4122"),
+			"timestamp":  knownvalue.StringExact("2022-02-22T19:22:22Z"),
+			"unix_ts_ms": knownvalue.Null(),
+		})),
+	)
+}
+
 func TestAcc_UUIDInspect_V5_NoTimestamp(t *testing.T) {
 	runOutputTest(t,
 		`output "test" { value = provider::burnham::uuid_inspect("cfbff0d1-9375-5685-968a-48ce8b50e3a9") }`,

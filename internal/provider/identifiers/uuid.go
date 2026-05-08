@@ -101,7 +101,7 @@ func (f *UUIDv7Function) Metadata(_ context.Context, _ function.MetadataRequest,
 func (f *UUIDv7Function) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Deterministic time-ordered UUID (version 7, RFC 9562 §5.7)",
-		MarkdownDescription: "Returns a [version 7 UUID](https://www.rfc-editor.org/rfc/rfc9562#name-uuid-version-7) embedding a 48-bit Unix-millisecond timestamp in its leading bytes. v7 UUIDs are **lexicographically sortable** by creation time, which makes them a much better choice than v4 for database keys, log IDs, and ordered storage.\n\nThis function is **deterministic**: the 74 random-ish bits (rand_a, rand_b) are derived from `entropy` via HMAC-SHA-256, so a stable `(timestamp, entropy)` always returns the same UUID. Use this when you want sortable IDs that don't churn the Terraform plan on re-apply. For unique IDs at plan time, give each call a different `entropy` (e.g. resource name).\n\n`timestamp` accepts any RFC 3339 / RFC 3339 Nano timestamp, e.g. `\"2026-05-08T12:00:00Z\"`. Sub-millisecond precision is truncated; the v7 spec only carries milliseconds. `entropy` is required and may be any string, including the empty string — the empty string still yields a valid UUID, though the random bits then come from `HMAC-SHA-256(\"\", timestamp_be_bytes)` and are constant for any given timestamp.",
+		MarkdownDescription: "Returns a [version 7 UUID](https://www.rfc-editor.org/rfc/rfc9562#name-uuid-version-7) embedding a 48-bit Unix-millisecond timestamp in its leading bytes. v7 UUIDs are **lexicographically sortable** by creation time, which makes them a much better choice than v4 for database keys, log IDs, and ordered storage.\n\nThis function is **deterministic**: the 74 random-ish bits (rand_a, rand_b) are derived from `entropy` via HMAC-SHA-256, so a stable `(timestamp, entropy)` always returns the same UUID. Use this when you want sortable IDs that don't churn the Terraform plan on re-apply. For unique IDs at plan time, give each call a different `entropy` (e.g. resource name).\n\n`timestamp` accepts any RFC 3339 / RFC 3339 Nano timestamp, e.g. `\"2026-05-08T12:00:00Z\"`. Sub-millisecond precision is truncated; the v7 spec only carries milliseconds.\n\n**Always pass a meaningful `entropy`.** The empty string is accepted but it makes the random bits a fixed function of the timestamp alone — every call sharing that timestamp returns the same UUID, defeating the point of the random fields. Use the resource name, a logical key, or any other per-call string to keep IDs distinct.",
 		Parameters: []function.Parameter{
 			function.StringParameter{
 				Name:        "timestamp",
@@ -191,12 +191,7 @@ func (f *UUIDInspectFunction) Metadata(_ context.Context, _ function.MetadataReq
 func (f *UUIDInspectFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary: "Decode an RFC 4122 / RFC 9562 UUID into version, variant, and timestamp",
-		MarkdownDescription: "Parses any UUID and returns a fixed-shape object with these attributes:\n\n" +
-			"- `version` — integer in `[0, 15]`. Typically 1, 3, 4, 5, 6, 7, or 8.\n" +
-			"- `variant` — one of `\"RFC 4122\"` (covers RFC 9562), `\"NCS\"`, `\"Microsoft\"`, `\"Future\"`, `\"Invalid\"`.\n" +
-			"- `timestamp` — RFC 3339 timestamp encoded in the UUID for v1, v6, and v7. `null` for other versions, where no timestamp is encoded.\n" +
-			"- `unix_ts_ms` — the raw 48-bit Unix-millisecond field for v7 UUIDs. `null` for other versions.\n\n" +
-			"Errors when the input is not a valid UUID string.",
+		MarkdownDescription: "Parses any UUID and returns a fixed-shape object with these attributes:\n\n- `version` — integer in `[0, 15]`. Typically 1, 3, 4, 5, 6, 7, or 8.\n- `variant` — one of `\"RFC 4122\"` (covers RFC 9562), `\"NCS\"`, `\"Microsoft\"`, `\"Future\"`, `\"Invalid\"`.\n- `timestamp` — RFC 3339 timestamp encoded in the UUID for v1, v6, and v7. `null` for other versions, where no timestamp is encoded.\n- `unix_ts_ms` — the raw 48-bit Unix-millisecond field for v7 UUIDs. `null` for other versions.\n\nErrors when the input is not a valid UUID string.",
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "uuid", Description: "The UUID to inspect, in canonical form (with hyphens) or compact form."},
 		},

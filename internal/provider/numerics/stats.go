@@ -7,7 +7,7 @@ Variance and standard deviation use the **population** formulas — divide the s
 
 Percentile uses the linear-interpolation method (Type 7 in Hyndman & Fan, the default in numpy, R, and Excel's PERCENTILE.INC): index = p/100 × (N - 1), interpolate between the two nearest observations when p does not land on an integer index.
 
-All arithmetic is `*big.Float` at a precision derived from the inputs (see `statsPrec`) so a list of 64-bit doubles or a list of arbitrary-precision integers both yield exact-as-possible answers without arbitrary truncation.
+All arithmetic is `*big.Float` at a precision derived from the inputs (see `numericPrec`) so a list of 64-bit doubles or a list of arbitrary-precision integers both yield exact-as-possible answers without arbitrary truncation.
 */
 
 package numerics
@@ -22,21 +22,25 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-// statsPrec returns the working precision (in bits) for big.Float arithmetic over the given inputs. We pick the maximum of (a) each input's own precision, (b) a 256-bit floor that comfortably exceeds IEEE 754 double, (c) some headroom proportional to N so summing many values does not lose digits, capped at (d) 4096 bits (≈1233 decimal digits) so a 10K-element list does not blow into multi-megabyte arithmetic for what is realistically a 30-digit answer.
-func statsPrec(xs []*big.Float) uint {
+// numericPrec returns the working precision (in bits) for big.Float arithmetic over the given inputs. We pick the maximum of (a) each input's own precision, (b) a 256-bit floor that comfortably exceeds IEEE 754 double, (c) some headroom proportional to N so summing many values does not lose digits, capped at (d) 4096 bits (≈1233 decimal digits) so a 10K-element list does not blow into multi-megabyte arithmetic for what is realistically a 30-digit answer. Shared with math.go's clamp / mod_floor — same precision policy applies wherever the numerics family does mixed-input big.Float arithmetic.
+func numericPrec(xs []*big.Float) uint {
 	const floor = 256
-	const cap = 4096
+	const ceiling = 4096
 	max := uint(floor)
 	for _, x := range xs {
 		if p := x.Prec(); p > max {
 			max = p
 		}
 	}
-	if extra := uint(64 + 8*len(xs)); extra > max {
-		max = extra
+	// Use 64-bit math then narrow so the addition cannot wrap on absurdly long lists; numericPrec is bounded by `ceiling` immediately afterward so the narrowing is safe in practice.
+	if extra := uint64(64) + 8*uint64(len(xs)); extra > uint64(max) {
+		if extra > ceiling {
+			extra = ceiling
+		}
+		max = uint(extra)
 	}
-	if max > cap {
-		max = cap
+	if max > ceiling {
+		max = ceiling
 	}
 	return max
 }
@@ -63,7 +67,7 @@ func readNumberList(ctx context.Context, req function.RunRequest) ([]*big.Float,
 	if ferr := validateNumberList(raw); ferr != nil {
 		return nil, 0, ferr
 	}
-	return raw, statsPrec(raw), nil
+	return raw, numericPrec(raw), nil
 }
 
 // sumWithPrec returns Σ xs at precision prec.
@@ -245,7 +249,7 @@ func (f *PercentileFunction) Run(ctx context.Context, req function.RunRequest, r
 		return
 	}
 
-	prec := statsPrec(xs)
+	prec := numericPrec(xs)
 	if pp := p.Prec(); pp > prec {
 		prec = pp
 	}

@@ -13,6 +13,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
+// hclByteHandlingGotcha is the canonical explanation of how HCL string literals reach byte-oriented crypto primitives. Both `hmac` and `hkdf` (and any future helper that takes raw-byte arguments) embed this verbatim into their MarkdownDescription so the warning stays in lockstep across functions.
+const hclByteHandlingGotcha = "**Byte handling, gotchas:** the inputs reach the function as the literal UTF-8 bytes of whatever string HCL hands it. HCL string literals only support `\\uNNNN` Unicode escapes — there is no `\\xNN` byte-escape syntax. A value spelled `\"\\u00ff\"` arrives as the two UTF-8 bytes `0xc3 0xbf`, *not* the single byte `0xff`. An OpenSSL-style hex value like `\"00ff\"` is similarly interpreted as four ASCII characters, *not* two raw bytes. For arbitrary-byte inputs (RFC test vectors, hex-encoded keys, anything outside ASCII), encode upstream as base64 in your variable and pass `base64decode(var.x)` to this function. Burnham does not currently ship a `hex_decode` helper."
+
 // diagsToString joins all diag.Diagnostics into a single human-readable string. Used so we can surface framework-internal errors via the function.NewFuncError API which only takes a string.
 func diagsToString(d diag.Diagnostics) string {
 	if !d.HasError() {

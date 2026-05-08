@@ -61,7 +61,7 @@ func (f *ModFloorFunction) Run(ctx context.Context, req function.RunRequest, res
 		return
 	}
 
-	prec := statsPrec([]*big.Float{a, b})
+	prec := numericPrec([]*big.Float{a, b})
 
 	// q = a / b, truncated toward zero by Int(). For negative non-integer q we adjust to floor.
 	q := new(big.Float).SetPrec(prec).Quo(a, b)
@@ -114,7 +114,7 @@ func (f *ClampFunction) Run(ctx context.Context, req function.RunRequest, resp *
 		resp.Error = function.NewFuncError(fmt.Sprintf("min_val (%s) must be <= max_val (%s)", lo.Text('g', -1), hi.Text('g', -1)))
 		return
 	}
-	prec := statsPrec([]*big.Float{value, lo, hi})
+	prec := numericPrec([]*big.Float{value, lo, hi})
 	var out *big.Float
 	switch {
 	case value.Cmp(lo) < 0:

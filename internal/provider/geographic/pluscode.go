@@ -44,7 +44,7 @@ func (f *PluscodeEncodeFunction) Metadata(_ context.Context, _ function.Metadata
 func (f *PluscodeEncodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Encode (latitude, longitude) into an Open Location Code (Plus code)",
-		MarkdownDescription: "Returns the [Plus code](https://maps.google.com/pluscodes/) (Open Location Code) for `(latitude, longitude)` at the requested `length`. Code length controls cell size:\n\n| length | cell size |\n| ---: | --- |\n| 2 | 1° × 1° (~110 km) |\n| 4 | 0.05° × 0.05° (~5.5 km) |\n| 6 | ~275 m |\n| 8 | ~14 m |\n| 10 | ~3.5 m (default) |\n| 11 | ~70 cm |\n\n`length` must be even between 2 and 10, or any value 11–15. `latitude` must be in `[-90, 90]`, `longitude` in `[-180, 180]`.\n\n```\npluscode_encode(37.7749, -122.4194, 10)\n→ \"849VQH48+W5\"\n```",
+		MarkdownDescription: "Returns the [Plus code](https://maps.google.com/pluscodes/) (Open Location Code) for `(latitude, longitude)` at the requested `length`. Code length controls cell size:\n\n| length | cell size |\n| ---: | --- |\n| 2 | 1° × 1° (~110 km) |\n| 4 | 0.05° × 0.05° (~5.5 km) |\n| 6 | ~275 m |\n| 8 | ~14 m |\n| 10 | ~3.5 m (default) |\n| 11 | ~70 cm |\n\n`length` must be even between 2 and 10, or any value 11–15. `latitude` must be in `[-90, 90]`, `longitude` in `[-180, 180]`.\n\n```\npluscode_encode(37.7749, -122.4194, 10)\n→ \"849VQHFJ+X6\"\n```",
 		Parameters: []function.Parameter{
 			function.NumberParameter{Name: "latitude", Description: "Latitude in degrees, [-90, 90]."},
 			function.NumberParameter{Name: "longitude", Description: "Longitude in degrees, [-180, 180]."},

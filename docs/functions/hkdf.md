@@ -21,7 +21,7 @@ hkdf("sha256", "input-keying-material", "salt", "per-tenant-foo", 32)
 → 64 hex chars (32 bytes)
 ```
 
-**Byte handling, gotchas:** `secret`, `salt`, and `info` reach the function as the literal UTF-8 bytes of whatever string HCL hands it. HCL string literals only support `\uNNNN` Unicode escapes — there is no `\xNN` byte escape — so a secret spelled `"\u00ff"` arrives as the two UTF-8 bytes `0xc3 0xbf`, *not* the single byte `0xff`. For arbitrary-byte secrets (RFC 5869 test vectors, anything OpenSSL-style hex), encode upstream as base64 in your variable and pass `base64decode(var.secret)` to this function.
+**Byte handling, gotchas:** the inputs reach the function as the literal UTF-8 bytes of whatever string HCL hands it. HCL string literals only support `\uNNNN` Unicode escapes — there is no `\xNN` byte-escape syntax. A value spelled `"\u00ff"` arrives as the two UTF-8 bytes `0xc3 0xbf`, *not* the single byte `0xff`. An OpenSSL-style hex value like `"00ff"` is similarly interpreted as four ASCII characters, *not* two raw bytes. For arbitrary-byte inputs (RFC test vectors, hex-encoded keys, anything outside ASCII), encode upstream as base64 in your variable and pass `base64decode(var.x)` to this function. Burnham does not currently ship a `hex_decode` helper.
 
 Used in TLS 1.3, the Signal protocol, and roughly every modern key-derivation pipeline. Backed by [`golang.org/x/crypto/hkdf`](https://pkg.go.dev/golang.org/x/crypto/hkdf).
 
@@ -29,7 +29,7 @@ Used in TLS 1.3, the Signal protocol, and roughly every modern key-derivation pi
 
 ```terraform
 /*
-HKDF (RFC 5869) — derive multiple subkeys deterministically from a single master secret. Returns hex-encoded bytes; pair with `base64decode(...)` if you need raw bytes downstream.
+HKDF (RFC 5869) — derive multiple subkeys deterministically from a single master secret. Returns hex-encoded bytes; if a downstream consumer needs raw bytes, decode the hex outside Terraform (Burnham does not currently ship a `hex_decode` helper).
 */
 output "tenant_a" {
   value = provider::burnham::hkdf("sha256", "master-secret", "deployment-salt", "tenant=a", 32)

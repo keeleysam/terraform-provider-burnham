@@ -24,7 +24,7 @@ Returns the [Plus code](https://maps.google.com/pluscodes/) (Open Location Code)
 
 ```
 pluscode_encode(37.7749, -122.4194, 10)
-→ "849VQH48+W5"
+→ "849VQHFJ+X6"
 ```
 
 ## Example Usage

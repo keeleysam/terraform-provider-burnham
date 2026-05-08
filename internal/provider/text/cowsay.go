@@ -12,6 +12,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"unicode"
 	"unicode/utf8"
 
 	"github.com/hashicorp/terraform-plugin-framework/function"
@@ -20,6 +21,22 @@ import (
 	"github.com/keeleysam/terraform-burnham/internal/provider/optionsutil"
 	"github.com/mitchellh/go-wordwrap"
 )
+
+// cowsayMaxMessageBytes caps the input message length. Realistic motds and login banners are well under 64 KiB; anything bigger almost certainly indicates an unbounded-input bug in the caller, and rendering it through wordwrap + a per-line scan would balloon plan-time memory.
+const cowsayMaxMessageBytes = 64 * 1024
+
+// printableTwoChar checks that s is exactly two codepoints, both printable. Cowsay's `eyes` and `tongue` slots are positional — control chars or newlines would shift the cow figure or inject escape sequences into the output.
+func printableTwoChar(s string) bool {
+	if utf8.RuneCountInString(s) != 2 {
+		return false
+	}
+	for _, r := range s {
+		if !unicode.IsPrint(r) {
+			return false
+		}
+	}
+	return true
+}
 
 var _ function.Function = (*CowsayFunction)(nil)
 
@@ -77,8 +94,8 @@ func parseCowsayOptions(opts []types.Dynamic) (cowsayOpts, *function.FuncError) 
 				return out, function.NewArgumentFuncError(1, "options.eyes must be a string")
 			}
 			e := s.ValueString()
-			if n := utf8.RuneCountInString(e); n != 2 {
-				return out, function.NewArgumentFuncError(1, fmt.Sprintf("options.eyes must be exactly 2 characters; received %q (%d)", e, n))
+			if !printableTwoChar(e) {
+				return out, function.NewArgumentFuncError(1, fmt.Sprintf("options.eyes must be exactly 2 printable characters; received %q", e))
 			}
 			out.eyes = e
 		case "tongue":
@@ -87,8 +104,8 @@ func parseCowsayOptions(opts []types.Dynamic) (cowsayOpts, *function.FuncError) 
 				return out, function.NewArgumentFuncError(1, "options.tongue must be a string")
 			}
 			tg := s.ValueString()
-			if n := utf8.RuneCountInString(tg); tg != "" && n != 2 {
-				return out, function.NewArgumentFuncError(1, fmt.Sprintf("options.tongue must be exactly 2 characters or empty; received %q (%d)", tg, n))
+			if tg != "" && !printableTwoChar(tg) {
+				return out, function.NewArgumentFuncError(1, fmt.Sprintf("options.tongue must be exactly 2 printable characters or empty; received %q", tg))
 			}
 			out.tongue = tg
 		case "width":
@@ -112,6 +129,10 @@ func (f *CowsayFunction) Run(ctx context.Context, req function.RunRequest, resp 
 	var optsArgs []types.Dynamic
 	resp.Error = function.ConcatFuncErrors(resp.Error, req.Arguments.Get(ctx, &message, &optsArgs))
 	if resp.Error != nil {
+		return
+	}
+	if len(message) > cowsayMaxMessageBytes {
+		resp.Error = function.NewArgumentFuncError(0, fmt.Sprintf("message exceeds maximum length of %d bytes", cowsayMaxMessageBytes))
 		return
 	}
 	opts, ferr := parseCowsayOptions(optsArgs)

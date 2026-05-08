@@ -53,6 +53,21 @@ func TestAcc_GeohashEncode_RejectsOutOfRangeLongitude(t *testing.T) {
 	)
 }
 
+func TestAcc_GeohashEncode_RejectsCornerLatitude90(t *testing.T) {
+	// Upstream silently snaps lat==90 / lon==180 to the south-polar/antimeridian corner; we reject so callers get an explicit error instead of a wrong code.
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::geohash_encode(90, 0, 5) }`,
+		regexp.MustCompile(`(?is)latitude\s+==\s+90\s+is\s+not\s+representable`),
+	)
+}
+
+func TestAcc_GeohashEncode_RejectsCornerLongitude180(t *testing.T) {
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::geohash_encode(0, 180, 5) }`,
+		regexp.MustCompile(`(?is)longitude\s+==\s+180\s+is\s+not\s+representable`),
+	)
+}
+
 // ─── geohash_decode ─────────────────────────────────────────────────────
 
 func TestAcc_GeohashDecode_RoundTripCenter(t *testing.T) {
@@ -93,19 +108,17 @@ func TestAcc_GeohashDecode_RejectsBadAlphabet(t *testing.T) {
 func TestAcc_GeohashDecode_RejectsEmpty(t *testing.T) {
 	runErrorTest(t,
 		`output "test" { value = provider::burnham::geohash_decode("") }`,
-		regexp.MustCompile(`(?is)hash\s+must\s+not\s+be\s+empty`),
+		regexp.MustCompile(`(?is)code\s+must\s+not\s+be\s+empty`),
 	)
 }
 
 // ─── pluscode_encode ────────────────────────────────────────────────────
 
 func TestAcc_PluscodeEncode_SanFranciscoCivicCenter(t *testing.T) {
-	// (37.7749, -122.4194) at length 10 yields a stable value cross-checked against the OLC reference.
+	// (37.7749, -122.4194) at length 10 yields the canonical "849VQHFJ+X6" cross-checked against Google's OLC reference implementation.
 	runOutputTest(t,
 		`output "test" { value = provider::burnham::pluscode_encode(37.7749, -122.4194, 10) }`,
-		statecheck.ExpectKnownOutputValue("test",
-			knownvalue.StringRegexp(regexp.MustCompile(`^[2-9CFGHJMPQRVWX]{8}\+[2-9CFGHJMPQRVWX]+$`)),
-		),
+		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("849VQHFJ+X6")),
 	)
 }
 

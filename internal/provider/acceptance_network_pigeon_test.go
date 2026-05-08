@@ -73,6 +73,14 @@ func TestAcc_PigeonThroughput_QoSClassLowAltitude(t *testing.T) {
 	)
 }
 
+func TestAcc_PigeonThroughput_QoSClassStandard(t *testing.T) {
+	// Altitude 200 m sits in the [50, 500) standard band.
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::pigeon_throughput(10, 256, 200).qos_class }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("standard")),
+	)
+}
+
 func TestAcc_PigeonThroughput_QoSClassExpress(t *testing.T) {
 	runOutputTest(t,
 		`output "test" { value = provider::burnham::pigeon_throughput(10, 256, 1000).qos_class }`,

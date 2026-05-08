@@ -199,6 +199,37 @@ func TestAcc_Cowsay_RejectsBadEyes(t *testing.T) {
 	)
 }
 
+func TestAcc_Cowsay_RejectsControlCharacterInEyes(t *testing.T) {
+	// Two-codepoint string that includes a non-printable rune (U+0007 BEL) — must be rejected so cow output can't be smuggled with terminal control codes.
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::cowsay("x", { eyes = "a" }) }`,
+		regexp.MustCompile(`(?is)eyes\s+must\s+be\s+exactly\s+2\s+printable`),
+	)
+}
+
+func TestAcc_Cowsay_TongueAppears(t *testing.T) {
+	// Default rendering uses two spaces in the tongue slot. Custom tongue "U " should appear verbatim on the line below the eyes.
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::cowsay("hi", { tongue = "U " }) }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.StringRegexp(regexp.MustCompile(`(?s)\(oo\)\\_+.*\n\s+U\s+\|\|----w \|`))),
+	)
+}
+
+func TestAcc_Cowsay_RejectsBadTongue(t *testing.T) {
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::cowsay("x", { tongue = "abc" }) }`,
+		regexp.MustCompile(`(?is)tongue\s+must\s+be\s+exactly\s+2`),
+	)
+}
+
+func TestAcc_Cowsay_WidthZeroPreservesNewlines(t *testing.T) {
+	// width = 0 disables wrapping; an input shorter than the default width that already contains a newline must keep the line break.
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::cowsay("a\nb", { width = 0 }) }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.StringRegexp(regexp.MustCompile(`(?s)^ ___\n/ a \\\n\\ b /\n ---\n`))),
+	)
+}
+
 func TestAcc_Cowsay_RejectsBadAction(t *testing.T) {
 	runErrorTest(t,
 		`output "test" { value = provider::burnham::cowsay("x", { action = "scream" }) }`,
@@ -225,6 +256,19 @@ func TestAcc_Cowsay_MultiLineBubble(t *testing.T) {
 }
 
 // ─── qr_ascii ───────────────────────────────────────────────────────────
+
+func TestAcc_QRAscii_LightOnDarkInvertsBlocks(t *testing.T) {
+	// light_on_dark should swap the dark and light roles. Concretely: a payload that produced ▀ ▄ space block in dark_on_light produces the inverted set; the cell counts of ▀ vs space invert. We just assert the raw byte count of `█` differs between styles for the same payload — easier to write than computing the exact module map but enough to lock the inversion path.
+	runOutputTest(t,
+		`output "test" {
+		   value = (
+		     length(provider::burnham::qr_ascii("hello", { style = "dark_on_light" })) == length(provider::burnham::qr_ascii("hello", { style = "light_on_dark" })) &&
+		     provider::burnham::qr_ascii("hello", { style = "dark_on_light" }) != provider::burnham::qr_ascii("hello", { style = "light_on_dark" })
+		   )
+		 }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.Bool(true)),
+	)
+}
 
 func TestAcc_QRAscii_BasicShape(t *testing.T) {
 	// Verify the output looks like a QR code: rectangular, contains the half-block characters, has a quiet zone.

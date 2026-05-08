@@ -62,12 +62,7 @@ func (f *PiApproximateDigitFunction) Metadata(_ context.Context, _ function.Meta
 func (f *PiApproximateDigitFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary: "Return the n-th digit of 22/7 in the [RFC 3091](https://www.rfc-editor.org/rfc/rfc3091) UDP reply format",
-		MarkdownDescription: "Returns the n-th decimal digit of 22/7 *following* the decimal point, formatted as the [RFC 3091 §2.1.2](https://www.rfc-editor.org/rfc/rfc3091#section-2.1.2) UDP reply payload `reply = nth_digit \":\" DIGIT`. This is the \"approximate service\" of RFC 3091 §1.1/§2.2 — long division of 22 by 7 gives `3.142857142857…`, a period-6 repeating cycle of `\"142857\"`.\n\n" +
-			"Examples:\n" +
-			"- `pi_approximate_digit(1)` → `\"1:1\"`\n" +
-			"- `pi_approximate_digit(7)` → `\"7:1\"` (cycle wraps to start of `\"142857\"`)\n" +
-			"- `pi_approximate_digit(100)` → `\"100:8\"`\n\n" +
-			"**No upper bound on n.** Because 22/7 cycles with period 6, the n-th digit is just `\"142857\"[(n-1) mod 6]` — a constant-time lookup. n can be arbitrarily large (up to ~10^150 in Terraform's 512-bit number type) and the function returns instantly.",
+		MarkdownDescription: "Returns the n-th decimal digit of 22/7 *following* the decimal point, formatted as the [RFC 3091 §2.1.2](https://www.rfc-editor.org/rfc/rfc3091#section-2.1.2) UDP reply payload `reply = nth_digit \":\" DIGIT`. This is the \"approximate service\" of RFC 3091 §1.1/§2.2 — long division of 22 by 7 gives `3.142857142857…`, a period-6 repeating cycle of `\"142857\"`.\n\nExamples:\n- `pi_approximate_digit(1)` → `\"1:1\"`\n- `pi_approximate_digit(7)` → `\"7:1\"` (cycle wraps to start of `\"142857\"`)\n- `pi_approximate_digit(100)` → `\"100:8\"`\n\n**No upper bound on n.** Because 22/7 cycles with period 6, the n-th digit is just `\"142857\"[(n-1) mod 6]` — a constant-time lookup. n can be arbitrarily large (up to ~10^150 in Terraform's 512-bit number type) and the function returns instantly.",
 		Parameters: []function.Parameter{
 			function.NumberParameter{
 				Name:        "n",
@@ -127,10 +122,7 @@ func (f *PiApproximateDigitsFunction) Metadata(_ context.Context, _ function.Met
 func (f *PiApproximateDigitsFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary: "Return the first `count` digits of 22/7, modeled on the [RFC 3091](https://www.rfc-editor.org/rfc/rfc3091) §1.1 TCP approximate service",
-		MarkdownDescription: "Returns the first `count` decimal digits of 22/7 *following* the decimal point as a single ASCII string. Models the [RFC 3091 §1.1](https://www.rfc-editor.org/rfc/rfc3091#section-1.1) TCP approximate service, which streams `\"starting with the most significant digit following the decimal point\"` — no seek operation, so this function takes only `count`.\n\n" +
-			"Example:\n" +
-			"- `pi_approximate_digits(12)` → `\"142857142857\"` (the 6-digit cycle, twice)\n\n" +
-			"Because 22/7 is a period-6 repeating decimal, output for any count `c` is just `\"142857\"` repeated and truncated. Count is bounded only by what Go's `int` and your machine's memory can hold.",
+		MarkdownDescription: "Returns the first `count` decimal digits of 22/7 *following* the decimal point as a single ASCII string. Models the [RFC 3091 §1.1](https://www.rfc-editor.org/rfc/rfc3091#section-1.1) TCP approximate service, which streams `\"starting with the most significant digit following the decimal point\"` — no seek operation, so this function takes only `count`.\n\nExample:\n- `pi_approximate_digits(12)` → `\"142857142857\"` (the 6-digit cycle, twice)\n\nBecause 22/7 is a period-6 repeating decimal, output for any count `c` is just `\"142857\"` repeated and truncated. Count is bounded only by what Go's `int` and your machine's memory can hold.",
 		Parameters: []function.Parameter{
 			function.Int64Parameter{
 				Name:        "count",

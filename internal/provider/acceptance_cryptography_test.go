@@ -182,6 +182,27 @@ func TestAcc_X509Inspect_Validity(t *testing.T) {
 	)
 }
 
+func TestAcc_X509Inspect_NotAfter(t *testing.T) {
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::x509_inspect(`+certHeredoc+`).not_after }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("2036-05-05T05:44:54Z")),
+	)
+}
+
+func TestAcc_X509Inspect_Subject(t *testing.T) {
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::x509_inspect(`+certHeredoc+`).subject }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("CN=test.burnham.example,O=Burnham Test,C=US")),
+	)
+}
+
+func TestAcc_X509Inspect_PublicKeyAlgorithm(t *testing.T) {
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::x509_inspect(`+certHeredoc+`).public_key_algorithm }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("Ed25519")),
+	)
+}
+
 func TestAcc_X509Inspect_KeyUsage(t *testing.T) {
 	runOutputTest(t,
 		`output "test" { value = provider::burnham::x509_inspect(`+certHeredoc+`).key_usage }`,
@@ -222,6 +243,20 @@ func TestAcc_X509Fingerprint_SHA1(t *testing.T) {
 	runOutputTest(t,
 		`output "test" { value = provider::burnham::x509_fingerprint(`+certHeredoc+`, "sha1") }`,
 		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("024b4ecf6cd77488ed286191ce1324624bb3b2a8")),
+	)
+}
+
+func TestAcc_X509Fingerprint_SHA384(t *testing.T) {
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::x509_fingerprint(`+certHeredoc+`, "sha384") }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("13b45fa66be9626d264b7560cbb8a1bc15f189ef9b90314a456cf5dba534813202c176756974ee80073b89cce20c6352")),
+	)
+}
+
+func TestAcc_X509Fingerprint_SHA512(t *testing.T) {
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::x509_fingerprint(`+certHeredoc+`, "sha512") }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("5fd3798b18fb55e7ba9ad6400a079eca7113646382ad50b95a3f83741981be72d925a43e3938661541c40dcb2099b9556d2e7f2fd6e24a949daa8271dc0c551b")),
 	)
 }
 
@@ -326,5 +361,47 @@ func TestAcc_ASN1Decode_RejectsExcessiveDepth(t *testing.T) {
 	runErrorTest(t,
 		`output "test" { value = provider::burnham::asn1_decode("MIGSMIGPMIGMMIGJMIGGMIGDMIGAMH4wfDB6MHgwdjB0MHIwcDBuMGwwajBoMGYwZDBiMGAwXjBcMFowWDBWMFQwUjBQME4wTDBKMEgwRjBEMEIwQDA+MDwwOjA4MDYwNDAyMDAwLjAsMCowKDAmMCQwIjAgMB4wHDAaMBgwFjAUMBIwEDAOMAwwCjAIMAYwBDACBQA=") }`,
 		regexp.MustCompile(`(?is)nesting\s+exceeds\s+maximum\s+supported\s+depth`),
+	)
+}
+
+// Primitive-tag coverage. Each fixture is a single-TLV DER that exercises one of decodePrimitive's per-tag branches; pre-computed via encoding/asn1 once and locked. Together they cover BIT STRING, OCTET STRING, UTF8String, PrintableString, BOOLEAN.
+
+func TestAcc_ASN1Decode_BitString(t *testing.T) {
+	// BIT STRING { 0x86 } — DER 03 02 00 86 → base64 "AwIAhg==". Decoded value is the hex of the data bytes (the leading unused-bits octet is stripped by encoding/asn1.BitString).
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::asn1_decode("AwIAhg==").value }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("86")),
+	)
+}
+
+func TestAcc_ASN1Decode_OctetString(t *testing.T) {
+	// OCTET STRING "hello" — DER 04 05 68 65 6c 6c 6f → base64 "BAVoZWxsbw==". Value is hex of the bytes.
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::asn1_decode("BAVoZWxsbw==").value }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("68656c6c6f")),
+	)
+}
+
+func TestAcc_ASN1Decode_UTF8String(t *testing.T) {
+	// UTF8String "hello" — DER 0c 05 68 65 6c 6c 6f → base64 "DAVoZWxsbw==". Value is the string itself.
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::asn1_decode("DAVoZWxsbw==").value }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("hello")),
+	)
+}
+
+func TestAcc_ASN1Decode_BooleanTrue(t *testing.T) {
+	// BOOLEAN true — DER 01 01 ff → base64 "AQH/".
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::asn1_decode("AQH/").value }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("true")),
+	)
+}
+
+func TestAcc_ASN1Decode_BooleanFalse(t *testing.T) {
+	// BOOLEAN false — DER 01 01 00 → base64 "AQEA".
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::asn1_decode("AQEA").value }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("false")),
 	)
 }

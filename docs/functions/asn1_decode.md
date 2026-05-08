@@ -32,9 +32,13 @@ Input is base64-encoded DER bytes — the same shape `pem_decode` returns in `ba
 
 **`value` is always a string, regardless of tag.** Even INTEGER and BOOLEAN nodes return their value as a textual representation (`"42"`, `"true"`). Consumers that need a number or bool convert per-tag with `tonumber(node.value)` / `node.value == "true"`. The single-typed field keeps the recursive schema buildable in Terraform (the framework can't express a recursive object type with per-node varying value types).
 
-Nesting is bounded: structures more than 64 levels deep are rejected to prevent stack-OOM on adversarial input. RFC 5280 X.509 nesting fits comfortably under that limit.
+Resource limits to bound adversarial input:
 
-Errors when the bytes are not well-formed BER/DER, when an INTEGER won't fit in `*big.Int`, when a date stamp can't be parsed, or when nesting exceeds the depth limit.
+- The decoded DER may be at most 8 MiB. Larger inputs are rejected before parsing.
+- Nesting may be at most 64 levels deep. RFC 5280 X.509 nesting fits comfortably under this limit.
+- A single decode may produce at most 100,000 nodes. The largest realistic certs sit around 1,000.
+
+Errors when the bytes are not well-formed BER/DER, when an INTEGER won't fit in `*big.Int`, when a date stamp can't be parsed, or when any of the above limits are exceeded.
 
 ## Example Usage
 

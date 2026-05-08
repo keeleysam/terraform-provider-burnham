@@ -64,6 +64,15 @@ func (f *GeohashEncodeFunction) Run(ctx context.Context, req function.RunRequest
 		resp.Error = ferr
 		return
 	}
+	// The upstream encoder treats latitude as [-90, 90) and longitude as [-180, 180): the literal upper-bound values silently wrap to -90 / -180. Reject explicitly so a caller's `lat = 90` doesn't end up encoded as the south-polar / antimeridian corner.
+	if lat == 90 {
+		resp.Error = function.NewArgumentFuncError(0, "latitude == 90 is not representable in the standard geohash grid; use a value strictly less than 90")
+		return
+	}
+	if lon == 180 {
+		resp.Error = function.NewArgumentFuncError(1, "longitude == 180 is not representable in the standard geohash grid; use a value strictly less than 180 (or -180, which is the same meridian)")
+		return
+	}
 	if precision < geohashMinPrecision || precision > geohashMaxPrecision {
 		resp.Error = function.NewArgumentFuncError(2, fmt.Sprintf("precision must be in [%d, %d]; received %d", geohashMinPrecision, geohashMaxPrecision, precision))
 		return
@@ -99,31 +108,28 @@ func (f *GeohashDecodeFunction) Metadata(_ context.Context, _ function.MetadataR
 func (f *GeohashDecodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary: "Decode a geohash into the centre point and bounding box of its cell",
-		MarkdownDescription: "Parses `hash` and returns:\n\n" +
-			"- `latitude` / `longitude` — the centre of the cell, in degrees.\n" +
-			"- `lat_min` / `lat_max` / `lon_min` / `lon_max` — the cell's bounding box (the points the hash *might* have come from).\n\n" +
-			"`hash` is case-insensitive but must use the standard geohash alphabet `0-9 b-z` minus `a i l o`. Errors on any other character.",
+		MarkdownDescription: "Parses `code` and returns:\n\n- `latitude` / `longitude` — the centre of the cell, in degrees.\n- `lat_min` / `lat_max` / `lon_min` / `lon_max` — the cell's bounding box (the points the hash *might* have come from).\n\n`code` is case-insensitive but must use the standard geohash alphabet `0-9 b-z` minus `a i l o`. Errors on any other character.",
 		Parameters: []function.Parameter{
-			function.StringParameter{Name: "hash", Description: "Geohash string to decode."},
+			function.StringParameter{Name: "code", Description: "Geohash string to decode."},
 		},
 		Return: function.ObjectReturn{AttributeTypes: geohashDecodeAttrs},
 	}
 }
 
 func (f *GeohashDecodeFunction) Run(ctx context.Context, req function.RunRequest, resp *function.RunResponse) {
-	var hash string
-	resp.Error = function.ConcatFuncErrors(resp.Error, req.Arguments.Get(ctx, &hash))
+	var code string
+	resp.Error = function.ConcatFuncErrors(resp.Error, req.Arguments.Get(ctx, &code))
 	if resp.Error != nil {
 		return
 	}
-	lower := strings.ToLower(hash)
+	lower := strings.ToLower(code)
 	if lower == "" {
-		resp.Error = function.NewArgumentFuncError(0, "hash must not be empty")
+		resp.Error = function.NewArgumentFuncError(0, "code must not be empty")
 		return
 	}
 	for i, r := range lower {
 		if !strings.ContainsRune(geohashAlphabet, r) {
-			resp.Error = function.NewArgumentFuncError(0, fmt.Sprintf("hash contains invalid character %q at position %d (allowed: %s)", r, i, geohashAlphabet))
+			resp.Error = function.NewArgumentFuncError(0, fmt.Sprintf("code contains invalid character %q at position %d (allowed: %s)", r, i, geohashAlphabet))
 			return
 		}
 	}

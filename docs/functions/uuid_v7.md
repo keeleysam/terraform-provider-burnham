@@ -13,7 +13,9 @@ Returns a [version 7 UUID](https://www.rfc-editor.org/rfc/rfc9562#name-uuid-vers
 
 This function is **deterministic**: the 74 random-ish bits (rand_a, rand_b) are derived from `entropy` via HMAC-SHA-256, so a stable `(timestamp, entropy)` always returns the same UUID. Use this when you want sortable IDs that don't churn the Terraform plan on re-apply. For unique IDs at plan time, give each call a different `entropy` (e.g. resource name).
 
-`timestamp` accepts any RFC 3339 / RFC 3339 Nano timestamp, e.g. `"2026-05-08T12:00:00Z"`. Sub-millisecond precision is truncated; the v7 spec only carries milliseconds. `entropy` is required and may be any string, including the empty string — the empty string still yields a valid UUID, though the random bits then come from `HMAC-SHA-256("", timestamp_be_bytes)` and are constant for any given timestamp.
+`timestamp` accepts any RFC 3339 / RFC 3339 Nano timestamp, e.g. `"2026-05-08T12:00:00Z"`. Sub-millisecond precision is truncated; the v7 spec only carries milliseconds.
+
+**Always pass a meaningful `entropy`.** The empty string is accepted but it makes the random bits a fixed function of the timestamp alone — every call sharing that timestamp returns the same UUID, defeating the point of the random fields. Use the resource name, a logical key, or any other per-call string to keep IDs distinct.
 
 ## Example Usage
 
