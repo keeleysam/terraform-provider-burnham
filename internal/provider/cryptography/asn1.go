@@ -47,24 +47,7 @@ func (f *ASN1DecodeFunction) Metadata(_ context.Context, _ function.MetadataRequ
 func (f *ASN1DecodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary: "Walk an ASN.1 DER byte string into a structural tree",
-		MarkdownDescription: "Decodes ASN.1 DER (or BER) bytes — supplied base64-encoded — into a recursive object tree. Each node has the same shape:\n\n" +
-			"- `tag` — the BER tag number (`2` for INTEGER, `6` for OBJECT IDENTIFIER, `16` for SEQUENCE, …).\n" +
-			"- `class` — `\"universal\"`, `\"application\"`, `\"context\"`, or `\"private\"`.\n" +
-			"- `compound` — `true` for constructed values that hold child nodes; `false` for primitive values.\n" +
-			"- `type` — human-readable name for universal-class tags (`\"INTEGER\"`, `\"SEQUENCE\"`, `\"OBJECT IDENTIFIER\"`, …); empty string for non-universal classes.\n" +
-			"- `value` — primitive payload as a string. Tag-specific encoding:\n" +
-			"  - INTEGER → decimal string\n" +
-			"  - BOOLEAN → `\"true\"` / `\"false\"`\n" +
-			"  - OBJECT IDENTIFIER → dotted form (`\"1.3.6.1.5.5.7.3.1\"`)\n" +
-			"  - UTF8String / PrintableString / IA5String / NumericString / VisibleString → the string value\n" +
-			"  - BIT STRING / OCTET STRING → hex\n" +
-			"  - UTCTime / GeneralizedTime → RFC 3339 timestamp\n" +
-			"  - NULL → empty string\n" +
-			"  - other primitives → hex of the raw value bytes\n" +
-			"  Always `\"\"` when `compound = true`.\n" +
-			"- `children` — a list of decoded children when `compound = true`; an empty list otherwise (because the framework forbids null lists of objects in a recursive-feeling tree).\n\n" +
-			"Input is base64-encoded DER bytes — the same shape `pem_decode` returns in `base64_body`. This keeps inputs ASCII-safe inside HCL strings.\n\n" +
-			"Errors when the bytes are not well-formed BER/DER, when an INTEGER won't fit in `*big.Int`, or when a date stamp can't be parsed.",
+		MarkdownDescription: "Decodes ASN.1 DER (or BER) bytes — supplied base64-encoded — into a recursive object tree. Each node has the same shape:\n\n- `tag` — the BER tag number (`2` for INTEGER, `6` for OBJECT IDENTIFIER, `16` for SEQUENCE, …).\n- `class` — `\"universal\"`, `\"application\"`, `\"context\"`, or `\"private\"`.\n- `compound` — `true` for constructed values that hold child nodes; `false` for primitive values.\n- `type` — human-readable name for universal-class tags (`\"INTEGER\"`, `\"SEQUENCE\"`, `\"OBJECT IDENTIFIER\"`, …); empty string for non-universal classes.\n- `value` — primitive payload as a string. Tag-specific encoding:\n  - INTEGER → decimal string\n  - BOOLEAN → `\"true\"` / `\"false\"`\n  - OBJECT IDENTIFIER → dotted form (`\"1.3.6.1.5.5.7.3.1\"`)\n  - UTF8String / PrintableString / IA5String / NumericString / VisibleString → the string value\n  - BIT STRING / OCTET STRING → hex\n  - UTCTime / GeneralizedTime → RFC 3339 timestamp\n  - NULL → empty string\n  - other primitives → hex of the raw value bytes\n\n  Always `\"\"` when `compound = true`.\n- `children` — a list of decoded children when `compound = true`; an empty list otherwise (because the framework forbids null lists of objects in a recursive-feeling tree).\n\nInput is base64-encoded DER bytes — the same shape `pem_decode` returns in `base64_body`. This keeps inputs ASCII-safe inside HCL strings.\n\n**`value` is always a string, regardless of tag.** Even INTEGER and BOOLEAN nodes return their value as a textual representation (`\"42\"`, `\"true\"`). Consumers that need a number or bool convert per-tag with `tonumber(node.value)` / `node.value == \"true\"`. The single-typed field keeps the recursive schema buildable in Terraform (the framework can't express a recursive object type with per-node varying value types).\n\nNesting is bounded: structures more than 64 levels deep are rejected to prevent stack-OOM on adversarial input. RFC 5280 X.509 nesting fits comfortably under that limit.\n\nErrors when the bytes are not well-formed BER/DER, when an INTEGER won't fit in `*big.Int`, when a date stamp can't be parsed, or when nesting exceeds the depth limit.",
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "der_base64", Description: "Base64-encoded DER bytes."},
 		},
@@ -107,24 +90,30 @@ func (f *ASN1DecodeFunction) Run(ctx context.Context, req function.RunRequest, r
 	resp.Error = function.ConcatFuncErrors(resp.Error, resp.Result.Set(ctx, &out))
 }
 
+// asn1MaxDepth bounds the recursion `decodeChildren` → `rawValueToNode` is allowed to do. ASN.1 BER permits arbitrary nesting; an adversarial input (`SEQUENCE { SEQUENCE { … } }` thousands deep) would otherwise grow Go's stack until the goroutine OOMs the Terraform process. RFC 5280 typical X.509 nesting is well under 16; 64 is very generous and still bounded.
+const asn1MaxDepth = 64
+
 // decodeASN1 parses a single TLV at the start of `data` and returns its decoded representation. Trailing bytes after the first complete TLV are ignored; the caller is responsible for splitting at higher levels.
 func decodeASN1(data []byte) (attr.Value, error) {
 	var raw asn1.RawValue
 	if _, err := asn1.Unmarshal(data, &raw); err != nil {
 		return nil, err
 	}
-	return rawValueToNode(raw)
+	return rawValueToNode(raw, 0)
 }
 
-// rawValueToNode turns a single asn1.RawValue into a Terraform object value matching asn1NodeAttrs.
-func rawValueToNode(raw asn1.RawValue) (attr.Value, error) {
+// rawValueToNode turns a single asn1.RawValue into a Terraform object value matching asn1NodeAttrs. `depth` is the current recursion depth; rejected past `asn1MaxDepth` to bound stack use under adversarial input.
+func rawValueToNode(raw asn1.RawValue, depth int) (attr.Value, error) {
+	if depth > asn1MaxDepth {
+		return nil, fmt.Errorf("ASN.1 nesting exceeds maximum supported depth of %d", asn1MaxDepth)
+	}
 	className := classToString(raw.Class)
 	tagName := universalTagName(raw)
 	value := ""
 	var children attr.Value = emptyDynamicList
 
 	if raw.IsCompound {
-		kids, err := decodeChildren(raw.Bytes)
+		kids, err := decodeChildren(raw.Bytes, depth+1)
 		if err != nil {
 			return nil, err
 		}
@@ -151,8 +140,8 @@ func rawValueToNode(raw asn1.RawValue) (attr.Value, error) {
 	return obj, nil
 }
 
-// decodeChildren walks a constructed value's contents, peeling off one TLV at a time.
-func decodeChildren(body []byte) (attr.Value, error) {
+// decodeChildren walks a constructed value's contents, peeling off one TLV at a time. `depth` is propagated to bound recursion.
+func decodeChildren(body []byte, depth int) (attr.Value, error) {
 	var kids []attr.Value
 	rest := body
 	for len(rest) > 0 {
@@ -161,7 +150,7 @@ func decodeChildren(body []byte) (attr.Value, error) {
 		if err != nil {
 			return nil, err
 		}
-		node, err := rawValueToNode(raw)
+		node, err := rawValueToNode(raw, depth)
 		if err != nil {
 			return nil, err
 		}

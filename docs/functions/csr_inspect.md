@@ -17,20 +17,37 @@ Parses the first `CERTIFICATE REQUEST` block in `pem` and returns a fixed-shape 
 
 Fields that don't exist on a CSR (serial number, validity window, key usage, BasicConstraints) are not on this object — those are set by the issuing CA when the request is approved.
 
+**This function reads structure, not trust.** It does **not** verify the CSR's self-signature. Treat the result as the *requested* attributes; the issuing CA decides what actually ends up on the certificate.
+
 Errors when the input contains no CERTIFICATE REQUEST block or the request fails to parse.
 
 ## Example Usage
 
 ```terraform
 // Decode a PKCS #10 CSR into a structured object. Use it to assert at plan time that a CSR's CN and SANs match what the issuing CA expects.
-variable "csr_pem" { type = string }
+locals {
+  csr_pem = <<-EOT
+    -----BEGIN CERTIFICATE REQUEST-----
+    MIIBezCCAS0CAQAwQzEdMBsGA1UEAwwUdGVzdC5idXJuaGFtLmV4YW1wbGUxFTAT
+    BgNVBAoMDEJ1cm5oYW0gVGVzdDELMAkGA1UEBhMCVVMwKjAFBgMrZXADIQBdRy86
+    BPldM5uQC7PkxejuEo3cQV4s7VRFh4IwX/Bjz6CBtjCBswYJKoZIhvcNAQkOMYGl
+    MIGiMGkGA1UdEQRiMGCCFHRlc3QuYnVybmhhbS5leGFtcGxlghh3d3cudGVzdC5i
+    dXJuaGFtLmV4YW1wbGWHBMAAAgGBD29wc0BleGFtcGxlLmNvbYYXaHR0cHM6Ly9l
+    eGFtcGxlLmNvbS9jc3IwCQYDVR0TBAIwADALBgNVHQ8EBAMCBaAwHQYDVR0lBBYw
+    FAYIKwYBBQUHAwEGCCsGAQUFBwMCMAUGAytlcANBAK9YRCz7VOyYUdbUWsS4uSES
+    Odr5Q/4/OQM+WhKq/ckVK43GHJ9YSbSnrBrbvHmKMsgvwSMt61Ljyi6fKro4XA0=
+    -----END CERTIFICATE REQUEST-----
+  EOT
+}
 
 output "subject" {
-  value = provider::burnham::csr_inspect(var.csr_pem).subject
+  value = provider::burnham::csr_inspect(local.csr_pem).subject
+  // → "CN=test.burnham.example,O=Burnham Test,C=US"
 }
 
 output "requested_sans" {
-  value = provider::burnham::csr_inspect(var.csr_pem).dns_names
+  value = provider::burnham::csr_inspect(local.csr_pem).dns_names
+  // → ["test.burnham.example", "www.test.burnham.example"]
 }
 ```
 

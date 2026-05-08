@@ -312,3 +312,19 @@ func TestAcc_ASN1Decode_RejectsTruncated(t *testing.T) {
 		regexp.MustCompile(`(?is)decoding\s+ASN\.1`),
 	)
 }
+
+func TestAcc_ASN1Decode_AcceptsModerateDepth(t *testing.T) {
+	// 8 levels of SEQUENCE wrapping a NULL — well under the 64 depth cap. Verifies the outermost decode succeeds.
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::asn1_decode("MBAwDjAMMAowCDAGMAQwAgUA").type }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("SEQUENCE")),
+	)
+}
+
+func TestAcc_ASN1Decode_RejectsExcessiveDepth(t *testing.T) {
+	// 70 levels of SEQUENCE — exceeds asn1MaxDepth (64). Hand-built once and locked. Defends against adversarial deep input that would otherwise grow the goroutine stack until the Terraform process OOMs.
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::asn1_decode("MIGSMIGPMIGMMIGJMIGGMIGDMIGAMH4wfDB6MHgwdjB0MHIwcDBuMGwwajBoMGYwZDBiMGAwXjBcMFowWDBWMFQwUjBQME4wTDBKMEgwRjBEMEIwQDA+MDwwOjA4MDYwNDAyMDAwLjAsMCowKDAmMCQwIjAgMB4wHDAaMBgwFjAUMBIwEDAOMAwwCjAIMAYwBDACBQA=") }`,
+		regexp.MustCompile(`(?is)nesting\s+exceeds\s+maximum\s+supported\s+depth`),
+	)
+}

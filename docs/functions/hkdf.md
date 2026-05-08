@@ -14,12 +14,14 @@ Performs the [RFC 5869](https://www.rfc-editor.org/rfc/rfc5869) Extract-then-Exp
 - `Extract`: PRK = HMAC-`algorithm`(`salt`, `secret`)
 - `Expand`: take `length` bytes from the output stream keyed by PRK and seeded with `info`
 
-All byte-string inputs are interpreted as raw bytes (decode first if you have hex/base64). Output is hex-encoded.
+Output is hex-encoded.
 
 ```
 hkdf("sha256", "input-keying-material", "salt", "per-tenant-foo", 32)
 → 64 hex chars (32 bytes)
 ```
+
+**Byte handling, gotchas:** `secret`, `salt`, and `info` reach the function as the literal UTF-8 bytes of whatever string HCL hands it. HCL string literals only support `\uNNNN` Unicode escapes — there is no `\xNN` byte escape — so a secret spelled `"\u00ff"` arrives as the two UTF-8 bytes `0xc3 0xbf`, *not* the single byte `0xff`. For arbitrary-byte secrets (RFC 5869 test vectors, anything OpenSSL-style hex), encode upstream as base64 in your variable and pass `base64decode(var.secret)` to this function.
 
 Used in TLS 1.3, the Signal protocol, and roughly every modern key-derivation pipeline. Backed by [`golang.org/x/crypto/hkdf`](https://pkg.go.dev/golang.org/x/crypto/hkdf).
 

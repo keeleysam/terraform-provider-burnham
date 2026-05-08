@@ -69,17 +69,7 @@ var x509InspectAttrs = map[string]attr.Type{
 func (f *X509InspectFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary: "Decode a PEM-encoded X.509 certificate into a structured object",
-		MarkdownDescription: "Parses the first `CERTIFICATE` block in `pem` and returns a fixed-shape object:\n\n" +
-			"- `subject`, `issuer` — RFC 4514 distinguished-name strings\n" +
-			"- `serial_number` — decimal\n" +
-			"- `not_before`, `not_after` — RFC 3339 timestamps\n" +
-			"- `signature_algorithm`, `public_key_algorithm` — `SHA256-RSA`, `Ed25519`, etc.\n" +
-			"- `is_ca` — bool, true when BasicConstraints CA flag is set\n" +
-			"- `key_usage` — list of name strings drawn from RFC 5280 KeyUsage\n" +
-			"- `ext_key_usage` — list of name strings drawn from RFC 5280 ExtendedKeyUsage\n" +
-			"- `dns_names`, `email_addresses`, `ip_addresses`, `uris` — Subject Alternative Names by category\n\n" +
-			"Non-CERTIFICATE PEM blocks (e.g. private keys, CSRs) before the cert are skipped, so a mixed `chain.pem` works without preprocessing.\n\n" +
-			"Errors when the input contains no CERTIFICATE block or the certificate fails to parse.",
+		MarkdownDescription: "Parses the first `CERTIFICATE` block in `pem` and returns a fixed-shape object:\n\n- `subject`, `issuer` — RFC 4514 distinguished-name strings\n- `serial_number` — decimal\n- `not_before`, `not_after` — RFC 3339 timestamps\n- `signature_algorithm`, `public_key_algorithm` — `SHA256-RSA`, `Ed25519`, etc.\n- `is_ca` — bool, true when BasicConstraints CA flag is set\n- `key_usage` — list of name strings drawn from RFC 5280 KeyUsage\n- `ext_key_usage` — list of name strings drawn from RFC 5280 ExtendedKeyUsage\n- `dns_names`, `email_addresses`, `ip_addresses`, `uris` — Subject Alternative Names by category\n\nNon-CERTIFICATE PEM blocks (e.g. private keys, CSRs) before the cert are skipped, so a mixed `chain.pem` works without preprocessing.\n\n**This function reads structure, not trust.** It does **not** verify the certificate's signature, validity window, or chain to any trusted root — a self-signed, expired, or revoked blob parses just fine. Don't make security decisions on the result without a separate signing or trust-validation step.\n\nErrors when the input contains no CERTIFICATE block or the certificate fails to parse.",
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "pem", Description: "PEM-encoded certificate (or a bundle containing one)."},
 		},

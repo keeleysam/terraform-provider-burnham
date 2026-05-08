@@ -17,12 +17,15 @@ Returns the [HMAC-`algorithm`](https://www.rfc-editor.org/rfc/rfc2104) of `messa
 - `"sha224"`, `"sha256"`, `"sha384"`, `"sha512"` — FIPS 180-4 SHA-2 family
 - `"sha512_224"`, `"sha512_256"` — truncated SHA-512 variants
 
-`key` and `message` are interpreted as raw byte strings. If your key is hex- or base64-encoded, decode first (`base64decode(key)` etc.).
-
 ```
 hmac("sha256", "super-secret", "payload")
 → "3da88…" (hex)
 ```
+
+**Byte handling, gotchas:** `key` and `message` are passed through to the underlying HMAC as the literal UTF-8 bytes of whatever string HCL hands the function. That matters because:
+
+- HCL string literals only support `\uNNNN` Unicode escapes — there is no `\xNN` byte-escape syntax. A key spelled `"\u00ff"` reaches the function as the two UTF-8 bytes `0xc3 0xbf`, *not* the single byte `0xff`. For arbitrary-byte keys (anything outside ASCII), encode the key as base64 in your variable and pass `base64decode(var.key)` to this function.
+- An OpenSSL-style hex secret like `"00ff"` is interpreted here as the four ASCII characters `0`, `0`, `f`, `f` — *not* the two bytes `0x00 0xff`. If your key is hex-encoded, decode it first (Burnham does not currently ship a `hex_decode`; for now, base64-encode upstream and `base64decode` here).
 
 This function is a derivation, not an MAC verifier — produce the expected MAC and `==`-compare in HCL.
 

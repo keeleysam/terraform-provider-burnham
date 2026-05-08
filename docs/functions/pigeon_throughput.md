@@ -23,6 +23,11 @@ Returns a fixed-shape object describing the theoretical IP-over-Avian-Carriers t
 - `frame_format` — verbatim RFC 1149 §3 frame description.
 - `rfc_citations` — sources for each field, so callers can audit the spec basis.
 
+**Modelling assumptions worth knowing.** The function models a single-flight, parallel-flock dispatch:
+
+- *Multi-bird parallelism.* Multiple birds carrying the fragmented payload are assumed to fly *concurrently*, so `flight_time_seconds` does not multiply by `birds_required`. RFC 2549 §4's flock-multicast framing supports this reading; RFC 1149 §3's "single point-to-point path" line, taken literally, would force serial transmission and `flight_time × birds_required` latency. We pick the parallel reading because every real-world cited use of avian-carrier IP (e.g. CPIP) ran flocks in parallel.
+- *Loss model.* `effective_throughput_bps = throughput_bps × (1 − packet_loss_probability)` treats lost datagrams as silently dropped — the throughput you actually receive at the far end. RFC 2549 §6's wording implies retransmission is possible but specifies no mechanism, so we don't bake it in. If you want the retransmission-amortised flight time, multiply `flight_time_seconds` by `1 / (1 − packet_loss_probability)`.
+
 `distance_km` and `payload_bytes` must be non-negative. `altitude_m` must be in `[0, 12000]` (above which homing pigeons are not specified by either RFC).
 
 ## Example Usage

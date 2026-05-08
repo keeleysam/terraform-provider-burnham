@@ -14,7 +14,7 @@ Returns `message` rendered as the original `cowsay(1)` would: a multi-line speec
 Options object:
 
 - `action` (string) — `"say"` (default; uses `< >` brackets and a `\` connector) or `"think"` (uses `( )` brackets and `o` connectors).
-- `eyes` (string) — exactly two characters used for the cow's eyes. Default `"oo"`. Common alternatives: `"=="` (stoned), `"@@"` (paranoid), `"--"` (dead), `"$$"` (greedy), `"OO"` (surprised).
+- `eyes` (string) — exactly two characters used for the cow's eyes. Default `"oo"`. Common alternatives: `"=="` (drowsy), `"@@"` (paranoid), `"--"` (dead), `"$$"` (greedy), `"OO"` (surprised).
 - `tongue` (string) — exactly two characters (or empty for no tongue). Default empty. Common: `"U "` (sticking out), `"V "` (vampire).
 - `width` (number) — wrap the input message to this many columns before rendering. Default `40`. Set to `0` to disable wrapping (lines stay as you wrote them).
 
@@ -33,8 +33,8 @@ output "thinking" {
   value = provider::burnham::cowsay("hmm", { action = "think" })
 }
 
-// Custom eyes (must be exactly 2 characters). Common alternatives: "==" (stoned), "@@" (paranoid), "--" (dead).
-output "stoned" {
+// Custom eyes (must be exactly 2 characters). Common alternatives: "==" (drowsy), "@@" (paranoid), "--" (dead).
+output "drowsy" {
   value = provider::burnham::cowsay("Whoa.", { eyes = "==" })
 }
 ```

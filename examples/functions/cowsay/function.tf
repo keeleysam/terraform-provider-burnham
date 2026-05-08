@@ -8,7 +8,7 @@ output "thinking" {
   value = provider::burnham::cowsay("hmm", { action = "think" })
 }
 
-// Custom eyes (must be exactly 2 characters). Common alternatives: "==" (stoned), "@@" (paranoid), "--" (dead).
-output "stoned" {
+// Custom eyes (must be exactly 2 characters). Common alternatives: "==" (drowsy), "@@" (paranoid), "--" (dead).
+output "drowsy" {
   value = provider::burnham::cowsay("Whoa.", { eyes = "==" })
 }

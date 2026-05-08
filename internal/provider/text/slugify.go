@@ -105,20 +105,20 @@ func (f *SlugifyFunction) Run(ctx context.Context, req function.RunRequest, resp
 	resp.Error = function.ConcatFuncErrors(resp.Error, resp.Result.Set(ctx, &result))
 }
 
-// slugifyWith calls gosimple/slug under a package-level lock so concurrent invocations don't race on its `Lowercase` package-global. gosimple/slug always emits "-" as the separator, so we post-process if a different one was requested.
+// slugifyWith calls gosimple/slug under a package-level lock so concurrent invocations don't race on its `Lowercase` package-global. The mutex unlock and the global restore are both deferred so a panic inside `gosimple.Make` cannot leave the global in a swapped state or the mutex permanently held — gosimple/slug is third-party code and we shouldn't assume it can't panic. gosimple/slug always emits "-" as the separator, so we post-process if a different one was requested.
 func slugifyWith(s string, opts slugifyOpts) string {
 	slugifyMu.Lock()
+	defer slugifyMu.Unlock()
 	prev := gosimple.Lowercase
+	defer func() { gosimple.Lowercase = prev }()
 	gosimple.Lowercase = opts.lowercase
+
 	var result string
 	if opts.language != "" {
 		result = gosimple.MakeLang(s, opts.language)
 	} else {
 		result = gosimple.Make(s)
 	}
-	gosimple.Lowercase = prev
-	slugifyMu.Unlock()
-
 	if opts.separator != "-" {
 		result = strings.ReplaceAll(result, "-", opts.separator)
 	}

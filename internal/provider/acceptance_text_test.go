@@ -206,6 +206,24 @@ func TestAcc_Cowsay_RejectsBadAction(t *testing.T) {
 	)
 }
 
+func TestAcc_Cowsay_MultiLineBubble(t *testing.T) {
+	// The single-line bubble uses < > brackets; multi-line uses / \ corners and | | sides. Pin the bytes for a 3-line input so the multi-line code path is exercised end-to-end.
+	want := " ___\n" +
+		"/ a \\\n" +
+		"| b |\n" +
+		"\\ c /\n" +
+		" ---\n" +
+		"        \\   ^__^\n" +
+		"         \\  (oo)\\_______\n" +
+		"            (__)\\       )\\/\\\n" +
+		"                ||----w |\n" +
+		"                ||     ||\n"
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::cowsay("a\nb\nc") }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact(want)),
+	)
+}
+
 // ─── qr_ascii ───────────────────────────────────────────────────────────
 
 func TestAcc_QRAscii_BasicShape(t *testing.T) {
@@ -253,5 +271,24 @@ func TestAcc_QRAscii_RejectsExcessiveQuietZone(t *testing.T) {
 	runErrorTest(t,
 		`output "test" { value = provider::burnham::qr_ascii("x", { quiet_zone = 999 }) }`,
 		regexp.MustCompile(`(?is)quiet_zone\s+must\s+be\s+in\s+\[0,\s*64\]`),
+	)
+}
+
+func TestAcc_QRAscii_ByteExactRegression(t *testing.T) {
+	// Lock the byte-exact half-block rendering for a small fixed payload at EC=L with quiet_zone=0. This is a regression test against rsc.io/qr changing its bit layout under us and against any future tweak to renderHalfBlock that silently corrupts output. If this expected value changes, scan the new output with a real QR reader before updating it — the regex-shape tests above cannot detect a malformed code.
+	want := "█▀▀▀▀▀█   ▀ █ █▀▀▀▀▀█\n" +
+		"█ ███ █ ▀ ▀ ▄ █ ███ █\n" +
+		"█ ▀▀▀ █  █▄█▀ █ ▀▀▀ █\n" +
+		"▀▀▀▀▀▀▀ █ █ ▀ ▀▀▀▀▀▀▀\n" +
+		"███▄█▀▀▀▀ █▄▀█▀▄ ▄█▄▄\n" +
+		"▄▄█▄ ▄▀▄█ ▀█▄█▀█▄█ ▀█\n" +
+		"▀▀   ▀▀▀█▄▀▀ ▀█▀  ██▄\n" +
+		"█▀▀▀▀▀█ ███ ▀ ▄ ▀ ▄██\n" +
+		"█ ███ █ ▀▀▀▄▀▄▀▄▀▄▀▄▀\n" +
+		"█ ▀▀▀ █ ████▄█▀█▄█▀▄▀\n" +
+		"▀▀▀▀▀▀▀ ▀▀▀▀ ▀▀▀ ▀▀▀▀\n"
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::qr_ascii("ok", { error_correction = "L", quiet_zone = 0 }) }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact(want)),
 	)
 }

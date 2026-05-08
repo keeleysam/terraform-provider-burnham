@@ -39,12 +39,7 @@ var csrInspectAttrs = map[string]attr.Type{
 func (f *CSRInspectFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary: "Decode a PEM-encoded PKCS #10 certificate signing request into a structured object",
-		MarkdownDescription: "Parses the first `CERTIFICATE REQUEST` block in `pem` and returns a fixed-shape object:\n\n" +
-			"- `subject` — RFC 4514 distinguished-name string from the CSR\n" +
-			"- `signature_algorithm`, `public_key_algorithm` — `SHA256-RSA`, `Ed25519`, etc.\n" +
-			"- `dns_names`, `email_addresses`, `ip_addresses`, `uris` — Subject Alternative Names by category, taken from the CSR's requested-extensions attribute\n\n" +
-			"Fields that don't exist on a CSR (serial number, validity window, key usage, BasicConstraints) are not on this object — those are set by the issuing CA when the request is approved.\n\n" +
-			"Errors when the input contains no CERTIFICATE REQUEST block or the request fails to parse.",
+		MarkdownDescription: "Parses the first `CERTIFICATE REQUEST` block in `pem` and returns a fixed-shape object:\n\n- `subject` — RFC 4514 distinguished-name string from the CSR\n- `signature_algorithm`, `public_key_algorithm` — `SHA256-RSA`, `Ed25519`, etc.\n- `dns_names`, `email_addresses`, `ip_addresses`, `uris` — Subject Alternative Names by category, taken from the CSR's requested-extensions attribute\n\nFields that don't exist on a CSR (serial number, validity window, key usage, BasicConstraints) are not on this object — those are set by the issuing CA when the request is approved.\n\n**This function reads structure, not trust.** It does **not** verify the CSR's self-signature. Treat the result as the *requested* attributes; the issuing CA decides what actually ends up on the certificate.\n\nErrors when the input contains no CERTIFICATE REQUEST block or the request fails to parse.",
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "pem", Description: "PEM-encoded CSR (or a bundle containing one)."},
 		},
