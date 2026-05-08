@@ -18,15 +18,7 @@ func (f *NAT64ExtractFunction) Metadata(_ context.Context, _ function.MetadataRe
 func (f *NAT64ExtractFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary: "Extract the embedded IPv4 address from a NAT64 IPv6 address (RFC 6052)",
-		MarkdownDescription: "Recovers the IPv4 address from a NAT64 IPv6 address.\n\n" +
-			"With no second argument, extracts the **last 32 bits** of the IPv6 address as a " +
-			"dotted-decimal IPv4 string. This is correct for the overwhelming common case: the " +
-			"Well-Known Prefix `64:ff9b::/96` and any other `/96` NAT64 prefix.\n\n" +
-			"With an optional `nat64_prefix` argument (e.g. `\"2001:db8::/48\"`), uses the " +
-			"RFC 6052 byte layout for that prefix length instead — needed for `/32`–`/64` " +
-			"prefixes where the IPv4 bytes don't sit in the last 32 bits.\n\n" +
-			"**Common uses:** reverse-mapping NAT64 addresses in flow logs or firewall hits " +
-			"back to the original IPv4; ACL generation from IPv6 traffic records.",
+		MarkdownDescription: "Recovers the IPv4 address from a NAT64 IPv6 address.\n\nWith no second argument, extracts the **last 32 bits** of the IPv6 address as a dotted-decimal IPv4 string. This is correct for the overwhelming common case: the Well-Known Prefix `64:ff9b::/96` and any other `/96` NAT64 prefix.\n\nWith an optional `nat64_prefix` argument (e.g. `\"2001:db8::/48\"`), uses the RFC 6052 byte layout for that prefix length instead — needed for `/32`–`/64` prefixes where the IPv4 bytes don't sit in the last 32 bits.\n\n**Common uses:** reverse-mapping NAT64 addresses in flow logs or firewall hits back to the original IPv4; ACL generation from IPv6 traffic records.",
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "ipv6", Description: "The NAT64 IPv6 address to decode."},
 		},

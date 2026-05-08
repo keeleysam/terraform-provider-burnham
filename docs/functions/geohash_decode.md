@@ -12,9 +12,11 @@ description: |-
 Parses `code` and returns:
 
 - `latitude` / `longitude` — the centre of the cell, in degrees.
-- `lat_min` / `lat_max` / `lon_min` / `lon_max` — the cell's bounding box (the points the hash *might* have come from).
+- `lat_min` / `lat_max` / `lon_min` / `lon_max` — the cell's bounding box (the points the code *might* have been encoded from).
 
 `code` is case-insensitive but must use the standard geohash alphabet `0-9 b-z` minus `a i l o`. Errors on any other character.
+
+For the corner cell `zzz…z` the geometric upper edges are exactly `(90, 180)`, but the upstream encoder wraps those values; the decoder shrinks `lat_max` / `lon_max` for that cell to the nearest representable float strictly below the wrap threshold (~one ULP off the geometric edge) so round-tripping `lat_max` / `lon_max` back through `geohash_encode` lands on the same cell.
 
 ## Example Usage
 

@@ -50,6 +50,21 @@ Burnham is organized into eight families of functions:
 | Windows .reg | `regencode` | `regdecode` | Registry Editor export format with typed values and comments |
 | YAML | `yamlencode` | — | Block style, literal scalars, comments. Terraform has `yamldecode` built-in |
 
+### Tagged-value helpers (consumed inside `regencode` / `plistencode`)
+
+`REG_*` and `<plist>` documents carry typed values that aren't directly representable in HCL — `REG_DWORD` is a 32-bit unsigned integer, `<data>` is base64-wrapped binary, and so on. These constructor functions return tagged objects that the matching encoder picks up and emits with the correct type tag. Use them inline inside the encoder's input map; they're meaningless outside that context.
+
+| Function | Returns | Used by |
+|---|---|---|
+| `plistdata(b64)` | tagged `data` | `plistencode` — emits as `<data>...</data>` |
+| `plistdate(rfc3339)` | tagged `date` | `plistencode` — emits as `<date>...</date>` |
+| `plistreal(number)` | tagged `real` | `plistencode` — emits as `<real>...</real>` (whole-number floats would otherwise round-trip as `<integer>`) |
+| `regbinary(hex)` | tagged `REG_BINARY` | `regencode` — input is a hex string |
+| `regdword(uint32)` | tagged `REG_DWORD` | `regencode` — accepts `[0, 4294967295]` |
+| `regexpandsz(string)` | tagged `REG_EXPAND_SZ` | `regencode` — Windows expands `%VAR%` references at lookup |
+| `regmulti(list(string))` | tagged `REG_MULTI_SZ` | `regencode` — null-separated list of strings |
+| `regqword(uint64)` | tagged `REG_QWORD` | `regencode` — accepts `[0, 18446744073709551615]` |
+
 Per-function documentation — including parameters, options, and return values — lives under [`docs/functions/`](docs/functions/) and on [registry.terraform.io](https://registry.terraform.io/providers/keeleysam/burnham/latest/docs). The pages there are auto-generated from the function metadata in source, so they always match the latest published version.
 
 ## Networking Functions

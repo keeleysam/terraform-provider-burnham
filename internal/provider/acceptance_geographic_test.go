@@ -54,17 +54,25 @@ func TestAcc_GeohashEncode_RejectsOutOfRangeLongitude(t *testing.T) {
 }
 
 func TestAcc_GeohashEncode_RejectsCornerLatitude90(t *testing.T) {
-	// Upstream silently snaps lat==90 / lon==180 to the south-polar/antimeridian corner; we reject so callers get an explicit error instead of a wrong code.
+	// Upstream wraps lat==90 to lat==-90; we reject so callers don't silently get the opposite quadrant.
 	runErrorTest(t,
 		`output "test" { value = provider::burnham::geohash_encode(90, 0, 5) }`,
-		regexp.MustCompile(`(?is)latitude\s+==\s+90\s+is\s+not\s+representable`),
+		regexp.MustCompile(`(?is)latitude\s+==\s+90\s+wraps`),
 	)
 }
 
 func TestAcc_GeohashEncode_RejectsCornerLongitude180(t *testing.T) {
 	runErrorTest(t,
 		`output "test" { value = provider::burnham::geohash_encode(0, 180, 5) }`,
-		regexp.MustCompile(`(?is)longitude\s+==\s+180\s+is\s+not\s+representable`),
+		regexp.MustCompile(`(?is)longitude\s+==\s+180\s+wraps`),
+	)
+}
+
+func TestAcc_GeohashDecode_CornerCellBBoxEdgesRoundTrip(t *testing.T) {
+	// Regression: previously the decoder reported `lat_max=90, lon_max=180` for "zzzzzzzzzzzz", which the encoder rejects. The decoder now shrinks those edges below the wrap threshold so feeding them back into `geohash_encode` lands on the same corner cell (prefix "z") instead of erroring.
+	runOutputTest(t,
+		`output "test" { value = substr(provider::burnham::geohash_encode(provider::burnham::geohash_decode("zzzzzzzzzzzz").lat_max, provider::burnham::geohash_decode("zzzzzzzzzzzz").lon_max, 1), 0, 1) }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("z")),
 	)
 }
 

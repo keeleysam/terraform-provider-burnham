@@ -3,6 +3,7 @@ package dataformat
 import (
 	"context"
 	"encoding/base64"
+	"fmt"
 	"reflect"
 
 	"github.com/fxamacker/cbor/v2"
@@ -26,10 +27,7 @@ func (f *CBORDecodeFunction) Metadata(_ context.Context, _ function.MetadataRequ
 func (f *CBORDecodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary: "Decode a base64-encoded CBOR blob into a value",
-		MarkdownDescription: "Decodes [CBOR](https://www.rfc-editor.org/rfc/rfc8949) ([RFC 8949](https://www.rfc-editor.org/rfc/rfc8949)) bytes — provided as a standard base64 string, since HCL strings are UTF-8 only — into a Terraform value.\n\n" +
-			"Type mapping: CBOR maps with string keys become objects (maps with non-string keys are an error); arrays become tuples; integers and floats become numbers; byte strings become standard base64 strings; tag-0/tag-1 datetimes become [RFC 3339](https://www.rfc-editor.org/rfc/rfc3339) strings; bignum tags (2/3) become full-precision numbers (Terraform's number type uses arbitrary-precision big floats).\n\n" +
-			"Backed by [fxamacker/cbor](https://github.com/fxamacker/cbor), an RFC 8949 conforming implementation.\n\n" +
-			"**Common uses:** consuming CBOR-encoded payloads from IoT/CoAP gateways, COSE signed objects, or any binary structured-data feed where compactness matters more than human readability.",
+		MarkdownDescription: "Decodes [CBOR](https://www.rfc-editor.org/rfc/rfc8949) ([RFC 8949](https://www.rfc-editor.org/rfc/rfc8949)) bytes — provided as a standard base64 string, since HCL strings are UTF-8 only — into a Terraform value.\n\nType mapping: CBOR maps with string keys become objects (maps with non-string keys are an error); arrays become tuples; integers and floats become numbers; byte strings become standard base64 strings; tag-0/tag-1 datetimes become [RFC 3339](https://www.rfc-editor.org/rfc/rfc3339) strings; bignum tags (2/3) become full-precision numbers (Terraform's number type uses arbitrary-precision big floats).\n\nBacked by [fxamacker/cbor](https://github.com/fxamacker/cbor), an RFC 8949 conforming implementation.\n\n**Common uses:** consuming CBOR-encoded payloads from IoT/CoAP gateways, COSE signed objects, or any binary structured-data feed where compactness matters more than human readability.",
 		Parameters: []function.Parameter{
 			function.StringParameter{
 				Name:        "input",
@@ -47,6 +45,10 @@ func (f *CBORDecodeFunction) Run(ctx context.Context, req function.RunRequest, r
 		return
 	}
 
+	if len(input) > dataformatMaxInputBytes {
+		resp.Error = function.NewArgumentFuncError(0, fmt.Sprintf("input exceeds maximum supported length of %d bytes", dataformatMaxInputBytes))
+		return
+	}
 	raw, err := base64.StdEncoding.DecodeString(input)
 	if err != nil {
 		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Invalid base64: "+err.Error()))
@@ -55,9 +57,13 @@ func (f *CBORDecodeFunction) Run(ctx context.Context, req function.RunRequest, r
 
 	// DefaultMapType: map[string]interface{} so goToTerraformValue's existing case handles maps directly.
 	// TimeTag: DecTagOptional makes tag-0 (RFC 3339) and tag-1 (epoch) datetimes decode to time.Time, which goValueDecodeBinary then converts to an RFC 3339 string. Without this, tag-1 epoch tags would silently come through as a bare number.
+	// MaxNestedLevels / MaxArrayElements / MaxMapPairs: defensive caps so an adversarial CBOR blob with millions of nested items or a million-element array can't OOM the Terraform process at plan time. RFC 8949 places no upper bound on these — fxamacker/cbor exposes the knobs and applies a default of 32 / 128k / 128k; we lift `MaxNestedLevels` to 256 (well above any realistic config) and keep the element-count default since it already bounds memory.
 	decMode, err := cbor.DecOptions{
-		DefaultMapType: cborMapStringInterfaceType,
-		TimeTag:        cbor.DecTagOptional,
+		DefaultMapType:   cborMapStringInterfaceType,
+		TimeTag:          cbor.DecTagOptional,
+		MaxNestedLevels:  256,
+		MaxArrayElements: 131072,
+		MaxMapPairs:      131072,
 	}.DecMode()
 	if err != nil {
 		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("CBOR decoder setup failed: "+err.Error()))
@@ -92,11 +98,7 @@ func (f *CBOREncodeFunction) Metadata(_ context.Context, _ function.MetadataRequ
 func (f *CBOREncodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary: "Encode a value as base64 CBOR",
-		MarkdownDescription: "Encodes a Terraform value as [CBOR](https://www.rfc-editor.org/rfc/rfc8949) ([RFC 8949](https://www.rfc-editor.org/rfc/rfc8949)) and returns the result as a standard base64 string. " +
-			"Output uses CBOR's [Core Deterministic Encoding](https://www.rfc-editor.org/rfc/rfc8949#section-4.2.1): definite-length items, sorted map keys, and shortest-form integers — so the same input produces byte-identical output.\n\n" +
-			"Whole-number floats are emitted as integers (matching the conventions of `jsonencode` here). Strings are encoded as CBOR text strings; the function does not synthesize byte strings or tagged values from HCL inputs.\n\n" +
-			"Backed by [fxamacker/cbor](https://github.com/fxamacker/cbor).\n\n" +
-			"**Common uses:** generating CBOR fixtures for IoT services, COSE-style payloads, or any binary feed that benefits from a deterministic encoding.",
+		MarkdownDescription: "Encodes a Terraform value as [CBOR](https://www.rfc-editor.org/rfc/rfc8949) ([RFC 8949](https://www.rfc-editor.org/rfc/rfc8949)) and returns the result as a standard base64 string. Output uses CBOR's [Core Deterministic Encoding](https://www.rfc-editor.org/rfc/rfc8949#section-4.2.1): definite-length items, sorted map keys, and shortest-form integers — so the same input produces byte-identical output.\n\nWhole-number floats are emitted as integers (matching the conventions of `jsonencode` here). Strings are encoded as CBOR text strings; the function does not synthesize byte strings or tagged values from HCL inputs.\n\nBacked by [fxamacker/cbor](https://github.com/fxamacker/cbor).\n\n**Common uses:** generating CBOR fixtures for IoT services, COSE-style payloads, or any binary feed that benefits from a deterministic encoding.",
 		Parameters: []function.Parameter{
 			function.DynamicParameter{
 				Name:        "value",

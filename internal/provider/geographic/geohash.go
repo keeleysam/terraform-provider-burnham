@@ -25,6 +25,10 @@ import (
 const (
 	geohashMinPrecision = 1
 	geohashMaxPrecision = 12
+
+	// geohashCornerLatMax / geohashCornerLonMax are the values the decoder reports for the upper edges of the "zzz…z" corner cell. The upstream library wraps `lat == 90` / `lon == 180` to the opposite corner, so we shrink the reported edges to the largest float strictly below that wraps cleanly. Determined empirically against `mmcloughlin/geohash`'s wrap threshold (~one ULP below 90 / 180); these values still encode to the same "z" prefix and are well below the float precision a real geographic measurement would carry.
+	geohashCornerLatMax = 90.0 - 1e-13
+	geohashCornerLonMax = 180.0 - 1e-13
 )
 
 // geohashAlphabet is the base-32 alphabet geohash uses ("Geohash-32"): the digits 0–9 plus the lowercase letters with `a`, `i`, `l`, `o` removed to avoid visual confusion. (This is a different exclusion set than Crockford-base32, which removes `i`, `l`, `o`, `u`.)
@@ -64,17 +68,17 @@ func (f *GeohashEncodeFunction) Run(ctx context.Context, req function.RunRequest
 		resp.Error = ferr
 		return
 	}
-	// The upstream encoder treats latitude as [-90, 90) and longitude as [-180, 180): the literal upper-bound values silently wrap to -90 / -180. Reject explicitly so a caller's `lat = 90` doesn't end up encoded as the south-polar / antimeridian corner.
+	if precision < geohashMinPrecision || precision > geohashMaxPrecision {
+		resp.Error = function.NewArgumentFuncError(2, fmt.Sprintf("precision must be in [%d, %d]; received %d", geohashMinPrecision, geohashMaxPrecision, precision))
+		return
+	}
+	// The upstream encoder treats latitude as [-90, 90) and longitude as [-180, 180): exactly 90 / 180 wrap to the opposite corner. Reject so callers see the surprise instead of silently encoding the south-polar / antimeridian quadrant. (The decoder shrinks its corner-cell bbox edges below 90 / 180 so re-encoding `geohash_decode("zzz…z").lat_max` round-trips into the same cell rather than tripping this check.)
 	if lat == 90 {
-		resp.Error = function.NewArgumentFuncError(0, "latitude == 90 is not representable in the standard geohash grid; use a value strictly less than 90")
+		resp.Error = function.NewArgumentFuncError(0, "latitude == 90 wraps under the standard geohash encoder; pass a value strictly less than 90")
 		return
 	}
 	if lon == 180 {
-		resp.Error = function.NewArgumentFuncError(1, "longitude == 180 is not representable in the standard geohash grid; use a value strictly less than 180 (or -180, which is the same meridian)")
-		return
-	}
-	if precision < geohashMinPrecision || precision > geohashMaxPrecision {
-		resp.Error = function.NewArgumentFuncError(2, fmt.Sprintf("precision must be in [%d, %d]; received %d", geohashMinPrecision, geohashMaxPrecision, precision))
+		resp.Error = function.NewArgumentFuncError(1, "longitude == 180 wraps under the standard geohash encoder; pass a value strictly less than 180 (or -180, which is the same meridian)")
 		return
 	}
 	out := geohash.EncodeWithPrecision(lat, lon, uint(precision))
@@ -108,7 +112,7 @@ func (f *GeohashDecodeFunction) Metadata(_ context.Context, _ function.MetadataR
 func (f *GeohashDecodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary: "Decode a geohash into the centre point and bounding box of its cell",
-		MarkdownDescription: "Parses `code` and returns:\n\n- `latitude` / `longitude` — the centre of the cell, in degrees.\n- `lat_min` / `lat_max` / `lon_min` / `lon_max` — the cell's bounding box (the points the hash *might* have come from).\n\n`code` is case-insensitive but must use the standard geohash alphabet `0-9 b-z` minus `a i l o`. Errors on any other character.",
+		MarkdownDescription: "Parses `code` and returns:\n\n- `latitude` / `longitude` — the centre of the cell, in degrees.\n- `lat_min` / `lat_max` / `lon_min` / `lon_max` — the cell's bounding box (the points the code *might* have been encoded from).\n\n`code` is case-insensitive but must use the standard geohash alphabet `0-9 b-z` minus `a i l o`. Errors on any other character.\n\nFor the corner cell `zzz…z` the geometric upper edges are exactly `(90, 180)`, but the upstream encoder wraps those values; the decoder shrinks `lat_max` / `lon_max` for that cell to the nearest representable float strictly below the wrap threshold (~one ULP off the geometric edge) so round-tripping `lat_max` / `lon_max` back through `geohash_encode` lands on the same cell.",
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "code", Description: "Geohash string to decode."},
 		},
@@ -136,13 +140,22 @@ func (f *GeohashDecodeFunction) Run(ctx context.Context, req function.RunRequest
 
 	lat, lon := geohash.Decode(lower)
 	box := geohash.BoundingBox(lower)
+	// The corner cell ("zzz…z") reports its upper edges at exactly 90 / 180. Those values wrap if fed back into `geohash_encode`, so shrink them to the nearest representable float that the encoder still accepts. The shift is below any meaningful geographic resolution (~10 nm at 90°N) and keeps the bbox round-trippable.
+	latMax := box.MaxLat
+	if latMax >= 90 {
+		latMax = geohashCornerLatMax
+	}
+	lonMax := box.MaxLng
+	if lonMax >= 180 {
+		lonMax = geohashCornerLonMax
+	}
 	out, diags := types.ObjectValue(geohashDecodeAttrs, map[string]attr.Value{
 		"latitude":  types.NumberValue(big.NewFloat(lat)),
 		"longitude": types.NumberValue(big.NewFloat(lon)),
 		"lat_min":   types.NumberValue(big.NewFloat(box.MinLat)),
-		"lat_max":   types.NumberValue(big.NewFloat(box.MaxLat)),
+		"lat_max":   types.NumberValue(big.NewFloat(latMax)),
 		"lon_min":   types.NumberValue(big.NewFloat(box.MinLng)),
-		"lon_max":   types.NumberValue(big.NewFloat(box.MaxLng)),
+		"lon_max":   types.NumberValue(big.NewFloat(lonMax)),
 	})
 	if diags.HasError() {
 		resp.Error = function.NewFuncError("building geohash_decode result")

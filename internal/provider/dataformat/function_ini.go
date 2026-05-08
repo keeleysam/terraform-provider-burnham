@@ -26,12 +26,7 @@ func (f *INIDecodeFunction) Metadata(_ context.Context, _ function.MetadataReque
 func (f *INIDecodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary: "Parse an INI file into a Terraform value",
-		MarkdownDescription: "Parses an INI string into a Terraform object. The result is a two-level map: section names at the outer level, " +
-			"key/value pairs at the inner level. Keys outside any section (\"global\" keys) are placed under the empty-string key (`\"\"`) " +
-			"so the structure stays uniform.\n\n" +
-			"All values are strings — INI has no native type system. Convert numerically/booleanly as needed in HCL.\n\n" +
-			"**Common uses:** reading legacy application config (`my.cnf`, `php.ini`, `.gitconfig`-style files), normalizing operator-edited config " +
-			"into a typed Terraform value, or feeding INI content into a `templatefile` substitution.",
+		MarkdownDescription: "Parses an INI string into a Terraform object. The result is a two-level map: section names at the outer level, key/value pairs at the inner level. Keys outside any section (\"global\" keys) are placed under the empty-string key (`\"\"`) so the structure stays uniform.\n\nAll values are strings — INI has no native type system. Convert numerically/booleanly as needed in HCL.\n\n**Common uses:** reading legacy application config (`my.cnf`, `php.ini`, `.gitconfig`-style files), normalizing operator-edited config into a typed Terraform value, or feeding INI content into a `templatefile` substitution.",
 		Parameters: []function.Parameter{
 			function.StringParameter{
 				Name:        "input",
@@ -195,11 +190,7 @@ func (f *INIEncodeFunction) Metadata(_ context.Context, _ function.MetadataReque
 func (f *INIEncodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary: "Encode a value as an INI file",
-		MarkdownDescription: "Encodes a Terraform object as an INI string. The input must be a two-level map: section names at the outer level, " +
-			"key/value pairs at the inner level. Keys under the empty-string key (`\"\"`) are rendered as global keys before any `[section]` header.\n\n" +
-			"All values are converted to strings; sections and keys are written in alphabetical order for deterministic output.\n\n" +
-			"**Common uses:** generating legacy application config files via `local_file`, or rendering INI snippets to be assembled into a larger " +
-			"config through `templatefile`.",
+		MarkdownDescription: "Encodes a Terraform object as an INI string. The input must be a two-level map: section names at the outer level, key/value pairs at the inner level. Keys under the empty-string key (`\"\"`) are rendered as global keys before any `[section]` header.\n\nAll values are converted to strings; sections and keys are written in alphabetical order for deterministic output.\n\n**Common uses:** generating legacy application config files via `local_file`, or rendering INI snippets to be assembled into a larger config through `templatefile`.",
 		Parameters: []function.Parameter{
 			function.DynamicParameter{
 				Name:        "value",

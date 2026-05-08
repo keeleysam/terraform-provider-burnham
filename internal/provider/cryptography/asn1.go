@@ -74,13 +74,12 @@ func (f *ASN1DecodeFunction) Run(ctx context.Context, req function.RunRequest, r
 	if resp.Error != nil {
 		return
 	}
-	trimmed := strings.TrimSpace(input)
-	// Cap input size at 8 MiB of base64; the decoded DER will be at most ~6 MiB. This is far above any realistic certificate while still bounding the worst case.
-	if len(trimmed) > asn1MaxBase64Bytes {
+	// Cap input size at 8 MiB; the decoded DER will be at most ~6 MiB. Checked on the *raw* string before TrimSpace so a megabyte of leading whitespace can't slip past the bound.
+	if len(input) > asn1MaxBase64Bytes {
 		resp.Error = function.NewArgumentFuncError(0, fmt.Sprintf("der_base64 input exceeds maximum length of %d bytes", asn1MaxBase64Bytes))
 		return
 	}
-	der, err := base64.StdEncoding.DecodeString(trimmed)
+	der, err := base64.StdEncoding.DecodeString(strings.TrimSpace(input))
 	if err != nil {
 		resp.Error = function.NewArgumentFuncError(0, "der_base64 must be valid base64: "+err.Error())
 		return

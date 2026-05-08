@@ -364,6 +364,14 @@ func TestAcc_ASN1Decode_RejectsExcessiveDepth(t *testing.T) {
 	)
 }
 
+func TestAcc_ASN1Decode_RejectsOversizedInput(t *testing.T) {
+	// 8 MiB + 1 byte exceeds asn1MaxBase64Bytes. Built procedurally with `format("%-N s", " ")` so the test source stays small; the function rejects on length before attempting base64 decode.
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::asn1_decode(format("%-8388609s", " ")) }`,
+		regexp.MustCompile(`(?is)der_base64\s+input\s+exceeds\s+maximum\s+length`),
+	)
+}
+
 // Primitive-tag coverage. Each fixture is a single-TLV DER that exercises one of decodePrimitive's per-tag branches; pre-computed via encoding/asn1 once and locked. Together they cover BIT STRING, OCTET STRING, UTF8String, PrintableString, BOOLEAN.
 
 func TestAcc_ASN1Decode_BitString(t *testing.T) {

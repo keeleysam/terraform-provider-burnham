@@ -25,7 +25,10 @@ jobs:
       - run: go build ./...
       - run: go vet ./...
       # `-coverpkg=./internal/...` captures cross-package coverage. The acceptance tests live in package provider but exercise package dataformat and package network through the protocol layer; without -coverpkg, that work doesn't count toward those packages and the per-package numbers look much worse than they actually are. We then write all per-package profiles into one merged file and report a single combined coverage figure, which is the number worth tracking.
-      - run: go test ./... -count=1 -coverpkg=./internal/... -coverprofile=coverage.out -v
+      # `TF_ACC=1` opts in to running the `TestAcc_*` acceptance tests (terraform-plugin-testing skips them by default — without this every TestAcc_* call is a no-op). `-race` catches data-race regressions in the few places we hold shared state across goroutines (slugify's mutex around gosimple/slug's package globals is the load-bearing example); cheap insurance even though most of the code is pure functions.
+      - run: go test ./... -count=1 -race -coverpkg=./internal/... -coverprofile=coverage.out -v
+        env:
+          TF_ACC: "1"
       - name: Combined coverage across all internal packages
         run: go tool cover -func=coverage.out | tail -1
 

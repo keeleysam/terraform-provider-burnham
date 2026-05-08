@@ -202,7 +202,7 @@ func TestAcc_Cowsay_RejectsBadEyes(t *testing.T) {
 func TestAcc_Cowsay_RejectsControlCharacterInEyes(t *testing.T) {
 	// Two-codepoint string that includes a non-printable rune (U+0007 BEL) — must be rejected so cow output can't be smuggled with terminal control codes.
 	runErrorTest(t,
-		`output "test" { value = provider::burnham::cowsay("x", { eyes = "a" }) }`,
+		`output "test" { value = provider::burnham::cowsay("x", { eyes = "a\u0007" }) }`,
 		regexp.MustCompile(`(?is)eyes\s+must\s+be\s+exactly\s+2\s+printable`),
 	)
 }
@@ -219,6 +219,14 @@ func TestAcc_Cowsay_RejectsBadTongue(t *testing.T) {
 	runErrorTest(t,
 		`output "test" { value = provider::burnham::cowsay("x", { tongue = "abc" }) }`,
 		regexp.MustCompile(`(?is)tongue\s+must\s+be\s+exactly\s+2`),
+	)
+}
+
+func TestAcc_Cowsay_RejectsOversizedMessage(t *testing.T) {
+	// 65 KiB > the 64 KiB cap. Built via `format("%-65537s","x")` to keep the test source readable.
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::cowsay(format("%-65537s", "x")) }`,
+		regexp.MustCompile(`(?is)message\s+exceeds\s+maximum\s+length`),
 	)
 }
 

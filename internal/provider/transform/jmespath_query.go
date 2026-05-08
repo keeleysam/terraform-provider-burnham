@@ -21,13 +21,7 @@ func (f *JMESPathQueryFunction) Metadata(_ context.Context, _ function.MetadataR
 func (f *JMESPathQueryFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary: "Run a JMESPath query against a value",
-		MarkdownDescription: "Evaluates a [JMESPath](https://jmespath.org/) expression against a Terraform value and returns the matching result. " +
-			"Useful for extracting fields from large nested structures (decoded API responses, manifests, configuration trees) " +
-			"without long chains of `try(local.x.foo[0].bar, null)`.\n\n" +
-			"The expression follows the JMESPath specification — projections (`[*]`), filters (`[?key == 'value']`), pipes (`|`), " +
-			"functions (`length`, `sort_by`, `to_string`, …), and multi-select hashes (`{a: foo, b: bar}`) are all supported. " +
-			"Returns `null` when the expression matches nothing.\n\n" +
-			"Backed by [jmespath-community/go-jmespath](https://github.com/jmespath-community/go-jmespath), the actively-maintained fork of the canonical Go implementation.",
+		MarkdownDescription: "Evaluates a [JMESPath](https://jmespath.org/) expression against a Terraform value and returns the matching result. Useful for extracting fields from large nested structures (decoded API responses, manifests, configuration trees) without long chains of `try(local.x.foo[0].bar, null)`.\n\nThe expression follows the JMESPath specification — projections (`[*]`), filters (`[?key == 'value']`), pipes (`|`), functions (`length`, `sort_by`, `to_string`, …), and multi-select hashes (`{a: foo, b: bar}`) are all supported. Returns `null` when the expression matches nothing.\n\nBacked by [jmespath-community/go-jmespath](https://github.com/jmespath-community/go-jmespath), the actively-maintained fork of the canonical Go implementation.",
 		Parameters: []function.Parameter{
 			function.DynamicParameter{
 				Name:        "value",

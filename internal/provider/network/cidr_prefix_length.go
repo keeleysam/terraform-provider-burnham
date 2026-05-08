@@ -18,9 +18,7 @@ func (f *CIDRPrefixLengthFunction) Metadata(_ context.Context, _ function.Metada
 func (f *CIDRPrefixLengthFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Return the prefix length (/N) of a CIDR as a number",
-		MarkdownDescription: "Extracts and returns just the prefix length from a CIDR string.\n\n" +
-			"**Common uses:** passing prefix lengths to BGP route-map configurations, " +
-			"conditional logic based on subnet size, feeding into `cidrsubnet` calls.",
+		MarkdownDescription: "Extracts and returns just the prefix length from a CIDR string.\n\n**Common uses:** passing prefix lengths to BGP route-map configurations, conditional logic based on subnet size, feeding into `cidrsubnet` calls.",
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "cidr", Description: "The CIDR to inspect."},
 		},

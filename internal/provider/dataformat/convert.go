@@ -22,19 +22,28 @@ const (
 	plistTypeDate = "date"
 	plistTypeData = "data"
 	plistTypeReal = "real"
+
+	// convertMaxDepth caps the recursion depth in goToTerraformValueImpl / terraformValueToGo so an adversarial decoded payload (deeply nested CBOR / msgpack / VDF / KDL / plist / JSON-Patch) can't stack-OOM the Terraform process. 1024 is generous — a realistic config rarely nests past ~30 levels — and matches the order of magnitude of asn1MaxDepth's defensive sibling in the cryptography package.
+	convertMaxDepth = 1024
+
+	// dataformatMaxInputBytes is an upper bound on the size of an inbound encoded payload (CBOR / msgpack / VDF / KDL / plist / etc.). 16 MiB is much larger than any realistic config blob a Terraform plan would carry, but small enough to bound memory in absolute terms when the underlying parser does not enforce its own limits (vmihailenco/msgpack v5, sblinch/kdl-go, andreoliwa/go-vdf).
+	dataformatMaxInputBytes = 16 * 1024 * 1024
 )
 
 // goToTerraformValue converts a Go interface{} (as returned by json.Unmarshal or a binary-format decoder) to a Terraform attr.Value, using the JSON value space: null, bool, string, number, list, object. []byte is rendered as a base64 string, time.Time as an RFC 3339 string, big.Int / *big.Int as an arbitrary-precision number. Use goToTerraformValuePlist when round-tripping plist-tagged types.
 func goToTerraformValue(v interface{}) (attr.Value, error) {
-	return goToTerraformValueImpl(v, false)
+	return goToTerraformValueImpl(v, false, 0)
 }
 
 // goToTerraformValuePlist is the plist-aware variant: time.Time, []byte, and whole-number float64 emit __plist_type-tagged objects so plistencode can later round-trip them back to <date>, <data>, and <real> elements respectively. Use goToTerraformValue everywhere else — for non-plist callers, the tagged objects would look like garbage map members in their HCL output.
 func goToTerraformValuePlist(v interface{}) (attr.Value, error) {
-	return goToTerraformValueImpl(v, true)
+	return goToTerraformValueImpl(v, true, 0)
 }
 
-func goToTerraformValueImpl(v interface{}, plist bool) (attr.Value, error) {
+func goToTerraformValueImpl(v interface{}, plist bool, depth int) (attr.Value, error) {
+	if depth >= convertMaxDepth {
+		return nil, fmt.Errorf("decoded structure exceeds maximum supported nesting depth of %d", convertMaxDepth)
+	}
 	switch val := v.(type) {
 	case nil:
 		return types.DynamicNull(), nil
@@ -111,10 +120,10 @@ func goToTerraformValueImpl(v interface{}, plist bool) (attr.Value, error) {
 		return types.StringValue(base64.StdEncoding.EncodeToString(val)), nil
 
 	case []interface{}:
-		return goSliceToTupleImpl(val, plist)
+		return goSliceToTupleImpl(val, plist, depth+1)
 
 	case map[string]interface{}:
-		return goMapToObjectImpl(val, plist)
+		return goMapToObjectImpl(val, plist, depth+1)
 
 	default:
 		return nil, fmt.Errorf("unsupported Go type %T", v)
@@ -139,10 +148,10 @@ func makePlistTaggedObject(plistType, value string) (attr.Value, error) {
 }
 
 func goSliceToTuple(slice []interface{}) (attr.Value, error) {
-	return goSliceToTupleImpl(slice, false)
+	return goSliceToTupleImpl(slice, false, 0)
 }
 
-func goSliceToTupleImpl(slice []interface{}, plist bool) (attr.Value, error) {
+func goSliceToTupleImpl(slice []interface{}, plist bool, depth int) (attr.Value, error) {
 	if len(slice) == 0 {
 		return types.TupleValueMust([]attr.Type{}, []attr.Value{}), nil
 	}
@@ -151,7 +160,7 @@ func goSliceToTupleImpl(slice []interface{}, plist bool) (attr.Value, error) {
 	elemValues := make([]attr.Value, len(slice))
 
 	for i, item := range slice {
-		val, err := goToTerraformValueImpl(item, plist)
+		val, err := goToTerraformValueImpl(item, plist, depth)
 		if err != nil {
 			return nil, fmt.Errorf("index %d: %w", i, err)
 		}
@@ -163,10 +172,10 @@ func goSliceToTupleImpl(slice []interface{}, plist bool) (attr.Value, error) {
 }
 
 func goMapToObject(m map[string]interface{}) (attr.Value, error) {
-	return goMapToObjectImpl(m, false)
+	return goMapToObjectImpl(m, false, 0)
 }
 
-func goMapToObjectImpl(m map[string]interface{}, plist bool) (attr.Value, error) {
+func goMapToObjectImpl(m map[string]interface{}, plist bool, depth int) (attr.Value, error) {
 	if len(m) == 0 {
 		return types.ObjectValueMust(map[string]attr.Type{}, map[string]attr.Value{}), nil
 	}
@@ -175,7 +184,7 @@ func goMapToObjectImpl(m map[string]interface{}, plist bool) (attr.Value, error)
 	attrValues := make(map[string]attr.Value, len(m))
 
 	for k, v := range m {
-		val, err := goToTerraformValueImpl(v, plist)
+		val, err := goToTerraformValueImpl(v, plist, depth)
 		if err != nil {
 			return nil, fmt.Errorf("key %q: %w", k, err)
 		}
@@ -190,10 +199,15 @@ func goMapToObjectImpl(m map[string]interface{}, plist bool) (attr.Value, error)
 	return obj, nil
 }
 
-// terraformValueToGo converts a Terraform attr.Value back to a Go interface{}.
-// When plistMode is true, tagged objects with __plist_type are converted to
-// their native Go types (time.Time, []byte).
+// terraformValueToGo converts a Terraform attr.Value back to a Go interface{}. When plistMode is true, tagged objects with __plist_type are converted to their native Go types (time.Time, []byte).
 func terraformValueToGo(v attr.Value, plistMode bool) (interface{}, error) {
+	return terraformValueToGoImpl(v, plistMode, 0)
+}
+
+func terraformValueToGoImpl(v attr.Value, plistMode bool, depth int) (interface{}, error) {
+	if depth >= convertMaxDepth {
+		return nil, fmt.Errorf("encoded value exceeds maximum supported nesting depth of %d", convertMaxDepth)
+	}
 	if v.IsNull() || v.IsUnknown() {
 		return nil, nil
 	}
@@ -215,7 +229,7 @@ func terraformValueToGo(v attr.Value, plistMode bool) (interface{}, error) {
 		elements := val.Elements()
 		slice := make([]interface{}, len(elements))
 		for i, elem := range elements {
-			goVal, err := terraformValueToGo(elem, plistMode)
+			goVal, err := terraformValueToGoImpl(elem, plistMode, depth+1)
 			if err != nil {
 				return nil, fmt.Errorf("index %d: %w", i, err)
 			}
@@ -235,7 +249,7 @@ func terraformValueToGo(v attr.Value, plistMode bool) (interface{}, error) {
 
 		m := make(map[string]interface{}, len(attrs))
 		for k, attrVal := range attrs {
-			goVal, err := terraformValueToGo(attrVal, plistMode)
+			goVal, err := terraformValueToGoImpl(attrVal, plistMode, depth+1)
 			if err != nil {
 				return nil, fmt.Errorf("key %q: %w", k, err)
 			}
@@ -247,7 +261,7 @@ func terraformValueToGo(v attr.Value, plistMode bool) (interface{}, error) {
 		elements := val.Elements()
 		slice := make([]interface{}, len(elements))
 		for i, elem := range elements {
-			goVal, err := terraformValueToGo(elem, plistMode)
+			goVal, err := terraformValueToGoImpl(elem, plistMode, depth+1)
 			if err != nil {
 				return nil, fmt.Errorf("index %d: %w", i, err)
 			}
@@ -259,7 +273,7 @@ func terraformValueToGo(v attr.Value, plistMode bool) (interface{}, error) {
 		elems := val.Elements()
 		m := make(map[string]interface{}, len(elems))
 		for k, elem := range elems {
-			goVal, err := terraformValueToGo(elem, plistMode)
+			goVal, err := terraformValueToGoImpl(elem, plistMode, depth+1)
 			if err != nil {
 				return nil, fmt.Errorf("key %q: %w", k, err)
 			}
@@ -271,7 +285,7 @@ func terraformValueToGo(v attr.Value, plistMode bool) (interface{}, error) {
 		elements := val.Elements()
 		slice := make([]interface{}, len(elements))
 		for i, elem := range elements {
-			goVal, err := terraformValueToGo(elem, plistMode)
+			goVal, err := terraformValueToGoImpl(elem, plistMode, depth+1)
 			if err != nil {
 				return nil, fmt.Errorf("index %d: %w", i, err)
 			}
@@ -280,7 +294,7 @@ func terraformValueToGo(v attr.Value, plistMode bool) (interface{}, error) {
 		return slice, nil
 
 	case basetypes.DynamicValue:
-		return terraformValueToGo(val.UnderlyingValue(), plistMode)
+		return terraformValueToGoImpl(val.UnderlyingValue(), plistMode, depth)
 
 	default:
 		return nil, fmt.Errorf("unsupported Terraform type %T", v)

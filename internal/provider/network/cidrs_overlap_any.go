@@ -19,10 +19,7 @@ func (f *CIDRsOverlapAnyFunction) Metadata(_ context.Context, _ function.Metadat
 func (f *CIDRsOverlapAnyFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary: "Check whether any CIDR in one list overlaps with any CIDR in another",
-		MarkdownDescription: "Returns `true` if any CIDR in list `a` overlaps with any CIDR in list `b`.\n\n" +
-			"**Common uses:** pre-flight validation in `variable` validation blocks to ensure a proposed " +
-			"VPC CIDR does not conflict with existing peered networks; checking that new security group " +
-			"ranges don't collide with reserved address space.",
+		MarkdownDescription: "Returns `true` if any CIDR in list `a` overlaps with any CIDR in list `b`.\n\n**Common uses:** pre-flight validation in `variable` validation blocks to ensure a proposed VPC CIDR does not conflict with existing peered networks; checking that new security group ranges don't collide with reserved address space.",
 		Parameters: []function.Parameter{
 			function.ListParameter{
 				Name:        "a",

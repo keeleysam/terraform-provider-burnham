@@ -1,7 +1,9 @@
 package provider
 
 import (
+	"fmt"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
@@ -227,6 +229,21 @@ func TestAcc_Nanoid_RejectsTooLarge(t *testing.T) {
 	runErrorTest(t,
 		`output "test" { value = provider::burnham::nanoid("seed", { size = 9999 }) }`,
 		regexp.MustCompile(`(?is)size\s+must\s+be\s+in\s+\[1,\s*1024\]`),
+	)
+}
+
+func TestAcc_Nanoid_AlphabetExactly256Codepoints(t *testing.T) {
+	// Regression: a 256-codepoint alphabet used to panic in the index calculation (`byte(256) → 0` made the modulus a divide-by-zero). Build a 256-rune alphabet from a contiguous unicode range and verify the function returns a same-length string of valid codepoints.
+	var alphabetBuilder strings.Builder
+	for r := rune(0x0100); r < rune(0x0100+256); r++ {
+		// Skip any rune that has special meaning in HCL string literals — none in this Latin-Extended-A through Latin-Extended-B sweep, but be explicit.
+		fmt.Fprintf(&alphabetBuilder, "\\u%04x", r)
+	}
+	alphabet := alphabetBuilder.String()
+	hcl := fmt.Sprintf(`output "test" { value = length(provider::burnham::nanoid("seed", { alphabet = "%s", size = 8 })) }`, alphabet)
+	runOutputTest(t,
+		hcl,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.Int64Exact(8)),
 	)
 }
 

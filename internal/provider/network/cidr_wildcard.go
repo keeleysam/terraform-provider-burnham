@@ -18,9 +18,7 @@ func (f *CIDRWildcardFunction) Metadata(_ context.Context, _ function.MetadataRe
 func (f *CIDRWildcardFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Return the wildcard mask (inverse of subnet mask) for an IPv4 CIDR",
-		MarkdownDescription: "Returns the wildcard mask for the given IPv4 CIDR. For example, `10.0.0.0/24` → `0.0.0.255`. IPv6 CIDRs return an error.\n\n" +
-			"**Common uses:** generating Cisco IOS ACL entries, AWS network ACL wildcard fields, " +
-			"firewall rules that use wildcard mask notation instead of prefix length.",
+		MarkdownDescription: "Returns the wildcard mask for the given IPv4 CIDR. For example, `10.0.0.0/24` → `0.0.0.255`. IPv6 CIDRs return an error.\n\n**Common uses:** generating Cisco IOS ACL entries, AWS network ACL wildcard fields, firewall rules that use wildcard mask notation instead of prefix length.",
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "cidr", Description: "An IPv4 CIDR."},
 		},

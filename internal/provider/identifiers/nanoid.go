@@ -145,7 +145,8 @@ func (f *NanoidFunction) Run(ctx context.Context, req function.RunRequest, resp 
 		resp.Error = function.NewArgumentFuncError(1, fmt.Sprintf("alphabet may have at most 256 codepoints; received %d", len(runes)))
 		return
 	}
-	mod := byte(len(runes))
+	// `mod` and the index math are int, not byte: a 256-rune alphabet is legal per the cap above, but `byte(256)` would wrap to 0 and turn the modulo into a divide-by-zero panic. int math handles 1–256 uniformly.
+	mod := len(runes)
 
 	seedBytes := []byte(seed)
 	label := []byte("burnham/nanoid:" + alphabet)
@@ -167,7 +168,7 @@ func (f *NanoidFunction) Run(ctx context.Context, req function.RunRequest, resp 
 		if bytesUsed >= len(block) {
 			refill()
 		}
-		idx := block[bytesUsed] % mod
+		idx := int(block[bytesUsed]) % mod
 		bytesUsed++
 		b.WriteRune(runes[idx])
 	}

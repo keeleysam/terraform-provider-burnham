@@ -26,12 +26,7 @@ func (f *DotenvDecodeFunction) Metadata(_ context.Context, _ function.MetadataRe
 func (f *DotenvDecodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary: "Parse a dotenv (.env) file into a string-to-string map",
-		MarkdownDescription: "Parses a [dotenv](https://github.com/joho/godotenv) (`.env`) file body into an object whose attributes are the file's keys, " +
-			"with all values as strings. Comments (`#`) are ignored. Both `KEY=value` and `export KEY=value` lines are accepted. " +
-			"Double-quoted values support `\\n`, `\\r`, `\\t` and `${VAR}` interpolation against earlier keys; single-quoted values are taken literally.\n\n" +
-			"All values are returned as strings — dotenv has no type system. Cast on the Terraform side with `tonumber()` / `tobool()` if needed.\n\n" +
-			"Backed by [joho/godotenv](https://github.com/joho/godotenv), the canonical Go implementation.\n\n" +
-			"**Common uses:** ingesting environment files for ECS/Lambda task definitions, container env blocks, or shipping config alongside compiled artifacts.",
+		MarkdownDescription: "Parses a [dotenv](https://github.com/joho/godotenv) (`.env`) file body into an object whose attributes are the file's keys, with all values as strings. Comments (`#`) are ignored. Both `KEY=value` and `export KEY=value` lines are accepted. Double-quoted values support `\\n`, `\\r`, `\\t` and `${VAR}` interpolation against earlier keys; single-quoted values are taken literally.\n\nAll values are returned as strings — dotenv has no type system. Cast on the Terraform side with `tonumber()` / `tobool()` if needed.\n\nBacked by [joho/godotenv](https://github.com/joho/godotenv), the canonical Go implementation.\n\n**Common uses:** ingesting environment files for ECS/Lambda task definitions, container env blocks, or shipping config alongside compiled artifacts.",
 		Parameters: []function.Parameter{
 			function.StringParameter{
 				Name:        "input",
@@ -82,10 +77,7 @@ func (f *DotenvEncodeFunction) Metadata(_ context.Context, _ function.MetadataRe
 func (f *DotenvEncodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary: "Encode a string-keyed object as a dotenv (.env) file body",
-		MarkdownDescription: "Encodes a flat string-keyed object as `KEY=value` lines in alphabetical key order. Numeric and boolean values are stringified. " +
-			"Values containing whitespace, quotes, `$`, `\\`, or newline characters are wrapped in double quotes with `\\n`/`\\r`/`\\t`/`\\\"`/`\\\\` escapes — readable round-trip with `dotenvdecode`. " +
-			"Nested objects and lists are not allowed.\n\n" +
-			"**Common uses:** generating `.env` files for `local_file`, container build contexts, or 12-factor service deployments.",
+		MarkdownDescription: "Encodes a flat string-keyed object as `KEY=value` lines in alphabetical key order. Numeric and boolean values are stringified. Values containing whitespace, quotes, `$`, `\\`, or newline characters are wrapped in double quotes with `\\n`/`\\r`/`\\t`/`\\\"`/`\\\\` escapes — readable round-trip with `dotenvdecode`. Nested objects and lists are not allowed.\n\n**Common uses:** generating `.env` files for `local_file`, container build contexts, or 12-factor service deployments.",
 		Parameters: []function.Parameter{
 			function.DynamicParameter{
 				Name:        "value",

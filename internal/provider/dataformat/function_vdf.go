@@ -28,11 +28,7 @@ func (f *VDFDecodeFunction) Metadata(_ context.Context, _ function.MetadataReque
 func (f *VDFDecodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary: "Parse a Valve Data Format (VDF) string into a Terraform value",
-		MarkdownDescription: "Parses a [Valve Data Format (VDF)](https://developer.valvesoftware.com/wiki/KeyValues) string into a Terraform object. " +
-			"VDF is a nested key-value format used by Steam and the Source engine — the only types are strings and nested objects, so all leaf values come back as strings.\n\n" +
-			"`//` comments are stripped during parsing.\n\n" +
-			"**Common uses:** reading Steam app manifests (`appmanifest_*.acf`), Source engine config files, or any Valve-tooling artifact " +
-			"where the on-disk format is VDF rather than INI/JSON.",
+		MarkdownDescription: "Parses a [Valve Data Format (VDF)](https://developer.valvesoftware.com/wiki/KeyValues) string into a Terraform object. VDF is a nested key-value format used by Steam and the Source engine — the only types are strings and nested objects, so all leaf values come back as strings.\n\n`//` comments are stripped during parsing.\n\n**Common uses:** reading Steam app manifests (`appmanifest_*.acf`), Source engine config files, or any Valve-tooling artifact where the on-disk format is VDF rather than INI/JSON.",
 		Parameters: []function.Parameter{
 			function.StringParameter{
 				Name:        "input",
@@ -48,6 +44,10 @@ func (f *VDFDecodeFunction) Run(ctx context.Context, req function.RunRequest, re
 
 	resp.Error = function.ConcatFuncErrors(resp.Error, req.Arguments.Get(ctx, &input))
 	if resp.Error != nil {
+		return
+	}
+	if len(input) > dataformatMaxInputBytes {
+		resp.Error = function.NewArgumentFuncError(0, fmt.Sprintf("input exceeds maximum supported length of %d bytes", dataformatMaxInputBytes))
 		return
 	}
 
@@ -82,11 +82,7 @@ func (f *VDFEncodeFunction) Metadata(_ context.Context, _ function.MetadataReque
 func (f *VDFEncodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary: "Encode a value as a Valve Data Format (VDF) string",
-		MarkdownDescription: "Encodes a Terraform object as a [Valve Data Format (VDF)](https://developer.valvesoftware.com/wiki/KeyValues) string. " +
-			"VDF is a nested key-value format — the only valid value types are strings (or nested objects). Other types must be converted to strings " +
-			"in HCL before encoding.\n\n" +
-			"**Common uses:** generating Steam workshop or app config files, dedicated-server configs for Source-engine games, or any other artifact " +
-			"where downstream Valve tooling expects VDF input.",
+		MarkdownDescription: "Encodes a Terraform object as a [Valve Data Format (VDF)](https://developer.valvesoftware.com/wiki/KeyValues) string. VDF is a nested key-value format — the only valid value types are strings (or nested objects). Other types must be converted to strings in HCL before encoding.\n\n**Common uses:** generating Steam workshop or app config files, dedicated-server configs for Source-engine games, or any other artifact where downstream Valve tooling expects VDF input.",
 		Parameters: []function.Parameter{
 			function.DynamicParameter{
 				Name:        "value",

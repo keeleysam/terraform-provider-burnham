@@ -19,11 +19,7 @@ func (f *CIDRsContainingIPFunction) Metadata(_ context.Context, _ function.Metad
 func (f *CIDRsContainingIPFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary: "Return every CIDR from a list that contains the given IP address",
-		MarkdownDescription: "Returns every CIDR from `cidrs` that contains `ip` as a list. " +
-			"Returns an empty list if none match. Multiple CIDRs may match when the list contains " +
-			"overlapping prefixes (e.g. a summary /8 and a more-specific /24 both match).\n\n" +
-			"**Common uses:** routing decisions — given an observed IP, find every VRF, VPC, or " +
-			"security zone it belongs to; determining which policy rules apply to a given address.",
+		MarkdownDescription: "Returns every CIDR from `cidrs` that contains `ip` as a list. Returns an empty list if none match. Multiple CIDRs may match when the list contains overlapping prefixes (e.g. a summary /8 and a more-specific /24 both match).\n\n**Common uses:** routing decisions — given an observed IP, find every VRF, VPC, or security zone it belongs to; determining which policy rules apply to a given address.",
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "ip", Description: "The IP address to look up."},
 			function.ListParameter{

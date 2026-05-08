@@ -18,14 +18,7 @@ func (f *NPTv6TranslateFunction) Metadata(_ context.Context, _ function.Metadata
 func (f *NPTv6TranslateFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary: "Translate an IPv6 address between NPTv6 prefix mappings (RFC 6296)",
-		MarkdownDescription: "Translates `ipv6` from `from_prefix` to `to_prefix` using the checksum-neutral " +
-			"algorithm defined in RFC 6296. Both prefixes must be /48.\n\n" +
-			"The first 48 bits are replaced with the new prefix. An adjustment is then applied to bytes 8–9 " +
-			"(the first word of the Interface Identifier) so that the one's complement sum of all 128 bits " +
-			"is preserved — this keeps transport-layer (TCP/UDP) checksums valid without packet rewriting.\n\n" +
-			"**Common uses:** computing the external address an internal host will appear as through an NPTv6 " +
-			"gateway (e.g. for DNS, ACL, or route configuration); reverse-translating an external address " +
-			"back to its internal form by swapping `from_prefix` and `to_prefix`.",
+		MarkdownDescription: "Translates `ipv6` from `from_prefix` to `to_prefix` using the checksum-neutral algorithm defined in RFC 6296. Both prefixes must be /48.\n\nThe first 48 bits are replaced with the new prefix. An adjustment is then applied to bytes 8–9 (the first word of the Interface Identifier) so that the one's complement sum of all 128 bits is preserved — this keeps transport-layer (TCP/UDP) checksums valid without packet rewriting.\n\n**Common uses:** computing the external address an internal host will appear as through an NPTv6 gateway (e.g. for DNS, ACL, or route configuration); reverse-translating an external address back to its internal form by swapping `from_prefix` and `to_prefix`.",
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "ipv6", Description: "The IPv6 address to translate."},
 			function.StringParameter{Name: "from_prefix", Description: "The /48 prefix the address currently belongs to."},

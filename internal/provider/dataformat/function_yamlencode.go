@@ -33,18 +33,7 @@ func (f *YAMLEncodeFunction) Metadata(_ context.Context, _ function.MetadataRequ
 func (f *YAMLEncodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary: "Encode a value as YAML with full formatting control",
-		MarkdownDescription: "Encodes a Terraform value as a YAML string. Unlike Terraform's built-in `yamlencode`, this " +
-			"defaults to block style, uses literal block scalars (`|`) for multi-line strings, and supports inline comments " +
-			"through an `options.comments` map.\n\n" +
-			"Pass an optional `options` object with these keys:\n\n" +
-			"- `indent` (number): indent width in spaces (default `2`).\n" +
-			"- `style` (string): `\"block\"` (default) or `\"flow\"`.\n" +
-			"- `quote_style` (string): `\"double\"`, `\"single\"`, or `\"plain\"`.\n" +
-			"- `null` (string): how to render nulls (default empty).\n" +
-			"- `sort_keys` (bool): sort object keys (default `true`).\n" +
-			"- `comments` (object): mirrored structure with string values that become `# ` comments before the matching key.\n\n" +
-			"**Common uses:** generating Kubernetes manifests, GitHub Actions workflows, Helm values files, or any other YAML " +
-			"configuration that gets reviewed and edited by humans.",
+		MarkdownDescription: "Encodes a Terraform value as a YAML string. Unlike Terraform's built-in `yamlencode`, this defaults to block style, uses literal block scalars (`|`) for multi-line strings, and supports inline comments through an `options.comments` map.\n\nPass an optional `options` object with these keys:\n\n- `indent` (number): indent width in spaces (default `2`).\n- `style` (string): `\"block\"` (default) or `\"flow\"`.\n- `quote_style` (string): `\"double\"`, `\"single\"`, or `\"plain\"`.\n- `null` (string): how to render nulls (default empty).\n- `sort_keys` (bool): sort object keys (default `true`).\n- `comments` (object): mirrored structure with string values that become `# ` comments before the matching key.\n\n**Common uses:** generating Kubernetes manifests, GitHub Actions workflows, Helm values files, or any other YAML configuration that gets reviewed and edited by humans.",
 		Parameters: []function.Parameter{
 			function.DynamicParameter{
 				Name:        "value",
@@ -53,15 +42,7 @@ func (f *YAMLEncodeFunction) Definition(_ context.Context, _ function.Definition
 		},
 		VariadicParameter: function.DynamicParameter{
 			Name: "options",
-			Description: "An optional options object. Supported keys: " +
-				"\"indent\" (number, default 2), " +
-				"\"flow_level\" (number, default 0: all block; -1: all flow), " +
-				"\"multiline\" (string: \"literal\", \"folded\", or \"quoted\"), " +
-				"\"quote_style\" (string: \"auto\", \"double\", or \"single\"), " +
-				"\"null_value\" (string: \"null\", \"~\", or \"\"), " +
-				"\"sort_keys\" (bool, default true), " +
-				"\"comments\" (object: mirrored structure for # comments). " +
-				"Pass at most one.",
+			Description: "An optional options object. Supported keys: \"indent\" (number, default 2), \"flow_level\" (number, default 0: all block; -1: all flow), \"multiline\" (string: \"literal\", \"folded\", or \"quoted\"), \"quote_style\" (string: \"auto\", \"double\", or \"single\"), \"null_value\" (string: \"null\", \"~\", or \"\"), \"sort_keys\" (bool, default true), \"comments\" (object: mirrored structure for # comments). Pass at most one.",
 		},
 		Return: function.StringReturn{},
 	}

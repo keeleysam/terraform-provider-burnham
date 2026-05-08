@@ -47,3 +47,59 @@ func TestAcc_RegEncode_Basic(t *testing.T) {
 		statecheck.ExpectKnownOutputValue("test", knownvalue.NotNull()),
 	)
 }
+
+// ─── regdword / regqword range checks ──────────────────────────────
+
+func TestAcc_RegDword_AcceptsUpperBound(t *testing.T) {
+	// 2^32 - 1 = 4294967295 — the documented maximum.
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::regdword(4294967295) }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.NotNull()),
+	)
+}
+
+func TestAcc_RegDword_RejectsNegative(t *testing.T) {
+	// Regression: previously `Uint64()` silently coerced negatives to 0.
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::regdword(-1) }`,
+		regexp.MustCompile(`(?is)value\s+must\s+be\s+>=\s+0`),
+	)
+}
+
+func TestAcc_RegDword_RejectsAboveMax(t *testing.T) {
+	// Regression: previously values above 2^32-1 silently saturated to MaxUint32.
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::regdword(4294967296) }`,
+		regexp.MustCompile(`(?is)value\s+must\s+be\s+in\s+\[0,\s*4294967295\]`),
+	)
+}
+
+func TestAcc_RegDword_RejectsFractional(t *testing.T) {
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::regdword(1.5) }`,
+		regexp.MustCompile(`(?is)value\s+must\s+be\s+a\s+whole\s+number`),
+	)
+}
+
+func TestAcc_RegQword_AcceptsUpperBound(t *testing.T) {
+	// 2^64 - 1 = 18446744073709551615 — Terraform's number type carries the value precisely.
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::regqword(18446744073709551615) }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.NotNull()),
+	)
+}
+
+func TestAcc_RegQword_RejectsNegative(t *testing.T) {
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::regqword(-1) }`,
+		regexp.MustCompile(`(?is)value\s+must\s+be\s+>=\s+0`),
+	)
+}
+
+func TestAcc_RegQword_RejectsAboveMax(t *testing.T) {
+	// 2^64 = 18446744073709551616, one above the max.
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::regqword(18446744073709551616) }`,
+		regexp.MustCompile(`(?is)value\s+must\s+be\s+in\s+\[0,\s*18446744073709551615\]`),
+	)
+}
