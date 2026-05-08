@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"math/big"
 	"regexp"
 	"testing"
 
@@ -191,4 +192,293 @@ func itoa(n int) string {
 		n /= 10
 	}
 	return string(b[i:])
+}
+
+// bigF builds a *big.Float for NumberExact assertions. Panics on a malformed literal because that's a programmer error in the test, not a runtime concern.
+func bigF(s string) *big.Float {
+	v, _, err := big.ParseFloat(s, 10, 256, big.ToNearestEven)
+	if err != nil {
+		panic("bigF: bad literal " + s + ": " + err.Error())
+	}
+	return v
+}
+
+// ─── mean ──────────────────────────────────────────────────────────────
+
+func TestAcc_Mean_SimpleAverage(t *testing.T) {
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::mean([1, 2, 3, 4, 5]) }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.NumberExact(bigF("3"))),
+	)
+}
+
+func TestAcc_Mean_FractionalResult(t *testing.T) {
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::mean([1, 2]) }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.NumberExact(bigF("1.5"))),
+	)
+}
+
+func TestAcc_Mean_Single(t *testing.T) {
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::mean([42]) }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.NumberExact(bigF("42"))),
+	)
+}
+
+func TestAcc_Mean_RejectsEmpty(t *testing.T) {
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::mean([]) }`,
+		regexp.MustCompile(`(?is)at\s+least\s+one\s+value`),
+	)
+}
+
+// ─── median ────────────────────────────────────────────────────────────
+
+func TestAcc_Median_OddCount(t *testing.T) {
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::median([5, 1, 3, 2, 4]) }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.NumberExact(bigF("3"))),
+	)
+}
+
+func TestAcc_Median_EvenCount(t *testing.T) {
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::median([1, 2, 3, 4]) }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.NumberExact(bigF("2.5"))),
+	)
+}
+
+func TestAcc_Median_Single(t *testing.T) {
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::median([7]) }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.NumberExact(bigF("7"))),
+	)
+}
+
+func TestAcc_Median_RejectsEmpty(t *testing.T) {
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::median([]) }`,
+		regexp.MustCompile(`(?is)at\s+least\s+one\s+value`),
+	)
+}
+
+// ─── percentile ────────────────────────────────────────────────────────
+
+func TestAcc_Percentile_Zero(t *testing.T) {
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::percentile([10, 20, 30, 40], 0) }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.NumberExact(bigF("10"))),
+	)
+}
+
+func TestAcc_Percentile_Hundred(t *testing.T) {
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::percentile([10, 20, 30, 40], 100) }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.NumberExact(bigF("40"))),
+	)
+}
+
+func TestAcc_Percentile_50MatchesMedian(t *testing.T) {
+	// numpy: percentile([1,2,3,4,5], 50) == 3
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::percentile([1, 2, 3, 4, 5], 50) }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.NumberExact(bigF("3"))),
+	)
+}
+
+func TestAcc_Percentile_LinearInterpolation(t *testing.T) {
+	// numpy: percentile([1, 2, 3, 4], 75) == 3.25
+	// h = 0.75 * 3 = 2.25; floor = 2; frac = 0.25; sorted[2]=3, sorted[3]=4; 3 + 0.25*1 = 3.25
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::percentile([1, 2, 3, 4], 75) }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.NumberExact(bigF("3.25"))),
+	)
+}
+
+func TestAcc_Percentile_OutOfRange(t *testing.T) {
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::percentile([1, 2, 3], 150) }`,
+		regexp.MustCompile(`(?is)p\s+must\s+be\s+in\s+\[0,\s*100\]`),
+	)
+}
+
+func TestAcc_Percentile_RejectsEmpty(t *testing.T) {
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::percentile([], 50) }`,
+		regexp.MustCompile(`(?is)at\s+least\s+one\s+value`),
+	)
+}
+
+// ─── variance / stddev ─────────────────────────────────────────────────
+
+func TestAcc_Variance_PopulationFormula(t *testing.T) {
+	// Population variance of [2, 4, 4, 4, 5, 5, 7, 9]: mean = 5; squared deviations sum = 32; var = 32/8 = 4
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::variance([2, 4, 4, 4, 5, 5, 7, 9]) }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.NumberExact(bigF("4"))),
+	)
+}
+
+func TestAcc_Variance_SingleElementIsZero(t *testing.T) {
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::variance([99]) }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.NumberExact(bigF("0"))),
+	)
+}
+
+func TestAcc_Variance_RejectsEmpty(t *testing.T) {
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::variance([]) }`,
+		regexp.MustCompile(`(?is)at\s+least\s+one\s+value`),
+	)
+}
+
+func TestAcc_Stddev_PopulationFormula(t *testing.T) {
+	// stddev of the same set above is sqrt(4) = 2
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::stddev([2, 4, 4, 4, 5, 5, 7, 9]) }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.NumberExact(bigF("2"))),
+	)
+}
+
+func TestAcc_Stddev_SingleElementIsZero(t *testing.T) {
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::stddev([99]) }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.NumberExact(bigF("0"))),
+	)
+}
+
+// ─── mode ──────────────────────────────────────────────────────────────
+
+func TestAcc_Mode_Unimodal(t *testing.T) {
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::mode([1, 2, 2, 3]) }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.ListExact([]knownvalue.Check{
+			knownvalue.NumberExact(bigF("2")),
+		})),
+	)
+}
+
+func TestAcc_Mode_Bimodal(t *testing.T) {
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::mode([1, 1, 2, 2, 3]) }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.ListExact([]knownvalue.Check{
+			knownvalue.NumberExact(bigF("1")),
+			knownvalue.NumberExact(bigF("2")),
+		})),
+	)
+}
+
+func TestAcc_Mode_AllUnique(t *testing.T) {
+	// All values appear once → every value is a mode → ascending list of all of them.
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::mode([3, 1, 2]) }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.ListExact([]knownvalue.Check{
+			knownvalue.NumberExact(bigF("1")),
+			knownvalue.NumberExact(bigF("2")),
+			knownvalue.NumberExact(bigF("3")),
+		})),
+	)
+}
+
+func TestAcc_Mode_RejectsEmpty(t *testing.T) {
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::mode([]) }`,
+		regexp.MustCompile(`(?is)at\s+least\s+one\s+value`),
+	)
+}
+
+// ─── mod_floor ─────────────────────────────────────────────────────────
+
+func TestAcc_ModFloor_PositivePositive(t *testing.T) {
+	// 7 mod 3 = 1
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::mod_floor(7, 3) }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.NumberExact(bigF("1"))),
+	)
+}
+
+func TestAcc_ModFloor_NegativePositive(t *testing.T) {
+	// -7 mod 3 = 2 (sign of divisor; the whole point of this function vs %)
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::mod_floor(-7, 3) }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.NumberExact(bigF("2"))),
+	)
+}
+
+func TestAcc_ModFloor_PositiveNegative(t *testing.T) {
+	// 7 mod -3 = -2 (sign of divisor)
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::mod_floor(7, -3) }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.NumberExact(bigF("-2"))),
+	)
+}
+
+func TestAcc_ModFloor_NegativeNegative(t *testing.T) {
+	// -7 mod -3: floor(-7 / -3) = floor(2.333) = 2; -7 - (-3 * 2) = -7 + 6 = -1
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::mod_floor(-7, -3) }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.NumberExact(bigF("-1"))),
+	)
+}
+
+func TestAcc_ModFloor_Fractional(t *testing.T) {
+	// 5.5 mod 2 = 1.5
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::mod_floor(5.5, 2) }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.NumberExact(bigF("1.5"))),
+	)
+}
+
+func TestAcc_ModFloor_Zero(t *testing.T) {
+	// 6 mod 3 = 0; non-negative result is the canonical case
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::mod_floor(6, 3) }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.NumberExact(bigF("0"))),
+	)
+}
+
+func TestAcc_ModFloor_DivByZero(t *testing.T) {
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::mod_floor(7, 0) }`,
+		regexp.MustCompile(`(?is)b\s+must\s+be\s+non-zero`),
+	)
+}
+
+// ─── clamp ─────────────────────────────────────────────────────────────
+
+func TestAcc_Clamp_InRange(t *testing.T) {
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::clamp(5, 0, 10) }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.NumberExact(bigF("5"))),
+	)
+}
+
+func TestAcc_Clamp_BelowMin(t *testing.T) {
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::clamp(-5, 0, 10) }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.NumberExact(bigF("0"))),
+	)
+}
+
+func TestAcc_Clamp_AboveMax(t *testing.T) {
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::clamp(99, 0, 10) }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.NumberExact(bigF("10"))),
+	)
+}
+
+func TestAcc_Clamp_AtBounds(t *testing.T) {
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::clamp(10, 0, 10) }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.NumberExact(bigF("10"))),
+	)
+}
+
+func TestAcc_Clamp_RejectsInvertedBounds(t *testing.T) {
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::clamp(5, 10, 0) }`,
+		regexp.MustCompile(`(?is)min_val.*must\s+be\s+<=\s+max_val`),
+	)
 }

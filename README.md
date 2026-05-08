@@ -108,7 +108,9 @@ Per-function documentation lives under [`docs/functions/`](docs/functions/) and 
 
 ## Numerics Functions
 
-Pure mathematical / standards-based functions that don't fit the other families. All deterministic, all evaluating at plan time. Today this is just an exhaustively faithful implementation of [RFC 3091](https://www.rfc-editor.org/rfc/rfc3091) — the *Pi Digit Generation Protocol* — covering both the TCP and UDP service shapes for π and the 22/7 approximate service. Future numerics functions live here too.
+Pure mathematical / standards-based functions that don't fit the other families. All deterministic, all evaluating at plan time. Two clusters today: an exhaustively faithful implementation of [RFC 3091](https://www.rfc-editor.org/rfc/rfc3091) — the *Pi Digit Generation Protocol* — and a small set of statistics and math helpers that fill gaps in Terraform's built-ins.
+
+### RFC 3091 — Pi Digit Generation Protocol
 
 | Function | Signature | Returns | Backed by |
 |---|---|---|---|
@@ -116,6 +118,26 @@ Pure mathematical / standards-based functions that don't fit the other families.
 | `pi_approximate_digits` | `(count number)` | `string` (count chars) | RFC 3091 §1.1 TCP service for 22/7. Period-6 cycle `"142857"`. |
 | `pi_digit` | `(n number)` | `string` `"<n>:<digit>"` | RFC 3091 §2.1.2 UDP reply for π. Embedded table of the first ⌊π × 10⁶⌋ = 3,141,592 digits, IEEE 754-2008 DPD-packed. |
 | `pi_digits` | `(count number)` | `string` (count chars) | RFC 3091 §1 TCP service for π. Same packed table. |
+
+### Statistics
+
+Operate on `list(number)`. Empty input is always an error — a statistic of zero observations is undefined. Variance and standard deviation use the **population** formulas (divide by N, matching numpy's default); for sample statistics multiply variance by `N / (N − 1)` explicitly. Percentile uses the linear-interpolation method (Hyndman & Fan Type 7 — the default in numpy, R, and Excel `PERCENTILE.INC`).
+
+| Function | Signature | Returns | Backed by |
+|---|---|---|---|
+| `mean` | `(numbers list(number))` | `number` | `math/big` (arbitrary precision) |
+| `median` | `(numbers list(number))` | `number` | sort + `math/big` |
+| `mode` | `(numbers list(number))` | `list(number)` | sort + bucket; multimodal-safe |
+| `percentile` | `(numbers list(number), p number)` | `number` | linear interpolation, Type 7 |
+| `stddev` | `(numbers list(number))` | `number` | `math/big.Float.Sqrt` of population variance |
+| `variance` | `(numbers list(number))` | `number` | population variance, `math/big` |
+
+### Math helpers
+
+| Function | Signature | Returns | Backed by |
+|---|---|---|---|
+| `clamp` | `(value number, min_val number, max_val number)` | `number` | comparison; errors when `min_val > max_val` |
+| `mod_floor` | `(a number, b number)` | `number` | floor-modulo: `a − b·⌊a/b⌋`. Sign of divisor, not dividend (unlike Terraform's built-in `%`). |
 
 Per-function documentation lives under [`docs/functions/`](docs/functions/) and on [registry.terraform.io](https://registry.terraform.io/providers/keeleysam/burnham/latest/docs).
 
