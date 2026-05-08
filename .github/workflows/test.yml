@@ -7,14 +7,15 @@ on:
 permissions:
   contents: read
 
-# Two parallel jobs so total wall time stays under ~3 minutes:
-#   - test:     build, vet, the full test suite, coverage.
+# Two parallel jobs:
+#   - test:     build, vet, the full -race -count=1 TF_ACC=1 acceptance suite, coverage.
 #   - generate: regenerate docs/ and pi_packed.bin, fail if either drifts.
-# The Chudnovsky regen for pi_packed.bin takes ~80s on Actions runners — splitting it off keeps the test feedback loop snappy.
+# The Chudnovsky regen for pi_packed.bin takes ~80s on Actions runners — splitting it off keeps the generate-drift feedback loop separate from the slower acceptance pass.
+# The test job's 15-minute timeout is a generous ceiling: locally the race-enabled acceptance suite runs in ~110 seconds, but Actions runners are roughly 2–3× slower for race-detector workloads, and the suite walks the framework protocol per-test. Don't tighten without re-measuring on a runner.
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-go@v6
