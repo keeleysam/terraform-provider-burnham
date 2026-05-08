@@ -82,22 +82,16 @@ func (f *PiApproximateDigitFunction) Run(ctx context.Context, req function.RunRe
 
 	// Defensive: (*big.Float).Int returns nil for ±Inf, which would panic on the Sign()/String() calls below. Terraform's number parser shouldn't produce Inf, but check explicitly so the contract holds even if the framework changes.
 	if n.IsInf() {
-		resp.Error = function.NewFuncError(fmt.Sprintf(
-			"n must be finite; received %s", n.Text('g', -1),
-		))
+		resp.Error = function.NewArgumentFuncError(0, fmt.Sprintf("n must be finite; received %s", n.Text('g', -1)))
 		return
 	}
 	nInt, accuracy := n.Int(nil)
 	if accuracy != big.Exact {
-		resp.Error = function.NewFuncError(fmt.Sprintf(
-			"n must be a whole number; received %s", n.Text('g', -1),
-		))
+		resp.Error = function.NewArgumentFuncError(0, fmt.Sprintf("n must be a whole number; received %s", n.Text('g', -1)))
 		return
 	}
 	if nInt.Sign() < 1 {
-		resp.Error = function.NewFuncError(fmt.Sprintf(
-			"RFC 3091 §2.1.1 requires n >= 1; received %s", nInt.String(),
-		))
+		resp.Error = function.NewArgumentFuncError(0, fmt.Sprintf("RFC 3091 §2.1.1 requires n >= 1; received %s", nInt.String()))
 		return
 	}
 
@@ -141,7 +135,7 @@ func (f *PiApproximateDigitsFunction) Run(ctx context.Context, req function.RunR
 	}
 
 	if count < 0 {
-		resp.Error = function.NewFuncError(fmt.Sprintf("count must be >= 0; received %d", count))
+		resp.Error = function.NewArgumentFuncError(0, fmt.Sprintf("count must be >= 0; received %d", count))
 		return
 	}
 

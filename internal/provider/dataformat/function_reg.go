@@ -68,7 +68,7 @@ func (f *RegDecodeFunction) Run(ctx context.Context, req function.RunRequest, re
 		IgnoreWhitespaces:      true,
 	})
 	if err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Failed to parse .reg file: "+err.Error()))
+		resp.Error = function.NewArgumentFuncError(0, "failed to parse .reg file: "+err.Error())
 		return
 	}
 
@@ -276,7 +276,7 @@ func (f *RegEncodeFunction) Run(ctx context.Context, req function.RunRequest, re
 	if len(optsArgs) == 1 {
 		obj, ok := optsArgs[0].UnderlyingValue().(basetypes.ObjectValue)
 		if !ok {
-			resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError(fmt.Sprintf("options must be an object, got %T", optsArgs[0].UnderlyingValue())))
+			resp.Error = function.NewArgumentFuncError(1, fmt.Sprintf("options must be an object, got %T", optsArgs[0].UnderlyingValue()))
 			return
 		}
 		if c, ok := obj.Attributes()["comments"]; ok {

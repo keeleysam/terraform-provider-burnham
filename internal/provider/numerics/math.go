@@ -111,7 +111,8 @@ func (f *ClampFunction) Run(ctx context.Context, req function.RunRequest, resp *
 		return
 	}
 	if lo.Cmp(hi) > 0 {
-		resp.Error = function.NewFuncError(fmt.Sprintf("min_val (%s) must be <= max_val (%s)", lo.Text('g', -1), hi.Text('g', -1)))
+		// `min_val` is arg 1, `max_val` is arg 2; the constraint involves both, so attribute to the upper bound (the more permissive choice when narrowing) — convention here is to flag the higher-numbered argument when both are involved.
+		resp.Error = function.NewArgumentFuncError(2, fmt.Sprintf("min_val (%s) must be <= max_val (%s)", lo.Text('g', -1), hi.Text('g', -1)))
 		return
 	}
 	prec := numericPrec([]*big.Float{value, lo, hi})

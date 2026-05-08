@@ -48,7 +48,7 @@ func (f *MsgpackDecodeFunction) Run(ctx context.Context, req function.RunRequest
 	}
 	raw, err := base64.StdEncoding.DecodeString(input)
 	if err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Invalid base64: "+err.Error()))
+		resp.Error = function.NewArgumentFuncError(0, "invalid base64: "+err.Error())
 		return
 	}
 
@@ -56,13 +56,13 @@ func (f *MsgpackDecodeFunction) Run(ctx context.Context, req function.RunRequest
 	dec.SetMapDecoder(decodeMsgpackMapStringInterface)
 	var goVal interface{}
 	if err := dec.Decode(&goVal); err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Failed to decode MessagePack: "+err.Error()))
+		resp.Error = function.NewArgumentFuncError(0, "failed to decode MessagePack: "+err.Error())
 		return
 	}
 
 	tfVal, err := goToTerraformValue(goVal)
 	if err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Failed to convert value: "+err.Error()))
+		resp.Error = function.NewArgumentFuncError(0, "failed to convert value: "+err.Error())
 		return
 	}
 
@@ -126,7 +126,7 @@ func (f *MsgpackEncodeFunction) Run(ctx context.Context, req function.RunRequest
 
 	goVal, err := terraformValueToGo(value.UnderlyingValue(), false)
 	if err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Failed to convert value: "+err.Error()))
+		resp.Error = function.NewArgumentFuncError(0, "failed to convert value: "+err.Error())
 		return
 	}
 

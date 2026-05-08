@@ -48,7 +48,7 @@ func (f *AppleStringsDecodeFunction) Run(ctx context.Context, req function.RunRe
 
 	decoded, err := decodeAppleStringsBody(input)
 	if err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Failed to parse .strings: "+err.Error()))
+		resp.Error = function.NewArgumentFuncError(0, "failed to parse .strings: "+err.Error())
 		return
 	}
 

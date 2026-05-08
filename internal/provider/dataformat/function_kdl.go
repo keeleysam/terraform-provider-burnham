@@ -52,7 +52,7 @@ func (f *KDLDecodeFunction) Run(ctx context.Context, req function.RunRequest, re
 
 	doc, err := kdl.Parse(strings.NewReader(input))
 	if err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Failed to parse KDL: "+err.Error()))
+		resp.Error = function.NewArgumentFuncError(0, "failed to parse KDL: "+err.Error())
 		return
 	}
 
@@ -207,7 +207,7 @@ func (f *KDLEncodeFunction) Run(ctx context.Context, req function.RunRequest, re
 	if len(optsArgs) == 1 {
 		obj, ok := optsArgs[0].UnderlyingValue().(basetypes.ObjectValue)
 		if !ok {
-			resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError(fmt.Sprintf("options must be an object, got %T", optsArgs[0].UnderlyingValue())))
+			resp.Error = function.NewArgumentFuncError(1, fmt.Sprintf("options must be an object, got %T", optsArgs[0].UnderlyingValue()))
 			return
 		}
 		vStr, err := getStringOption(obj.Attributes(), "version")

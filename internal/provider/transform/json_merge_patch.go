@@ -48,31 +48,31 @@ func (f *JSONMergePatchFunction) Run(ctx context.Context, req function.RunReques
 
 	docGo, err := terraformToJSON(value.UnderlyingValue())
 	if err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Failed to convert value: "+err.Error()))
+		resp.Error = function.NewArgumentFuncError(0, "failed to convert value: "+err.Error())
 		return
 	}
 
 	patchGo, err := terraformToJSON(patch.UnderlyingValue())
 	if err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Failed to convert patch: "+err.Error()))
+		resp.Error = function.NewArgumentFuncError(1, "failed to convert patch: "+err.Error())
 		return
 	}
 
 	docBytes, err := json.Marshal(docGo)
 	if err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Failed to marshal document: "+err.Error()))
+		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("failed to marshal document: "+err.Error()))
 		return
 	}
 
 	patchBytes, err := json.Marshal(patchGo)
 	if err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Failed to marshal patch: "+err.Error()))
+		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("failed to marshal patch: "+err.Error()))
 		return
 	}
 
 	mergedBytes, err := jsonpatch.MergePatch(docBytes, patchBytes)
 	if err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Failed to apply merge patch: "+err.Error()))
+		resp.Error = function.NewArgumentFuncError(1, "failed to apply merge patch: "+err.Error())
 		return
 	}
 
@@ -80,13 +80,13 @@ func (f *JSONMergePatchFunction) Run(ctx context.Context, req function.RunReques
 	dec := json.NewDecoder(bytes.NewReader(mergedBytes))
 	dec.UseNumber()
 	if err := dec.Decode(&mergedGo); err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Failed to decode merged document: "+err.Error()))
+		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("failed to decode merged document: "+err.Error()))
 		return
 	}
 
 	tfVal, err := jsonToTerraform(mergedGo)
 	if err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Failed to convert result: "+err.Error()))
+		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("failed to convert result: "+err.Error()))
 		return
 	}
 

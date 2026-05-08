@@ -47,13 +47,13 @@ func (f *JSONPathQueryFunction) Run(ctx context.Context, req function.RunRequest
 
 	path, err := jsonpath.Parse(expression)
 	if err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Invalid JSONPath expression: "+err.Error()))
+		resp.Error = function.NewArgumentFuncError(1, "invalid JSONPath expression: "+err.Error())
 		return
 	}
 
 	data, err := terraformToJSON(value.UnderlyingValue())
 	if err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Failed to convert value: "+err.Error()))
+		resp.Error = function.NewArgumentFuncError(0, "failed to convert value: "+err.Error())
 		return
 	}
 
@@ -65,7 +65,7 @@ func (f *JSONPathQueryFunction) Run(ctx context.Context, req function.RunRequest
 
 	tfVal, err := jsonToTerraform(results)
 	if err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Failed to convert result: "+err.Error()))
+		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("failed to convert result: "+err.Error()))
 		return
 	}
 

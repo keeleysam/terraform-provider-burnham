@@ -50,38 +50,38 @@ func (f *JSONPatchFunction) Run(ctx context.Context, req function.RunRequest, re
 
 	docGo, err := terraformToJSON(value.UnderlyingValue())
 	if err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Failed to convert value: "+err.Error()))
+		resp.Error = function.NewArgumentFuncError(0, "failed to convert value: "+err.Error())
 		return
 	}
 
 	patchGo, err := terraformToJSON(patch.UnderlyingValue())
 	if err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Failed to convert patch: "+err.Error()))
+		resp.Error = function.NewArgumentFuncError(1, "failed to convert patch: "+err.Error())
 		return
 	}
 
 	// json-patch operates on JSON byte streams; round-trip both inputs through encoding/json.
 	docBytes, err := json.Marshal(docGo)
 	if err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Failed to marshal document: "+err.Error()))
+		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("failed to marshal document: "+err.Error()))
 		return
 	}
 
 	patchBytes, err := json.Marshal(patchGo)
 	if err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Failed to marshal patch: "+err.Error()))
+		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("failed to marshal patch: "+err.Error()))
 		return
 	}
 
 	decoded, err := jsonpatch.DecodePatch(patchBytes)
 	if err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Invalid JSON Patch: "+err.Error()))
+		resp.Error = function.NewArgumentFuncError(1, "invalid JSON Patch: "+err.Error())
 		return
 	}
 
 	patchedBytes, err := decoded.Apply(docBytes)
 	if err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Failed to apply patch: "+err.Error()))
+		resp.Error = function.NewArgumentFuncError(1, "failed to apply patch: "+err.Error())
 		return
 	}
 
@@ -89,13 +89,13 @@ func (f *JSONPatchFunction) Run(ctx context.Context, req function.RunRequest, re
 	dec := json.NewDecoder(bytes.NewReader(patchedBytes))
 	dec.UseNumber()
 	if err := dec.Decode(&patchedGo); err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Failed to decode patched document: "+err.Error()))
+		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("failed to decode patched document: "+err.Error()))
 		return
 	}
 
 	tfVal, err := jsonToTerraform(patchedGo)
 	if err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Failed to convert result: "+err.Error()))
+		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("failed to convert result: "+err.Error()))
 		return
 	}
 

@@ -68,7 +68,7 @@ func (f *NDJSONDecodeFunction) Run(ctx context.Context, req function.RunRequest,
 
 	tfVal, err := goSliceToTuple(values)
 	if err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Failed to convert value: "+err.Error()))
+		resp.Error = function.NewArgumentFuncError(0, "failed to convert value: "+err.Error())
 		return
 	}
 
@@ -108,7 +108,7 @@ func (f *NDJSONEncodeFunction) Run(ctx context.Context, req function.RunRequest,
 
 	goVal, err := terraformValueToGo(value.UnderlyingValue(), false)
 	if err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Failed to convert value: "+err.Error()))
+		resp.Error = function.NewArgumentFuncError(0, "failed to convert value: "+err.Error())
 		return
 	}
 

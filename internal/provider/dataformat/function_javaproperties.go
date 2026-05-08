@@ -48,7 +48,7 @@ func (f *JavaPropertiesDecodeFunction) Run(ctx context.Context, req function.Run
 	loader := &properties.Loader{Encoding: properties.UTF8, DisableExpansion: true}
 	props, err := loader.LoadBytes([]byte(input))
 	if err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Failed to parse .properties: "+err.Error()))
+		resp.Error = function.NewArgumentFuncError(0, "failed to parse .properties: "+err.Error())
 		return
 	}
 

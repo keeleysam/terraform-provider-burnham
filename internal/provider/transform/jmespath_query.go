@@ -47,19 +47,19 @@ func (f *JMESPathQueryFunction) Run(ctx context.Context, req function.RunRequest
 
 	data, err := terraformToJSON(value.UnderlyingValue())
 	if err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Failed to convert value: "+err.Error()))
+		resp.Error = function.NewArgumentFuncError(0, "failed to convert value: "+err.Error())
 		return
 	}
 
 	result, err := jmespath.Search(expression, data)
 	if err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("JMESPath error: "+err.Error()))
+		resp.Error = function.NewArgumentFuncError(1, "JMESPath error: "+err.Error())
 		return
 	}
 
 	tfVal, err := jsonToTerraform(result)
 	if err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Failed to convert result: "+err.Error()))
+		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("failed to convert result: "+err.Error()))
 		return
 	}
 

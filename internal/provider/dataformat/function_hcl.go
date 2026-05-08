@@ -95,7 +95,7 @@ func (f *HCLDecodeFunction) Run(ctx context.Context, req function.RunRequest, re
 
 	tfVal, err := goMapToObject(out)
 	if err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Failed to convert value: "+err.Error()))
+		resp.Error = function.NewArgumentFuncError(0, "failed to convert value: "+err.Error())
 		return
 	}
 	resp.Error = function.ConcatFuncErrors(resp.Error, resp.Result.Set(ctx, types.DynamicValue(tfVal)))
@@ -134,7 +134,7 @@ func (f *HCLEncodeFunction) Run(ctx context.Context, req function.RunRequest, re
 
 	goVal, err := terraformValueToGo(value.UnderlyingValue(), false)
 	if err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Failed to convert value: "+err.Error()))
+		resp.Error = function.NewArgumentFuncError(0, "failed to convert value: "+err.Error())
 		return
 	}
 
@@ -146,7 +146,7 @@ func (f *HCLEncodeFunction) Run(ctx context.Context, req function.RunRequest, re
 		case map[string]interface{}:
 			asMap = m
 		default:
-			resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError(fmt.Sprintf("hclencode requires an object, got %T", goVal)))
+			resp.Error = function.NewArgumentFuncError(0, fmt.Sprintf("hclencode requires an object, got %T", goVal))
 			return
 		}
 	}
@@ -160,7 +160,7 @@ func (f *HCLEncodeFunction) Run(ctx context.Context, req function.RunRequest, re
 	sort.Strings(keys)
 	for _, k := range keys {
 		if !hclsyntax.ValidIdentifier(k) {
-			resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError(fmt.Sprintf("Attribute name %q is not a valid HCL identifier", k)))
+			resp.Error = function.NewArgumentFuncError(0, fmt.Sprintf("attribute name %q is not a valid HCL identifier", k))
 			return
 		}
 		v := asMap[k]

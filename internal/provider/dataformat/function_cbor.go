@@ -51,7 +51,7 @@ func (f *CBORDecodeFunction) Run(ctx context.Context, req function.RunRequest, r
 	}
 	raw, err := base64.StdEncoding.DecodeString(input)
 	if err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Invalid base64: "+err.Error()))
+		resp.Error = function.NewArgumentFuncError(0, "invalid base64: "+err.Error())
 		return
 	}
 
@@ -72,13 +72,13 @@ func (f *CBORDecodeFunction) Run(ctx context.Context, req function.RunRequest, r
 
 	var goVal interface{}
 	if err := decMode.Unmarshal(raw, &goVal); err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Failed to decode CBOR: "+err.Error()))
+		resp.Error = function.NewArgumentFuncError(0, "failed to decode CBOR: "+err.Error())
 		return
 	}
 
 	tfVal, err := goToTerraformValue(goVal)
 	if err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Failed to convert value: "+err.Error()))
+		resp.Error = function.NewArgumentFuncError(0, "failed to convert value: "+err.Error())
 		return
 	}
 
@@ -118,7 +118,7 @@ func (f *CBOREncodeFunction) Run(ctx context.Context, req function.RunRequest, r
 
 	goVal, err := terraformValueToGo(value.UnderlyingValue(), false)
 	if err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Failed to convert value: "+err.Error()))
+		resp.Error = function.NewArgumentFuncError(0, "failed to convert value: "+err.Error())
 		return
 	}
 

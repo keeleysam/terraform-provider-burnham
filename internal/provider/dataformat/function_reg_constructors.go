@@ -145,7 +145,7 @@ func (f *RegBinaryFunction) Run(ctx context.Context, req function.RunRequest, re
 		return
 	}
 	if _, err := hex.DecodeString(input); err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Invalid hex string: "+err.Error()))
+		resp.Error = function.NewArgumentFuncError(0, "invalid hex string: "+err.Error())
 		return
 	}
 	obj, err := makeRegTaggedObject(regTypeBinary, types.StringValue(input))
@@ -191,7 +191,7 @@ func (f *RegMultiFunction) Run(ctx context.Context, req function.RunRequest, res
 	case types.List:
 		elements = v.Elements()
 	default:
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Argument must be a list of strings."))
+		resp.Error = function.NewArgumentFuncError(0, "argument must be a list of strings")
 		return
 	}
 	if len(elements) == 0 {
@@ -205,7 +205,7 @@ func (f *RegMultiFunction) Run(ctx context.Context, req function.RunRequest, res
 	for i, elem := range elements {
 		sv, ok := elem.(types.String)
 		if !ok {
-			resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("All elements must be strings."))
+			resp.Error = function.NewArgumentFuncError(0, "all elements must be strings")
 			return
 		}
 		strElems[i] = sv

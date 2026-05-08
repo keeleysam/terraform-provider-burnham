@@ -63,11 +63,11 @@ func (f *PiDigitFunction) Run(ctx context.Context, req function.RunRequest, resp
 	}
 
 	if n < 1 {
-		resp.Error = function.NewFuncError(fmt.Sprintf("RFC 3091 §2.1.1 requires n >= 1; received %d", n))
+		resp.Error = function.NewArgumentFuncError(0, fmt.Sprintf("RFC 3091 §2.1.1 requires n >= 1; received %d", n))
 		return
 	}
 	if n > piMaxDigits {
-		resp.Error = function.NewFuncError(piCapErrorMessage("n", n))
+		resp.Error = function.NewArgumentFuncError(0, piCapErrorMessage("n", n))
 		return
 	}
 
@@ -111,11 +111,11 @@ func (f *PiDigitsFunction) Run(ctx context.Context, req function.RunRequest, res
 	}
 
 	if count < 0 {
-		resp.Error = function.NewFuncError(fmt.Sprintf("count must be >= 0; received %d", count))
+		resp.Error = function.NewArgumentFuncError(0, fmt.Sprintf("count must be >= 0; received %d", count))
 		return
 	}
 	if count > piMaxDigits {
-		resp.Error = function.NewFuncError(piCapErrorMessage("count", count))
+		resp.Error = function.NewArgumentFuncError(0, piCapErrorMessage("count", count))
 		return
 	}
 

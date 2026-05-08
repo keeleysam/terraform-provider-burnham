@@ -50,7 +50,7 @@ func (f *INIDecodeFunction) Run(ctx context.Context, req function.RunRequest, re
 		SkipUnrecognizableLines: false,
 	}, []byte(input))
 	if err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Failed to parse INI: "+err.Error()))
+		resp.Error = function.NewArgumentFuncError(0, "failed to parse INI: "+err.Error())
 		return
 	}
 
@@ -211,7 +211,7 @@ func (f *INIEncodeFunction) Run(ctx context.Context, req function.RunRequest, re
 
 	obj, ok := value.UnderlyingValue().(types.Object)
 	if !ok {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Value must be an object with section names as keys."))
+		resp.Error = function.NewArgumentFuncError(0, "value must be an object with section names as keys")
 		return
 	}
 

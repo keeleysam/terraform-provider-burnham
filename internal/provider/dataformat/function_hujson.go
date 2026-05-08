@@ -52,7 +52,7 @@ func (f *HuJSONDecodeFunction) Run(ctx context.Context, req function.RunRequest,
 	// Standardize strips comments and trailing commas, producing valid JSON.
 	standardized, err := hujson.Standardize([]byte(input))
 	if err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Invalid HuJSON: "+err.Error()))
+		resp.Error = function.NewArgumentFuncError(0, "invalid HuJSON: "+err.Error())
 		return
 	}
 
@@ -61,13 +61,13 @@ func (f *HuJSONDecodeFunction) Run(ctx context.Context, req function.RunRequest,
 	d.UseNumber()
 	var goVal interface{}
 	if err := d.Decode(&goVal); err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Failed to decode JSON: "+err.Error()))
+		resp.Error = function.NewArgumentFuncError(0, "failed to decode JSON: "+err.Error())
 		return
 	}
 
 	tfVal, err := goToTerraformValue(goVal)
 	if err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Failed to convert value: "+err.Error()))
+		resp.Error = function.NewArgumentFuncError(0, "failed to convert value: "+err.Error())
 		return
 	}
 
@@ -120,7 +120,7 @@ func (f *HuJSONEncodeFunction) Run(ctx context.Context, req function.RunRequest,
 	if len(optsArgs) == 1 {
 		obj, ok := optsArgs[0].UnderlyingValue().(basetypes.ObjectValue)
 		if !ok {
-			resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError(fmt.Sprintf("options must be an object, got %T", optsArgs[0].UnderlyingValue())))
+			resp.Error = function.NewArgumentFuncError(1, fmt.Sprintf("options must be an object, got %T", optsArgs[0].UnderlyingValue()))
 			return
 		}
 		attrs := obj.Attributes()
@@ -151,7 +151,7 @@ func (f *HuJSONEncodeFunction) Run(ctx context.Context, req function.RunRequest,
 
 	goVal, err := terraformValueToGo(value.UnderlyingValue(), false)
 	if err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Failed to convert value: "+err.Error()))
+		resp.Error = function.NewArgumentFuncError(0, "failed to convert value: "+err.Error())
 		return
 	}
 
@@ -187,7 +187,7 @@ func (f *HuJSONEncodeFunction) Run(ctx context.Context, req function.RunRequest,
 
 	ast, err := hujson.Parse(hujsonBytes)
 	if err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Failed to parse as HuJSON: "+err.Error()))
+		resp.Error = function.NewArgumentFuncError(0, "failed to parse as HuJSON: "+err.Error())
 		return
 	}
 

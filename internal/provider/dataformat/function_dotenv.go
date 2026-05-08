@@ -46,7 +46,7 @@ func (f *DotenvDecodeFunction) Run(ctx context.Context, req function.RunRequest,
 
 	parsed, err := godotenv.Unmarshal(input)
 	if err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Failed to parse dotenv: "+err.Error()))
+		resp.Error = function.NewArgumentFuncError(0, "failed to parse dotenv: "+err.Error())
 		return
 	}
 
@@ -57,7 +57,7 @@ func (f *DotenvDecodeFunction) Run(ctx context.Context, req function.RunRequest,
 
 	tfVal, err := goMapToObject(asMap)
 	if err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Failed to convert value: "+err.Error()))
+		resp.Error = function.NewArgumentFuncError(0, "failed to convert value: "+err.Error())
 		return
 	}
 
@@ -99,7 +99,7 @@ func (f *DotenvEncodeFunction) Run(ctx context.Context, req function.RunRequest,
 	if !ok {
 		mv, isMap := value.UnderlyingValue().(basetypes.MapValue)
 		if !isMap {
-			resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError(fmt.Sprintf("dotenvencode requires an object or map, got %T", value.UnderlyingValue())))
+			resp.Error = function.NewArgumentFuncError(0, fmt.Sprintf("dotenvencode requires an object or map, got %T", value.UnderlyingValue()))
 			return
 		}
 		entries, err := dotenvFromMapValue(mv)

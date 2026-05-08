@@ -54,7 +54,7 @@ func (f *VDFDecodeFunction) Run(ctx context.Context, req function.RunRequest, re
 	parser := vdf.NewParser(strings.NewReader(input))
 	goVal, err := parser.Parse()
 	if err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Failed to parse VDF: "+err.Error()))
+		resp.Error = function.NewArgumentFuncError(0, "failed to parse VDF: "+err.Error())
 		return
 	}
 

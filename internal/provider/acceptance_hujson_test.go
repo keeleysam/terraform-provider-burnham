@@ -23,7 +23,7 @@ func TestAcc_HuJSONDecode_WithComments(t *testing.T) {
 func TestAcc_HuJSONDecode_Invalid(t *testing.T) {
 	runErrorTest(t,
 		`output "test" { value = provider::burnham::hujsondecode("{bad}") }`,
-		regexp.MustCompile(`Invalid HuJSON`),
+		regexp.MustCompile(`(?i)invalid HuJSON`),
 	)
 }
 

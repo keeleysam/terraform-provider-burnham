@@ -63,7 +63,7 @@ func (f *PlistDecodeFunction) Run(ctx context.Context, req function.RunRequest, 
 	var goVal interface{}
 	_, err := plist.Unmarshal(data, &goVal)
 	if err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Failed to decode plist: "+err.Error()))
+		resp.Error = function.NewArgumentFuncError(0, "failed to decode plist: "+err.Error())
 		return
 	}
 
@@ -141,7 +141,7 @@ func (f *PlistEncodeFunction) Run(ctx context.Context, req function.RunRequest, 
 	if len(optsArgs) == 1 {
 		obj, ok := optsArgs[0].UnderlyingValue().(basetypes.ObjectValue)
 		if !ok {
-			resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError(fmt.Sprintf("options must be an object, got %T", optsArgs[0].UnderlyingValue())))
+			resp.Error = function.NewArgumentFuncError(1, fmt.Sprintf("options must be an object, got %T", optsArgs[0].UnderlyingValue()))
 			return
 		}
 		attrs := obj.Attributes()
@@ -171,7 +171,7 @@ func (f *PlistEncodeFunction) Run(ctx context.Context, req function.RunRequest, 
 
 	goVal, err := terraformValueToGo(value.UnderlyingValue(), true)
 	if err != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Failed to convert value: "+err.Error()))
+		resp.Error = function.NewArgumentFuncError(0, "failed to convert value: "+err.Error())
 		return
 	}
 
