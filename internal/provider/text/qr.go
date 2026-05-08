@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/keeleysam/terraform-burnham/internal/provider/optionsutil"
 	"rsc.io/qr"
 )
 
@@ -52,17 +53,11 @@ type qrOpts struct {
 
 func parseQROptions(opts []types.Dynamic) (qrOpts, *function.FuncError) {
 	out := qrOpts{level: qr.L, quietZone: 4, lightOnDark: false}
-	if len(opts) == 0 {
-		return out, nil
+	attrs, ferr := optionsutil.SingleOptionsObject(opts, `{ error_correction = "H" }`)
+	if ferr != nil {
+		return out, ferr
 	}
-	if len(opts) > 1 {
-		return out, function.NewArgumentFuncError(1, "at most one options argument may be provided")
-	}
-	obj, ok := opts[0].UnderlyingValue().(basetypes.ObjectValue)
-	if !ok || obj.IsNull() || obj.IsUnknown() {
-		return out, function.NewArgumentFuncError(1, "options must be an object literal, e.g. { error_correction = \"H\" }")
-	}
-	for k, val := range obj.Attributes() {
+	for k, val := range attrs {
 		switch k {
 		case "error_correction":
 			s, ok := val.(basetypes.StringValue)
@@ -82,7 +77,7 @@ func parseQROptions(opts []types.Dynamic) (qrOpts, *function.FuncError) {
 				return out, function.NewArgumentFuncError(1, fmt.Sprintf("options.error_correction must be \"L\", \"M\", \"Q\", or \"H\"; received %q", s.ValueString()))
 			}
 		case "quiet_zone":
-			n, err := numberAttrToInt(val)
+			n, err := optionsutil.NumberAttrToInt(val)
 			if err != nil {
 				return out, function.NewArgumentFuncError(1, "options.quiet_zone must be a whole number: "+err.Error())
 			}

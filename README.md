@@ -11,16 +11,16 @@ In 1909, Daniel Burnham published the [Plan of Chicago](https://en.wikipedia.org
 
 Terraform plans deserve the same treatment. But today, when your Terraform needs to work with structured data formats like property lists or human-edited JSON, do real arithmetic on IP address space, or apply environment overlays to a base manifest, you're stuck with workarounds. Shelling out to external tools, embedding raw strings, pasting opaque expressions that obscure what the plan is actually doing.
 
-Burnham fixes this. It's a pure function provider — no resources, no data sources, no API calls — that gives Terraform native fluency with the structured data formats, network primitives, and data-manipulation idioms it can't handle cleanly on its own.
+Burnham fixes this. It's a pure function provider — no resources, no data sources, no API calls — that fills the operations Terraform's expression language can't handle cleanly on its own. Structured data formats and network arithmetic at the foundation; query and patch over decoded values; deterministic identifiers, text manipulation, certificate inspection, and geographic encoding alongside; and a small numerics library where RFC-faithful curiosities live next to plain statistics.
 
-Your configuration profiles, ACL policies, and structured documents become first-class citizens in your Terraform plans, not opaque blobs passed through `file()` and hoped for the best. Your network plans show set arithmetic on CIDRs in plain HCL instead of `templatefile()`-driven Python preprocessors. Your manifest overlays apply RFC 7396 merge patches in one expression rather than a chain of `merge()` and `try()` calls.
+Your configuration profiles, ACL policies, and structured documents become first-class citizens in your Terraform plans, not opaque blobs passed through `file()` and hoped for the best. Your network plans show set arithmetic on CIDRs in plain HCL instead of `templatefile()`-driven Python preprocessors. Your manifest overlays apply RFC 7396 merge patches in one expression rather than a chain of `merge()` and `try()` calls. Your TLS certificates surface their expiry, SANs, and fingerprints as structured fields instead of opaque base64 blobs.
 
 The result is Terraform code that reads like a blueprint — clear, logical, and built to last.
 
 Burnham is organized into eight families of functions:
 
 - **[Structured Data Functions](#structured-data-functions)** — encode/decode for JSON (pretty), HuJSON, plist, INI, CSV, YAML, .reg, VDF, KDL, NDJSON, MessagePack, CBOR, dotenv, Java .properties, Apple .strings, and general HCL.
-- **[Networking Functions](#networking-functions)** — CIDR set operations, queries, IP arithmetic, NAT64 (RFC 6052), NPTv6 (RFC 6296), IPAM helpers, and IP-over-Avian-Carriers (RFC 1149 / RFC 2549) throughput calculation.
+- **[Networking Functions](#networking-functions)** — CIDR set operations, queries, IP arithmetic, NAT64 (RFC 6052), NPTv6 (RFC 6296), IPAM helpers, and a faithful RFC 1149 / RFC 2549 (IP over Avian Carriers) throughput calculator.
 - **[Query and Patch Functions](#query-and-patch-functions)** — JMESPath, JSONPath (RFC 9535), JSON Patch (RFC 6902), and JSON Merge Patch (RFC 7396) over decoded structures.
 - **[Numerics Functions](#numerics-functions)** — RFC 3091 (Pi Digit Generation Protocol), statistics, and small math helpers.
 - **[Identifiers Functions](#identifiers-functions)** — deterministic UUIDs (v5, v7), Nano ID, and petname.
@@ -54,9 +54,11 @@ Per-function documentation — including parameters, options, and return values 
 
 ## Networking Functions
 
-Pure functions for IP/CIDR work that HCL alone can't express: set arithmetic on address space, normalizing mixed IPv4/IPv6 inputs, NAT64 / NPTv6 translation, and IPAM-style allocation. All functions are pure (no network calls, no state) and evaluate at plan time. Uses [`go4.org/netipx`](https://pkg.go.dev/go4.org/netipx) for set operations, prefix aggregation, and range conversion.
+Pure functions for IP/CIDR work that HCL alone can't express: set arithmetic on address space, normalizing mixed IPv4/IPv6 inputs, NAT64 / NPTv6 translation, IPAM-style allocation, and one exhaustively faithful implementation of RFC 1149 / RFC 2549 (IP over Avian Carriers). All functions are pure (no network calls, no state) and evaluate at plan time. Uses [`go4.org/netipx`](https://pkg.go.dev/go4.org/netipx) for set operations, prefix aggregation, and range conversion.
 
 The **Backed by** column matters for understanding where bugs live. Functions backed by `netipx` or `net/netip` are thin parsing wrappers — if the logic is wrong, it's almost certainly in the upstream library, not here. Functions with custom or RFC-derived implementations are where this provider adds real logic of its own.
+
+### Standard CIDR / IP / NAT64 / NPTv6
 
 | Function | Signature | Returns | Backed by |
 |---|---|---|---|
@@ -93,8 +95,15 @@ The **Backed by** column matters for understanding where bugs live. Functions ba
 | `nat64_synthesize_cidr` | `(ipv4_cidr string, prefix string [, use_hex bool])` | `string` | custom (RFC 6052 §2.2) |
 | `nat64_synthesize_cidrs` | `(ipv4_cidrs list(string), prefix string [, use_hex bool])` | `list(string)` | custom (RFC 6052 §2.2) |
 | `nptv6_translate` | `(ipv6 string, from_prefix string, to_prefix string)` | `string` | custom (RFC 6296 checksum-neutral) |
-| `pigeon_throughput` | `(distance_km number, payload_bytes number, altitude_m number)` | `object` | RFC 1149 / RFC 2549 — see function docs for the citation map. Returns MTU, birds required, flight time, throughput, packet loss, QoS class, and the canonical frame-format string. |
 | `range_to_cidrs` | `(first_ip string, last_ip string)` | `list(string)` | netipx `IPRange.Prefixes()` |
+
+### RFC 1149 / RFC 2549 — IP over Avian Carriers
+
+[RFC 1149](https://www.rfc-editor.org/rfc/rfc1149) ("A Standard for the Transmission of IP Datagrams on Avian Carriers", April 1990) and [RFC 2549](https://www.rfc-editor.org/rfc/rfc2549) ("IP over Avian Carriers with Quality of Service", April 1999) are two of the IETF's most well-known April Fools' RFCs. They specify, with completely straight faces, the frame format, MTU, and QoS framework for transmitting IP datagrams via homing pigeon. The implementation here is faithful to the metrics the RFCs imply — chosen constants, citation-mapped output fields, and the verbatim §3 frame-format string — in the same spirit as `pi_digit` is faithful to RFC 3091 over in [Numerics](#numerics-functions).
+
+| Function | Signature | Returns | Backed by |
+|---|---|---|---|
+| `pigeon_throughput` | `(distance_km number, payload_bytes number, altitude_m number)` | `object` | custom (RFC 1149 §3 + RFC 2549 §§3, 6). Output object: `mtu_bytes`, `birds_required`, `per_bird_payload_bytes`, `cruise_speed_kmh`, `flight_time_seconds`, `throughput_bps`, `packet_loss_probability`, `effective_throughput_bps`, `qos_class`, `frame_format`, `rfc_citations`. |
 
 Per-function documentation lives under [`docs/functions/`](docs/functions/) and on [registry.terraform.io](https://registry.terraform.io/providers/keeleysam/burnham/latest/docs).
 

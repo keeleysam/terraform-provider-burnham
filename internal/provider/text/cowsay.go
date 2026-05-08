@@ -17,6 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/keeleysam/terraform-burnham/internal/provider/optionsutil"
 	"github.com/mitchellh/go-wordwrap"
 )
 
@@ -54,17 +55,11 @@ type cowsayOpts struct {
 
 func parseCowsayOptions(opts []types.Dynamic) (cowsayOpts, *function.FuncError) {
 	out := cowsayOpts{action: "say", eyes: "oo", tongue: "", width: 40}
-	if len(opts) == 0 {
-		return out, nil
+	attrs, ferr := optionsutil.SingleOptionsObject(opts, `{ action = "think" }`)
+	if ferr != nil {
+		return out, ferr
 	}
-	if len(opts) > 1 {
-		return out, function.NewArgumentFuncError(1, "at most one options argument may be provided")
-	}
-	obj, ok := opts[0].UnderlyingValue().(basetypes.ObjectValue)
-	if !ok || obj.IsNull() || obj.IsUnknown() {
-		return out, function.NewArgumentFuncError(1, "options must be an object literal, e.g. { action = \"think\" }")
-	}
-	for k, val := range obj.Attributes() {
+	for k, val := range attrs {
 		switch k {
 		case "action":
 			s, ok := val.(basetypes.StringValue)
@@ -97,7 +92,7 @@ func parseCowsayOptions(opts []types.Dynamic) (cowsayOpts, *function.FuncError) 
 			}
 			out.tongue = tg
 		case "width":
-			n, err := numberAttrToInt(val)
+			n, err := optionsutil.NumberAttrToInt(val)
 			if err != nil {
 				return out, function.NewArgumentFuncError(1, "options.width must be a whole number: "+err.Error())
 			}

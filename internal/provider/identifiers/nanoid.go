@@ -16,14 +16,13 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
-	"math/big"
 	"strings"
 	"unicode/utf8"
 
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/keeleysam/terraform-burnham/internal/provider/optionsutil"
 )
 
 // nanoidDefaultAlphabet is the 64-character URL-safe alphabet used by upstream nanoid by default. Order matches the reference implementation.
@@ -67,17 +66,11 @@ func (f *NanoidFunction) Definition(_ context.Context, _ function.DefinitionRequ
 func nanoidOptions(opts []types.Dynamic) (string, int, *function.FuncError) {
 	alphabet := nanoidDefaultAlphabet
 	size := nanoidDefaultSize
-	if len(opts) == 0 {
-		return alphabet, size, nil
+	attrs, ferr := optionsutil.SingleOptionsObject(opts, "{ size = 10 }")
+	if ferr != nil {
+		return "", 0, ferr
 	}
-	if len(opts) > 1 {
-		return "", 0, function.NewArgumentFuncError(1, "at most one options argument may be provided")
-	}
-	obj, ok := opts[0].UnderlyingValue().(basetypes.ObjectValue)
-	if !ok || obj.IsNull() || obj.IsUnknown() {
-		return "", 0, function.NewArgumentFuncError(1, "options must be an object literal, e.g. { size = 10 }")
-	}
-	for k, val := range obj.Attributes() {
+	for k, val := range attrs {
 		switch k {
 		case "alphabet":
 			s, ok := val.(basetypes.StringValue)
@@ -86,7 +79,7 @@ func nanoidOptions(opts []types.Dynamic) (string, int, *function.FuncError) {
 			}
 			alphabet = s.ValueString()
 		case "size":
-			n, err := numberAttrToInt(val)
+			n, err := optionsutil.NumberAttrToInt(val)
 			if err != nil {
 				return "", 0, function.NewArgumentFuncError(1, "options.size must be a whole number: "+err.Error())
 			}
@@ -96,26 +89,6 @@ func nanoidOptions(opts []types.Dynamic) (string, int, *function.FuncError) {
 		}
 	}
 	return alphabet, size, nil
-}
-
-// numberAttrToInt converts a Terraform Number attr.Value (carries a *big.Float internally) into a Go int. Errors when the value is null/unknown, non-integral, or out of int range.
-func numberAttrToInt(v attr.Value) (int, error) {
-	num, ok := v.(basetypes.NumberValue)
-	if !ok {
-		return 0, fmt.Errorf("expected a number, got %T", v)
-	}
-	if num.IsNull() || num.IsUnknown() {
-		return 0, fmt.Errorf("value is null or unknown")
-	}
-	bf := num.ValueBigFloat()
-	bi, accuracy := bf.Int(nil)
-	if accuracy != big.Exact {
-		return 0, fmt.Errorf("not a whole number")
-	}
-	if !bi.IsInt64() {
-		return 0, fmt.Errorf("out of int range")
-	}
-	return int(bi.Int64()), nil
 }
 
 // uniqueRunes verifies the alphabet has no duplicate codepoints. Duplicates would silently bias the output toward those characters.

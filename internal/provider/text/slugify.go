@@ -18,6 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/keeleysam/terraform-burnham/internal/provider/optionsutil"
 )
 
 // slugifyMu serializes access to gosimple/slug's package-level Lowercase global. Terraform's plan-time evaluation can call provider functions concurrently across the expression graph, and the upstream library only exposes its lowercase knob as a process-global. Holding a mutex around the swap is the cheapest fix; the alternative is forking the library or post-processing case ourselves, which loses the consistent-with-upstream guarantee.
@@ -56,17 +57,11 @@ type slugifyOpts struct {
 
 func parseSlugifyOptions(opts []types.Dynamic) (slugifyOpts, *function.FuncError) {
 	out := slugifyOpts{separator: "-", lowercase: true}
-	if len(opts) == 0 {
-		return out, nil
+	attrs, ferr := optionsutil.SingleOptionsObject(opts, "{ lowercase = false }")
+	if ferr != nil {
+		return out, ferr
 	}
-	if len(opts) > 1 {
-		return out, function.NewArgumentFuncError(1, "at most one options argument may be provided")
-	}
-	obj, ok := opts[0].UnderlyingValue().(basetypes.ObjectValue)
-	if !ok || obj.IsNull() || obj.IsUnknown() {
-		return out, function.NewArgumentFuncError(1, "options must be an object literal, e.g. { lowercase = false }")
-	}
-	for k, val := range obj.Attributes() {
+	for k, val := range attrs {
 		switch k {
 		case "language":
 			s, ok := val.(basetypes.StringValue)

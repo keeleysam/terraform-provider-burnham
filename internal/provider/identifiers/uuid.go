@@ -260,7 +260,8 @@ func (f *UUIDInspectFunction) Run(ctx context.Context, req function.RunRequest, 
 		"unix_ts_ms": unixTsMs,
 	})
 	if diags.HasError() {
-		resp.Error = function.NewFuncError(fmt.Sprintf("building inspect result: %v", diags))
+		e := diags.Errors()[0]
+		resp.Error = function.NewFuncError(fmt.Sprintf("building inspect result: %s: %s", e.Summary(), e.Detail()))
 		return
 	}
 	resp.Error = function.ConcatFuncErrors(resp.Error, resp.Result.Set(ctx, &out))

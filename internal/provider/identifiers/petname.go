@@ -18,6 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/keeleysam/terraform-burnham/internal/provider/optionsutil"
 )
 
 const (
@@ -58,20 +59,14 @@ func (f *PetnameFunction) Definition(_ context.Context, _ function.DefinitionReq
 func petnameOptions(opts []types.Dynamic) (int, string, *function.FuncError) {
 	words := petnameDefaultWords
 	separator := petnameDefaultSeparator
-	if len(opts) == 0 {
-		return words, separator, nil
+	attrs, ferr := optionsutil.SingleOptionsObject(opts, "{ words = 3 }")
+	if ferr != nil {
+		return 0, "", ferr
 	}
-	if len(opts) > 1 {
-		return 0, "", function.NewArgumentFuncError(1, "at most one options argument may be provided")
-	}
-	obj, ok := opts[0].UnderlyingValue().(basetypes.ObjectValue)
-	if !ok || obj.IsNull() || obj.IsUnknown() {
-		return 0, "", function.NewArgumentFuncError(1, "options must be an object literal, e.g. { words = 3 }")
-	}
-	for k, val := range obj.Attributes() {
+	for k, val := range attrs {
 		switch k {
 		case "words":
-			n, err := numberAttrToInt(val)
+			n, err := optionsutil.NumberAttrToInt(val)
 			if err != nil {
 				return 0, "", function.NewArgumentFuncError(1, "options.words must be a whole number: "+err.Error())
 			}

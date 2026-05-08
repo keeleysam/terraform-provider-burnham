@@ -107,8 +107,12 @@ func (f *PigeonThroughputFunction) Run(ctx context.Context, req function.RunRequ
 	if resp.Error != nil {
 		return
 	}
-	if distanceBF.IsInf() || altitudeBF.IsInf() {
-		resp.Error = function.NewFuncError("distance_km and altitude_m must both be finite")
+	if distanceBF.IsInf() {
+		resp.Error = function.NewArgumentFuncError(0, "distance_km must be finite")
+		return
+	}
+	if altitudeBF.IsInf() {
+		resp.Error = function.NewArgumentFuncError(2, "altitude_m must be finite")
 		return
 	}
 	distanceKm, _ := distanceBF.Float64()
