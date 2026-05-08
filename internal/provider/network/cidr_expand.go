@@ -40,7 +40,7 @@ func (f *CIDRExpandFunction) Run(ctx context.Context, req function.RunRequest, r
 
 	result, err := iputil.ExpandCIDR(cidr)
 	if err != nil {
-		resp.Error = function.NewFuncError(err.Error())
+		resp.Error = function.NewArgumentFuncError(0, err.Error())
 		return
 	}
 

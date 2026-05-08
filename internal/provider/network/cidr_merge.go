@@ -41,7 +41,7 @@ func (f *CIDRMergeFunction) Run(ctx context.Context, req function.RunRequest, re
 
 	result, err := iputil.MergeCIDRs(cidrs)
 	if err != nil {
-		resp.Error = function.NewFuncError(err.Error())
+		resp.Error = function.NewArgumentFuncError(0, err.Error())
 		return
 	}
 

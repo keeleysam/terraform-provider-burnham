@@ -36,7 +36,7 @@ func (f *IPIsPrivateFunction) Run(ctx context.Context, req function.RunRequest, 
 
 	result, err := iputil.IPIsPrivate(ip)
 	if err != nil {
-		resp.Error = function.NewFuncError(err.Error())
+		resp.Error = function.NewArgumentFuncError(0, err.Error())
 		return
 	}
 
@@ -72,7 +72,7 @@ func (f *CIDRIsPrivateFunction) Run(ctx context.Context, req function.RunRequest
 
 	result, err := iputil.CIDRIsPrivate(cidr)
 	if err != nil {
-		resp.Error = function.NewFuncError(err.Error())
+		resp.Error = function.NewArgumentFuncError(0, err.Error())
 		return
 	}
 

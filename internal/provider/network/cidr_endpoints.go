@@ -35,7 +35,7 @@ func (f *CIDRFirstIPFunction) Run(ctx context.Context, req function.RunRequest, 
 
 	result, err := iputil.CIDRFirstIP(cidr)
 	if err != nil {
-		resp.Error = function.NewFuncError(err.Error())
+		resp.Error = function.NewArgumentFuncError(0, err.Error())
 		return
 	}
 
@@ -70,7 +70,7 @@ func (f *CIDRLastIPFunction) Run(ctx context.Context, req function.RunRequest, r
 
 	result, err := iputil.CIDRLastIP(cidr)
 	if err != nil {
-		resp.Error = function.NewFuncError(err.Error())
+		resp.Error = function.NewArgumentFuncError(0, err.Error())
 		return
 	}
 

@@ -35,7 +35,7 @@ func (f *IPVersionFunction) Run(ctx context.Context, req function.RunRequest, re
 
 	result, err := iputil.IPVersion(ip)
 	if err != nil {
-		resp.Error = function.NewFuncError(err.Error())
+		resp.Error = function.NewArgumentFuncError(0, err.Error())
 		return
 	}
 
@@ -70,7 +70,7 @@ func (f *CIDRVersionFunction) Run(ctx context.Context, req function.RunRequest, 
 
 	result, err := iputil.CIDRVersion(cidr)
 	if err != nil {
-		resp.Error = function.NewFuncError(err.Error())
+		resp.Error = function.NewArgumentFuncError(0, err.Error())
 		return
 	}
 

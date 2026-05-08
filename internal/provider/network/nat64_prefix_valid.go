@@ -35,7 +35,7 @@ func (f *NAT64PrefixValidFunction) Run(ctx context.Context, req function.RunRequ
 
 	result, err := iputil.NAT64PrefixValid(prefix)
 	if err != nil {
-		resp.Error = function.NewFuncError(err.Error())
+		resp.Error = function.NewArgumentFuncError(0, err.Error())
 		return
 	}
 

@@ -35,7 +35,7 @@ func (f *IPToMixedNotationFunction) Run(ctx context.Context, req function.RunReq
 
 	result, err := iputil.IPToMixedNotation(ip)
 	if err != nil {
-		resp.Error = function.NewFuncError(err.Error())
+		resp.Error = function.NewArgumentFuncError(0, err.Error())
 		return
 	}
 
@@ -70,7 +70,7 @@ func (f *IPv4ToIPv4MappedFunction) Run(ctx context.Context, req function.RunRequ
 
 	result, err := iputil.IPv4ToIPv4Mapped(ipv4)
 	if err != nil {
-		resp.Error = function.NewFuncError(err.Error())
+		resp.Error = function.NewArgumentFuncError(0, err.Error())
 		return
 	}
 

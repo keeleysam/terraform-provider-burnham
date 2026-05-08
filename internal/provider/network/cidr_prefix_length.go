@@ -35,7 +35,7 @@ func (f *CIDRPrefixLengthFunction) Run(ctx context.Context, req function.RunRequ
 
 	result, err := iputil.CIDRPrefixLength(cidr)
 	if err != nil {
-		resp.Error = function.NewFuncError(err.Error())
+		resp.Error = function.NewArgumentFuncError(0, err.Error())
 		return
 	}
 

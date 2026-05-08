@@ -35,7 +35,7 @@ func (f *CIDRHostCountFunction) Run(ctx context.Context, req function.RunRequest
 
 	result, err := iputil.CIDRHostCount(cidr)
 	if err != nil {
-		resp.Error = function.NewFuncError(err.Error())
+		resp.Error = function.NewArgumentFuncError(0, err.Error())
 		return
 	}
 
@@ -70,7 +70,7 @@ func (f *CIDRUsableHostCountFunction) Run(ctx context.Context, req function.RunR
 
 	result, err := iputil.CIDRUsableHostCount(cidr)
 	if err != nil {
-		resp.Error = function.NewFuncError(err.Error())
+		resp.Error = function.NewArgumentFuncError(0, err.Error())
 		return
 	}
 
