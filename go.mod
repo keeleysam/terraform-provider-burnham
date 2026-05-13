@@ -4,7 +4,7 @@ go 1.26.1
 
 require (
 	github.com/andygrunwald/vdf v1.1.0
-	github.com/calico32/kdl-go v0.10.0
+	github.com/calico32/kdl-go v0.11.1
 	github.com/evanphx/json-patch/v5 v5.9.11
 	github.com/fxamacker/cbor/v2 v2.9.2
 	github.com/gersonkurz/go-regis3 v0.0.0-20260204141052-9cc701fe149b
