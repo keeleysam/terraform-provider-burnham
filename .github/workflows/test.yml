@@ -29,7 +29,7 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
-    # Bumped from 10 → 15. Recent runs land around 9:00-10:00 on the `go test` step alone (record was 9:57 with the Ed25519 acceptance suite added), leaving zero headroom against a 10-minute job timeout. The acceptance count grows roughly linearly with each new TestAcc_* test and each new family, so the 5-minute pad is intentional. If we cross 12 minutes routinely, the next move is sharding TestAcc_* across a GHA matrix rather than another timeout bump.
+    # Recent runs land near the old 10-min ceiling (record 9:57); 5 min of pad.
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
