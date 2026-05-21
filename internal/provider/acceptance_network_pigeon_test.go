@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 )
 
-// pigeon_throughput (RFC 1149 / RFC 2549) lives in the network family but its tests are kept in their own file so the standard CIDR / IP / NAT64 / NPTv6 test surface in `acceptance_network_test.go` doesn't get diluted by the joke-RFC-faithful one. Same family, different reading speed.
+// pigeon_throughput (RFC 1149 / RFC 2549) tests live in their own file so the standard CIDR / IP / NAT64 / NPTv6 test surface in `acceptance_network_test.go` doesn't get cluttered with throughput-specific assertions.
 
 func TestAcc_PigeonThroughput_FrameFormatQuoteVerbatim(t *testing.T) {
 	runOutputTest(t,

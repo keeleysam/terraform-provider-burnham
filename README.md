@@ -11,7 +11,7 @@ In 1909, Daniel Burnham published the [Plan of Chicago](https://en.wikipedia.org
 
 Terraform plans deserve the same treatment. But today, when your Terraform needs to work with structured data formats like property lists or human-edited JSON, do real arithmetic on IP address space, or apply environment overlays to a base manifest, you're stuck with workarounds. Shelling out to external tools, embedding raw strings, pasting opaque expressions that obscure what the plan is actually doing.
 
-Burnham fixes this. It's a pure function provider — no resources, no data sources, no API calls — that fills the operations Terraform's expression language can't handle cleanly on its own. Structured data formats and network arithmetic at the foundation; query and patch over decoded values; deterministic identifiers, text manipulation, certificate inspection, and geographic encoding alongside; and a small numerics library where RFC-faithful curiosities live next to plain statistics.
+Burnham fixes this. It's a pure function provider — no resources, no data sources, no API calls — that fills the operations Terraform's expression language can't handle cleanly on its own. Structured data formats and network arithmetic at the foundation; query and patch over decoded values; deterministic identifiers, text manipulation, certificate inspection, and geographic encoding alongside; and a small numerics library covering RFC 3091 and a handful of statistics helpers.
 
 Your configuration profiles, ACL policies, and structured documents become first-class citizens in your Terraform plans, not opaque blobs passed through `file()` and hoped for the best. Your network plans show set arithmetic on CIDRs in plain HCL instead of `templatefile()`-driven Python preprocessors. Your manifest overlays apply RFC 7396 merge patches in one expression rather than a chain of `merge()` and `try()` calls. Your TLS certificates surface their expiry, SANs, and fingerprints as structured fields instead of opaque base64 blobs.
 
@@ -114,7 +114,7 @@ The **Backed by** column matters for understanding where bugs live. Functions ba
 
 ### RFC 1149 / RFC 2549 — IP over Avian Carriers
 
-[RFC 1149](https://www.rfc-editor.org/rfc/rfc1149) ("A Standard for the Transmission of IP Datagrams on Avian Carriers", April 1990) and [RFC 2549](https://www.rfc-editor.org/rfc/rfc2549) ("IP over Avian Carriers with Quality of Service", April 1999) are two of the IETF's most well-known April Fools' RFCs. They specify, with completely straight faces, the frame format, MTU, and QoS framework for transmitting IP datagrams via homing pigeon. The implementation here is faithful to the metrics the RFCs imply — chosen constants, citation-mapped output fields, and the verbatim §3 frame-format string — in the same spirit as `pi_digit` is faithful to RFC 3091 over in [Numerics](#numerics-functions).
+[RFC 1149](https://www.rfc-editor.org/rfc/rfc1149) ("A Standard for the Transmission of IP Datagrams on Avian Carriers", 1990) and [RFC 2549](https://www.rfc-editor.org/rfc/rfc2549) ("IP over Avian Carriers with Quality of Service", 1999) specify the frame format, MTU, and QoS framework for transmitting IP datagrams via homing pigeon. The implementation is faithful to the metrics the RFCs imply — chosen constants, citation-mapped output fields, and the verbatim §3 frame-format string — in the same spirit as `pi_digit` is faithful to RFC 3091 over in [Numerics](#numerics-functions).
 
 | Function | Signature | Returns | Backed by |
 |---|---|---|---|
