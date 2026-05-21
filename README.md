@@ -25,7 +25,7 @@ Burnham is organized into eight families of functions:
 - **[Numerics Functions](#numerics-functions)** — RFC 3091 (Pi Digit Generation Protocol), statistics, and small math helpers.
 - **[Identifiers Functions](#identifiers-functions)** — deterministic UUIDs (v5, v7), Nano ID, and petname.
 - **[Text Functions](#text-functions)** — Unicode normalization, transliterating slugify, Levenshtein distance, word-wrap, cowsay, ASCII QR.
-- **[Cryptography Functions](#cryptography-functions)** — HMAC (RFC 2104), HKDF (RFC 5869), PEM block decoding, X.509 / CSR inspection and fingerprinting, generic ASN.1 BER/DER decoding.
+- **[Cryptography Functions](#cryptography-functions)** — HMAC (RFC 2104), HKDF (RFC 5869), PEM block decoding, X.509 / CSR inspection and fingerprinting, generic ASN.1 BER/DER decoding, deterministic ECDSA P-256 key derivation, deterministic X.509 self-signing (RFC 5280) and CMS/PKCS#7 signing (RFC 5652) via RFC 6979 deterministic ECDSA.
 - **[Geographic Functions](#geographic-functions)** — geohash and Open Location Code (Plus codes), encode and decode.
 
 ## Structured Data Functions
@@ -201,19 +201,24 @@ Per-function documentation lives under [`docs/functions/`](docs/functions/) and 
 
 ## Cryptography Functions
 
-Pure functions for keyed hashing, key derivation, and certificate / CSR / ASN.1 inspection. The headline wins are `x509_inspect` and `csr_inspect`: cert metadata becomes first-class HCL instead of a thing you regex out of a `tls_*.crt`. `hmac` and `hkdf` close another long-standing gap — webhook signing and per-tenant key derivation no longer need an `external` data source.
+Pure functions for keyed hashing, key derivation, certificate / CSR / ASN.1 inspection, and the three primitives needed to *construct* certs and CMS/PKCS#7 signatures deterministically. The inspection wins are `x509_inspect` and `csr_inspect`: cert metadata becomes first-class HCL instead of a thing you regex out of a `tls_*.crt`. `hmac` and `hkdf` close the symmetric-crypto gap — webhook signing and per-tenant key derivation no longer need an `external` data source. The signing trio (`ecdsa_p256_key_from_seed` + `x509_self_sign` + `pkcs7_sign`) closes the asymmetric one: derive a stable signing identity from any seed, build a self-signed cert, and emit a byte-stable CMS SignedData — all without random state, suitable for Terraform-driven workflows where plan output must match apply output.
 
 | Function | Signature | Returns | Backed by |
 |---|---|---|---|
 | `asn1_decode` | `(der_base64 string)` | recursive object | `encoding/asn1.RawValue` walked by hand |
 | `csr_inspect` | `(pem string)` | object | stdlib `crypto/x509` (`ParseCertificateRequest`) |
+| `ecdsa_p256_key_from_seed` | `(seed string)` | `string` (PEM PKCS#8) | stdlib `crypto/ecdsa` + `golang.org/x/crypto/hkdf` |
 | `hkdf` | `(algorithm string, secret string, salt string, info string, length number)` | `string` (hex) | [`golang.org/x/crypto/hkdf`](https://pkg.go.dev/golang.org/x/crypto/hkdf), RFC 5869 |
 | `hmac` | `(algorithm string, key string, message string)` | `string` (hex) | stdlib `crypto/hmac`, RFC 2104 |
 | `pem_decode` | `(pem string)` | `list(object)` | stdlib `encoding/pem`, RFC 7468 |
+| `pkcs7_sign` | `(data string, private_key_pem string, cert_pem string)` | `string` (base64 DER) | [`digitorus/pkcs7`](https://github.com/digitorus/pkcs7) `SignWithoutAttr` + [`nspcc-dev/rfc6979`](https://github.com/nspcc-dev/rfc6979), RFC 5652 + RFC 6979 |
 | `x509_fingerprint` | `(pem string, algorithm string)` | `string` (hex) | stdlib SHA-1/SHA-2 over the cert's DER bytes |
 | `x509_inspect` | `(pem string)` | object | stdlib `crypto/x509` (`ParseCertificate`) |
+| `x509_self_sign` | `(private_key_pem string, common_name string, serial string, not_before string, not_after string)` | `string` (PEM) | stdlib `crypto/x509.CreateCertificate` + [`nspcc-dev/rfc6979`](https://github.com/nspcc-dev/rfc6979), RFC 5280 + RFC 6979 |
 
 `hmac` and `hkdf` accept inputs as raw bytes (the framework hands the function a UTF-8 string verbatim). HCL string literals only support `\uNNNN` escape sequences for non-ASCII bytes, and those are emitted as their UTF-8 encoding rather than as raw byte values — so RFC test vectors that exercise high-byte inputs aren't directly representable in HCL. ASCII-only inputs round-trip cleanly; for arbitrary-byte inputs, base64-encode and `base64decode(...)` first.
+
+The signing trio is currently P-256-only — RSA and Ed25519 paths would each need their own deterministic-signer wrappers (RSA via PKCS#1 v1.5, naturally deterministic; Ed25519 via PureEdDSA, also naturally deterministic but rejected by macOS's configuration-profile installer at the keychain-import layer as of macOS 26.5 — which is why the trio is ECDSA-P-256 rather than the simpler Ed25519). `pkcs7_sign` produces the "no signed attributes" CMS shape that Apple's profile installer accepts; it deliberately is *not* a general-purpose CMS-with-signed-attrs builder — Apple's `signingTime` would otherwise reintroduce non-determinism.
 
 Per-function documentation lives under [`docs/functions/`](docs/functions/) and on [registry.terraform.io](https://registry.terraform.io/providers/keeleysam/burnham/latest/docs).
 

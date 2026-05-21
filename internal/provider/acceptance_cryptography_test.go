@@ -44,6 +44,31 @@ Odr5Q/4/OQM+WhKq/ckVK43GHJ9YSbSnrBrbvHmKMsgvwSMt61Ljyi6fKro4XA0=
 `
 )
 
+// Test fixture for pkcs7_sign's "external identity" mode — a real ECDSA P-256 keypair generated once with `openssl ecparam -name prime256v1 -genkey | openssl pkcs8 -topk8 -nocrypt` and a self-signed cert for it. Locked here so acceptance tests don't shell out to openssl at test time. CN=burnham-test-p256, validity 2026 → 2036.
+const (
+	testECDSAP256KeyPEM = `-----BEGIN PRIVATE KEY-----
+MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQg7zF1t2VFJJWPOcHi
+0BYZnkWB/2bOBBXxWzMtnATpn06hRANCAARjCS1S5sK75BKMvJR1m7YEPEupniYQ
+6tG3M2IpxmIhPg9nGX5lXzVid74I+RtkAIZmz6UmGFMGnEP1orEig3Nm
+-----END PRIVATE KEY-----
+`
+	testECDSAP256CertPEM = `-----BEGIN CERTIFICATE-----
+MIIByzCCAXGgAwIBAgIUMASm5ZLV8Bfy8XpJVbvyJqBCoAQwCgYIKoZIzj0EAwIw
+OzEaMBgGA1UEAwwRYnVybmhhbS10ZXN0LXAyNTYxEDAOBgNVBAoMB0J1cm5oYW0x
+CzAJBgNVBAYTAlVTMB4XDTI2MDUyMTAyMTg1N1oXDTM2MDUxODAyMTg1N1owOzEa
+MBgGA1UEAwwRYnVybmhhbS10ZXN0LXAyNTYxEDAOBgNVBAoMB0J1cm5oYW0xCzAJ
+BgNVBAYTAlVTMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEYwktUubCu+QSjLyU
+dZu2BDxLqZ4mEOrRtzNiKcZiIT4PZxl+ZV81Yne+CPkbZACGZs+lJhhTBpxD9aKx
+IoNzZqNTMFEwHQYDVR0OBBYEFEFT2fsexjM6+I4yyoxLMxwU2AFIMB8GA1UdIwQY
+MBaAFEFT2fsexjM6+I4yyoxLMxwU2AFIMA8GA1UdEwEB/wQFMAMBAf8wCgYIKoZI
+zj0EAwIDSAAwRQIgEhguARQtpGPMrwtGvn5ak8g7MhrYdG7xLbJm7wROeP0CIQCL
+2CMof37FZZUJUktQ53AeeaKNJ1EaIa+6J1GskqhWdg==
+-----END CERTIFICATE-----
+`
+	testECDSAP256KeyHeredoc  = "<<EOT\n" + testECDSAP256KeyPEM + "EOT\n"
+	testECDSAP256CertHeredoc = "<<EOT\n" + testECDSAP256CertPEM + "EOT\n"
+)
+
 // ─── hmac (RFC 2104) ───────────────────────────────────────────────────
 
 func TestAcc_HMAC_SHA256RFCTestVector(t *testing.T) {
@@ -428,4 +453,221 @@ func TestAcc_ASN1Decode_BMPStringDecodesUTF16(t *testing.T) {
 		`output "test" { value = provider::burnham::asn1_decode("HgQASABp").value }`,
 		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("Hi")),
 	)
+}
+
+// ─── ecdsa_p256_key_from_seed ──────────────────────────────────────────
+
+func TestAcc_ECDSAP256KeyFromSeed_ReturnsPKCS8PEM(t *testing.T) {
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::ecdsa_p256_key_from_seed("burnham-test") }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.StringRegexp(regexp.MustCompile(`(?s)^-----BEGIN PRIVATE KEY-----\n.+\n-----END PRIVATE KEY-----\n$`))),
+	)
+}
+
+func TestAcc_ECDSAP256KeyFromSeed_DeterministicSameSeed(t *testing.T) {
+	// Two derivations from the same seed must produce the same PEM. Compares them inside a single plan — the function being non-deterministic would surface as a diff equal-check failure.
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::ecdsa_p256_key_from_seed("same-seed") == provider::burnham::ecdsa_p256_key_from_seed("same-seed") }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.Bool(true)),
+	)
+}
+
+func TestAcc_ECDSAP256KeyFromSeed_DifferentSeedsDiffer(t *testing.T) {
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::ecdsa_p256_key_from_seed("seed-a") == provider::burnham::ecdsa_p256_key_from_seed("seed-b") }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.Bool(false)),
+	)
+}
+
+func TestAcc_ECDSAP256KeyFromSeed_RejectsEmptySeed(t *testing.T) {
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::ecdsa_p256_key_from_seed("") }`,
+		regexp.MustCompile(`(?is)seed\s+must\s+not\s+be\s+empty`),
+	)
+}
+
+// ─── x509_self_sign ─────────────────────────────────────────────────────
+
+func TestAcc_X509SelfSign_ProducesParseableCert(t *testing.T) {
+	// Chain ecdsa_p256_key_from_seed → x509_self_sign → x509_inspect: confirms the cert burnham emits parses back through burnham's own inspector. CN round-trip is the smoking-gun field — if cert assembly broke, this would be empty or wrong.
+	config := `
+locals {
+  key  = provider::burnham::ecdsa_p256_key_from_seed("acc-test")
+  cert = provider::burnham::x509_self_sign(local.key, "burnham.acc", "deterministic-serial", "2001-01-01T00:00:00Z", "2099-01-01T00:00:00Z")
+}
+output "test" { value = provider::burnham::x509_inspect(local.cert).subject }
+`
+	runOutputTest(t,
+		config,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("CN=burnham.acc")),
+	)
+}
+
+func TestAcc_X509SelfSign_Deterministic(t *testing.T) {
+	config := `
+locals {
+  key = provider::burnham::ecdsa_p256_key_from_seed("det")
+  a   = provider::burnham::x509_self_sign(local.key, "burnham.det", "serial-15-bytes", "2001-01-01T00:00:00Z", "2099-01-01T00:00:00Z")
+  b   = provider::burnham::x509_self_sign(local.key, "burnham.det", "serial-15-bytes", "2001-01-01T00:00:00Z", "2099-01-01T00:00:00Z")
+}
+output "test" { value = local.a == local.b }
+`
+	runOutputTest(t, config, statecheck.ExpectKnownOutputValue("test", knownvalue.Bool(true)))
+}
+
+func TestAcc_X509SelfSign_RejectsBadValidity(t *testing.T) {
+	config := `
+locals { key = provider::burnham::ecdsa_p256_key_from_seed("seed") }
+output "test" { value = provider::burnham::x509_self_sign(local.key, "cn", "serial", "2099-01-01T00:00:00Z", "2001-01-01T00:00:00Z") }
+`
+	runErrorTest(t, config, regexp.MustCompile(`(?is)not_after\s+must\s+be\s+strictly\s+after\s+not_before`))
+}
+
+func TestAcc_X509SelfSign_RejectsBadCommonName(t *testing.T) {
+	config := `
+locals { key = provider::burnham::ecdsa_p256_key_from_seed("seed") }
+output "test" { value = provider::burnham::x509_self_sign(local.key, "", "serial", "2001-01-01T00:00:00Z", "2099-01-01T00:00:00Z") }
+`
+	runErrorTest(t, config, regexp.MustCompile(`(?is)common_name\s+must\s+be\s+1.64`))
+}
+
+func TestAcc_X509SelfSign_Rejects65CharCommonName(t *testing.T) {
+	// 65 ASCII characters — one over the RFC 5280 §A.1 ub-common-name-length cap. Confirms the upper bound actually fires (the empty-string test above wouldn't catch a regression in the upper-bound branch).
+	config := `
+locals {
+  key = provider::burnham::ecdsa_p256_key_from_seed("seed")
+  cn  = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+}
+output "test" { value = provider::burnham::x509_self_sign(local.key, local.cn, "serial", "2001-01-01T00:00:00Z", "2099-01-01T00:00:00Z") }
+`
+	runErrorTest(t, config, regexp.MustCompile(`(?is)common_name\s+must\s+be\s+1.64`))
+}
+
+func TestAcc_X509SelfSign_AcceptsMultiByteCommonName(t *testing.T) {
+	// 64 CJK characters = 192 UTF-8 bytes. The RFC 5280 §A.1 ub-common-name-length cap is on *characters* (ASN.1 string elements / Unicode code points), not bytes — this CN is RFC-legal and our rune-counting check must accept it. A byte-counting regression would reject this with the "must be 1-64" message.
+	// 64 copies of U+4E00 (一, the simplest CJK character) spelled out as \u escapes so the literal stays editable.
+	const cn = "一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一"
+	config := `
+locals {
+  key  = provider::burnham::ecdsa_p256_key_from_seed("multibyte-cn")
+  cert = provider::burnham::x509_self_sign(local.key, "` + cn + `", "serial-15-bytes", "2001-01-01T00:00:00Z", "2099-01-01T00:00:00Z")
+}
+output "test" { value = startswith(local.cert, "-----BEGIN CERTIFICATE-----") }
+`
+	runOutputTest(t, config, statecheck.ExpectKnownOutputValue("test", knownvalue.Bool(true)))
+}
+
+// ─── pkcs7_sign ─────────────────────────────────────────────────────────
+
+func TestAcc_PKCS7Sign_ASN1DecodeNavigatesNestedHeterogeneous(t *testing.T) {
+	// End-to-end shape test for pkcs7_sign output: derive identity → self-sign cert → CMS-sign payload → decode via asn1_decode and assert structural fields at multiple levels of nesting.
+	//
+	// Subsumes the older "output is base64 DER" smoke check by demanding more: the asn1_decode children-as-tuple fix in this PR is the gate that lets us walk CMS SignedData (heterogeneous SET children — mix of SEQUENCE / OCTET STRING / [0]-tagged blobs at multiple levels). Just checking root `.type` would only prove the outer tag; this navigates two levels deeper to assert heterogeneous-children navigation actually works.
+	//
+	// CMS ContentInfo SEQUENCE → children[1] is the [0]-EXPLICIT-tagged content (class "context"), which wraps the SignedData SEQUENCE. The wrapped SignedData's first child is the version INTEGER. So `children[1].children[0].children[0].value` is the SignedData version field — per RFC 5652 §5.1 that's "1" for id-data + IssuerAndSerialNumber + plain-cert configurations.
+	config := `
+locals {
+  key     = provider::burnham::ecdsa_p256_key_from_seed("nested-nav-test")
+  cert    = provider::burnham::x509_self_sign(local.key, "burnham.nested", "serial-15-bytes", "2001-01-01T00:00:00Z", "2099-01-01T00:00:00Z")
+  signed  = provider::burnham::pkcs7_sign("hello, world", local.key, local.cert)
+  decoded = provider::burnham::asn1_decode(local.signed)
+}
+output "outer_type" { value = local.decoded.type }
+output "content_class" { value = local.decoded.children[1].class }
+output "signed_data_version" { value = local.decoded.children[1].children[0].children[0].value }
+`
+	runOutputTest(t, config,
+		statecheck.ExpectKnownOutputValue("outer_type", knownvalue.StringExact("SEQUENCE")),
+		statecheck.ExpectKnownOutputValue("content_class", knownvalue.StringExact("context")),
+		statecheck.ExpectKnownOutputValue("signed_data_version", knownvalue.StringExact("1")),
+	)
+}
+
+func TestAcc_PKCS7Sign_OutputMatchesBase64Charset(t *testing.T) {
+	config := `
+locals {
+  key  = provider::burnham::ecdsa_p256_key_from_seed("charset")
+  cert = provider::burnham::x509_self_sign(local.key, "cn", "serial", "2001-01-01T00:00:00Z", "2099-01-01T00:00:00Z")
+}
+output "test" { value = provider::burnham::pkcs7_sign("payload", local.key, local.cert) }
+`
+	runOutputTest(t, config, statecheck.ExpectKnownOutputValue("test",
+		knownvalue.StringRegexp(regexp.MustCompile(`^[A-Za-z0-9+/]+=*$`))))
+}
+
+func TestAcc_PKCS7Sign_Deterministic(t *testing.T) {
+	config := `
+locals {
+  key  = provider::burnham::ecdsa_p256_key_from_seed("det")
+  cert = provider::burnham::x509_self_sign(local.key, "cn", "serial", "2001-01-01T00:00:00Z", "2099-01-01T00:00:00Z")
+  a    = provider::burnham::pkcs7_sign("payload", local.key, local.cert)
+  b    = provider::burnham::pkcs7_sign("payload", local.key, local.cert)
+}
+output "test" { value = local.a == local.b }
+`
+	runOutputTest(t, config, statecheck.ExpectKnownOutputValue("test", knownvalue.Bool(true)))
+}
+
+func TestAcc_PKCS7Sign_RejectsEmptyData(t *testing.T) {
+	config := `
+locals {
+  key  = provider::burnham::ecdsa_p256_key_from_seed("seed")
+  cert = provider::burnham::x509_self_sign(local.key, "cn", "serial", "2001-01-01T00:00:00Z", "2099-01-01T00:00:00Z")
+}
+output "test" { value = provider::burnham::pkcs7_sign("", local.key, local.cert) }
+`
+	runErrorTest(t, config, regexp.MustCompile(`(?is)data\s+must\s+not\s+be\s+empty`))
+}
+
+func TestAcc_PKCS7Sign_ExternalIdentity(t *testing.T) {
+	// Drive pkcs7_sign with a hardcoded ECDSA P-256 key + cert (the "real identity" mode the function's doc advertises) instead of the derive-from-seed chain. Verifies the PEM-parsing path for both inputs and confirms the signing function works without our derivation primitives. The output is base64-encoded DER; checking it parses as ASN.1 SEQUENCE confirms the function succeeded end-to-end (errors would surface as the function failing before the asn1_decode call).
+	config := `
+locals {
+  signed = provider::burnham::pkcs7_sign("hello", ` + testECDSAP256KeyHeredoc + `, ` + testECDSAP256CertHeredoc + `)
+}
+output "test" { value = provider::burnham::asn1_decode(local.signed).type }
+`
+	runOutputTest(t, config, statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("SEQUENCE")))
+}
+
+func TestAcc_PKCS7Sign_ExternalIdentityIsDeterministic(t *testing.T) {
+	// Even with an externally-supplied identity (where the cert assembly happened outside Terraform with random k), the CMS layer must still produce identical bytes across runs given the same (data, key, cert) — that's the RFC 6979 wrapper doing its job at sign time.
+	config := `
+locals {
+  a = provider::burnham::pkcs7_sign("payload", ` + testECDSAP256KeyHeredoc + `, ` + testECDSAP256CertHeredoc + `)
+  b = provider::burnham::pkcs7_sign("payload", ` + testECDSAP256KeyHeredoc + `, ` + testECDSAP256CertHeredoc + `)
+}
+output "test" { value = local.a == local.b }
+`
+	runOutputTest(t, config, statecheck.ExpectKnownOutputValue("test", knownvalue.Bool(true)))
+}
+
+func TestAcc_PKCS7Sign_RejectsMismatchedKeyAndCert(t *testing.T) {
+	// Key A vs cert for key B — should error rather than silently produce unverifiable CMS.
+	config := `
+locals { key_b = provider::burnham::ecdsa_p256_key_from_seed("different-seed") }
+output "test" { value = provider::burnham::pkcs7_sign("payload", local.key_b, ` + testECDSAP256CertHeredoc + `) }
+`
+	runErrorTest(t, config, regexp.MustCompile(`(?is)cert_pem\s+public\s+key\s+does\s+not\s+match`))
+}
+
+func TestAcc_PKCS7Sign_RejectsOversizedData(t *testing.T) {
+	// pkcs7DataMaxBytes is 16 MiB. Use format("%-N s", " ") to procedurally build a 17-MiB string without bloating the test source.
+	config := `
+locals {
+  data = format("%-17825793s", " ")
+  key  = provider::burnham::ecdsa_p256_key_from_seed("seed")
+  cert = provider::burnham::x509_self_sign(local.key, "cn", "serial", "2001-01-01T00:00:00Z", "2099-01-01T00:00:00Z")
+}
+output "test" { value = provider::burnham::pkcs7_sign(local.data, local.key, local.cert) }
+`
+	runErrorTest(t, config, regexp.MustCompile(`(?is)data\s+exceeds\s+maximum\s+length`))
+}
+
+func TestAcc_ECDSAP256KeyFromSeed_RejectsOversizedSeed(t *testing.T) {
+	// ecdsaSeedMaxBytes is 8 MiB. Use format("%-N s", " ") to procedurally build a >8 MiB string. Confirms the cap fires before the seed reaches HKDF.
+	config := `
+output "test" { value = provider::burnham::ecdsa_p256_key_from_seed(format("%-8388609s", " ")) }
+`
+	runErrorTest(t, config, regexp.MustCompile(`(?is)seed\s+exceeds\s+maximum\s+length`))
 }

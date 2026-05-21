@@ -57,18 +57,20 @@ func (f *ASN1DecodeFunction) Definition(_ context.Context, _ function.Definition
 	}
 }
 
-// asn1NodeAttrs is the schema for a single node in the recursive output tree. Because Terraform's framework can't model "a list of *this same shape*" without a recursive ObjectType (which doesn't exist), we model children as a list of dynamic values and let HCL navigate the tree positionally with attribute access plus `try()`.
+// asn1NodeAttrs is the schema for a single node in the recursive output tree. Because Terraform's framework can't model "a list of *this same shape*" without a recursive ObjectType (which doesn't exist), we model children as a dynamic value and let HCL navigate the tree positionally with attribute access plus `try()`.
+//
+// `children` is typed `Dynamic` rather than `List(Dynamic)` because cty's List requires homogeneous element types — a CMS SignedData's SET children (mix of SEQUENCE, OCTET STRING, [0]-tagged blobs, …) have different concrete types, and `cty.ListVal` panics when fed a heterogeneous slice. Holding `children` as a Dynamic-typed Tuple sidesteps the constraint without changing how HCL accesses the field (both `children[0]` and `length(children)` work on tuples).
 var asn1NodeAttrs = map[string]attr.Type{
 	"tag":      types.Int64Type,
 	"class":    types.StringType,
 	"compound": types.BoolType,
 	"type":     types.StringType,
 	"value":    types.StringType,
-	"children": types.ListType{ElemType: types.DynamicType},
+	"children": types.DynamicType,
 }
 
-// emptyDynamicList is the canonical empty `list(dynamic)` reused for every primitive ASN.1 node. Sharing one value across all such nodes saves a per-node allocation on deeply-nested structures (cert extensions can nest 4-5 levels with dozens of leaves).
-var emptyDynamicList = types.ListValueMust(types.DynamicType, nil)
+// emptyChildren is the canonical empty children value reused for every primitive ASN.1 node. Sharing one value saves a per-node allocation on deeply-nested structures (cert extensions can nest 4-5 levels with dozens of leaves).
+var emptyChildren = types.DynamicValue(types.TupleValueMust(nil, nil))
 
 func (f *ASN1DecodeFunction) Run(ctx context.Context, req function.RunRequest, resp *function.RunResponse) {
 	var input string
@@ -128,7 +130,7 @@ func rawValueToNode(raw asn1.RawValue, depth int, nodes *int) (attr.Value, error
 	className := classToString(raw.Class)
 	tagName := universalTagName(raw)
 	value := ""
-	var children attr.Value = emptyDynamicList
+	var children attr.Value = emptyChildren
 
 	if raw.IsCompound {
 		kids, err := decodeChildren(raw.Bytes, depth+1, nodes)
@@ -159,8 +161,11 @@ func rawValueToNode(raw asn1.RawValue, depth int, nodes *int) (attr.Value, error
 }
 
 // decodeChildren walks a constructed value's contents, peeling off one TLV at a time. `depth` is propagated to bound recursion; `nodes` is the shared count threaded through all sibling subtrees.
+//
+// Returns a TupleValue (not a ListValue) so CMS-style SETs with heterogeneous child types don't trip cty's "inconsistent value types in ListVal" panic — every child gets to keep its own concrete shape. The returned value is wrapped in DynamicValue to match the `children` field's `DynamicType` schema declaration.
 func decodeChildren(body []byte, depth int, nodes *int) (attr.Value, error) {
 	var kids []attr.Value
+	var kidTypes []attr.Type
 	rest := body
 	for len(rest) > 0 {
 		var raw asn1.RawValue
@@ -172,14 +177,15 @@ func decodeChildren(body []byte, depth int, nodes *int) (attr.Value, error) {
 		if err != nil {
 			return nil, err
 		}
-		kids = append(kids, types.DynamicValue(node))
+		kids = append(kids, node)
+		kidTypes = append(kidTypes, types.ObjectType{AttrTypes: asn1NodeAttrs})
 		rest = next
 	}
-	v, diags := types.ListValue(types.DynamicType, kids)
+	tup, diags := types.TupleValue(kidTypes, kids)
 	if diags.HasError() {
-		return nil, fmt.Errorf("building children list: %s", diagsToString(diags))
+		return nil, fmt.Errorf("building children tuple: %s", diagsToString(diags))
 	}
-	return v, nil
+	return types.DynamicValue(tup), nil
 }
 
 // classToString translates the numeric ASN.1 class into a human label.

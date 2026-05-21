@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- New family **cryptography**: `hmac` (RFC 2104), `hkdf` (RFC 5869), `pem_decode` (RFC 7468), `x509_inspect`, `x509_fingerprint`, `csr_inspect` (PKCS#10), `asn1_decode` (BER/DER walk).
+- New family **cryptography**: `hmac` (RFC 2104), `hkdf` (RFC 5869), `pem_decode` (RFC 7468), `x509_inspect`, `x509_fingerprint`, `csr_inspect` (PKCS#10), `asn1_decode` (BER/DER walk), plus a deterministic ECDSA P-256 signing pipeline: `ecdsa_p256_key_from_seed` (HKDF-SHA256 seed → secp256r1 scalar → PKCS#8 PEM), `x509_self_sign` (RFC 5280 v3 self-signed cert via RFC 6979 deterministic ECDSA — serial bounded to 20 octets per §4.1.2.2, UTCTime/GeneralizedTime split at 2050 per §4.1.2.5, BasicConstraints critical with cA=FALSE per §4.2.1.9), and `pkcs7_sign` (RFC 5652 SignedData ContentInfo, encapsulated `id-data`, no signed attributes per §5.3, embedded cert, signature via RFC 6979 deterministic ECDSA-with-SHA256, byte-stable across runs). The signing trio chains together but `pkcs7_sign` also accepts caller-supplied real-world identities for the CA-issued case and rejects mismatched key/cert pairs at call time rather than producing silently-unverifiable output.
 - New family **identifiers**: deterministic `uuid_v5` (RFC 9562 §5.5), deterministic `uuid_v7` (RFC 9562 §5.7), `uuid_inspect`, deterministic `nanoid`, deterministic `petname`.
 - New family **text**: `unicode_normalize` (UAX #15 NFC/NFD/NFKC/NFKD), `slugify`, `levenshtein`, `wrap`, `cowsay`, `qr_ascii`.
 - New family **geographic**: `geohash_encode`, `geohash_decode`, `pluscode_encode`, `pluscode_decode` (Open Location Code).
@@ -21,10 +21,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - README adds a "Tagged-value helpers" sub-table covering `plistdata`/`plistdate`/`plistreal` and `regbinary`/`regdword`/`regexpandsz`/`regmulti`/`regqword`, which were registered but not previously documented in the README.
 - All `MarkdownDescription` strings across `dataformat/`, `network/`, and `transform/` collapsed to single literals (no mid-paragraph `+` joins).
 - `geohash_decode` parameter renamed `hash` → `code` to match `pluscode_decode` and the broader geographic-family naming.
+- `asn1_decode`'s `children` field is now `dynamic` (a tuple at runtime) instead of `list(dynamic)`. Tuples in HCL still accept `children[i]`, `length(children)`, and `[for x in children : ...]` — but `tolist(children)` and any type-assertion that explicitly demanded `list(...)` will fail. This was forced by the heterogeneous-children panic fix (see Fixed); homogeneous-children HCL that relied on list typing should `[for x in children : x]` to coerce.
 - HMAC and HKDF docstrings now share a single `hclByteHandlingGotcha` helper so the byte-handling explanation cannot drift between the two functions.
 - CI now runs the full acceptance suite with `TF_ACC=1` and `-race`.
 
 ### Fixed
+- `asn1_decode` no longer panics when decoding ASN.1 structures with heterogeneous children (e.g. CMS SignedData's SET children: SEQUENCE, OCTET STRING, [0]-tagged blobs). The decoder's `children` field is now a `Dynamic`-typed tuple instead of `list(dynamic)`, sidestepping cty's "inconsistent value types in ListVal" panic; HCL accessor syntax (`children[0]`, `length(children)`) is unaffected.
 - `nanoid` no longer panics on a 256-codepoint alphabet (`byte(256)` overflow → `% 0` divide-by-zero); modulus arithmetic is now in `int`.
 - `regdword` / `regqword` now reject negative, fractional, and out-of-range inputs explicitly. Previously `(*big.Float).Uint64()` silently saturated negatives to `0` and overflow to `MaxUint*`.
 - `geohash_encode` rejects exact `lat == 90` / `lon == 180` (upstream encoder wrapped these to the opposite corner) and `geohash_decode` shrinks the corner-cell bbox edges below the wrap threshold so feeding `lat_max` / `lon_max` back into the encoder round-trips into the same cell.

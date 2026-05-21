@@ -5,6 +5,7 @@ go 1.26.1
 require (
 	github.com/andygrunwald/vdf v1.1.0
 	github.com/calico32/kdl-go v0.11.1
+	github.com/digitorus/pkcs7 v0.0.0-20250730155240-ffadbf3f398c
 	github.com/evanphx/json-patch/v5 v5.9.11
 	github.com/fxamacker/cbor/v2 v2.9.2
 	github.com/gersonkurz/go-regis3 v0.0.0-20260204141052-9cc701fe149b
@@ -21,6 +22,7 @@ require (
 	github.com/magiconair/properties v1.8.10
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/mmcloughlin/geohash v0.10.0
+	github.com/nspcc-dev/rfc6979 v0.2.4
 	github.com/tailscale/hujson v0.0.0-20260302212456-ecc657c15afd
 	github.com/theory/jsonpath v0.12.0
 	github.com/vmihailenco/msgpack/v5 v5.4.1
