@@ -120,6 +120,15 @@ The **Backed by** column matters for understanding where bugs live. Functions ba
 |---|---|---|---|
 | `pigeon_throughput` | `(distance_km number, payload_bytes number, altitude_m number)` | `object` | custom (RFC 1149 §3 + RFC 2549 §§3, 6). Output object: `mtu_bytes`, `birds_required`, `per_bird_payload_bytes`, `cruise_speed_kmh`, `flight_time_seconds`, `throughput_bps`, `packet_loss_probability`, `effective_throughput_bps`, `qos_class`, `frame_format`, `rfc_citations`. |
 
+### RFC 8771 — I-DUNNO
+
+[RFC 8771](https://www.rfc-editor.org/rfc/rfc8771) ("The Internationalized Deliberately Unreadable Network Notation (I-DUNNO)", 2020) packs an IP address's bits into Unicode codepoints whose UTF-8 byte lengths carry the bits per §3 Table 1 (1/2/3/4-byte = 7/11/16/21 bits), with §4 mandating at least one multi-octet sequence and one IDNA2008-DISALLOWED character. The §5 worked example — `198.51.100.164` → U+0063, U+000C, U+006C, U+04A4 — round-trips through this encoder exactly. Decoder is the spec's intentionally-omitted §3.2 ("the machines will know how to do it").
+
+| Function | Signature | Returns | Backed by |
+|---|---|---|---|
+| `ip_idunno_encode` | `(ip string)` | `string` | custom (RFC 8771 §§3–4) |
+| `ip_idunno_decode` | `(encoded string)` | `string` | custom (RFC 8771 §3.2, reversed) |
+
 Per-function documentation lives under [`docs/functions/`](docs/functions/) and on [registry.terraform.io](https://registry.terraform.io/providers/keeleysam/burnham/latest/docs).
 
 ## Query and Patch Functions

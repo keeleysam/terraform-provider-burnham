@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New family **geographic**: `geohash_encode`, `geohash_decode`, `pluscode_encode`, `pluscode_decode` (Open Location Code).
 - Numerics expansion: `mean`, `median`, `mode`, `percentile`, `variance`, `stddev`, `clamp`, `mod_floor`.
 - Network expansion: `pigeon_throughput` — RFC 1149 / RFC 2549 IP-over-Avian-Carriers throughput calculator.
+- Network expansion: `ip_idunno_encode` / `ip_idunno_decode` — RFC 8771 Internationalized Deliberately Unreadable Network Notation. Dual-stack, reaches the §4.1 Minimum Confusion Level on every output, and reproduces the §5 worked example bit-for-bit.
 - `cmd/gendoctemplates` writes per-function `subcategory:` headers so the registry sidebar groups functions by family.
 
 ### Changed

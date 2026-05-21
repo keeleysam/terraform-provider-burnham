@@ -52,5 +52,8 @@ func Functions() []func() function.Function {
 		NewCIDRFindFreeFunction,
 		// IP over Avian Carriers (RFC 1149 / RFC 2549)
 		NewPigeonThroughputFunction,
+		// I-DUNNO Internationalized Deliberately Unreadable Network Notation (RFC 8771)
+		NewIPIDunnoEncodeFunction,
+		NewIPIDunnoDecodeFunction,
 	}
 }
