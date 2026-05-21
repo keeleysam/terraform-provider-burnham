@@ -665,9 +665,131 @@ output "test" { value = provider::burnham::pkcs7_sign(local.data, local.key, loc
 }
 
 func TestAcc_ECDSAP256KeyFromSeed_RejectsOversizedSeed(t *testing.T) {
-	// ecdsaSeedMaxBytes is 8 MiB. Use format("%-N s", " ") to procedurally build a >8 MiB string. Confirms the cap fires before the seed reaches HKDF.
+	// signingSeedMaxBytes is 8 MiB. Use format("%-N s", " ") to procedurally build a >8 MiB string. Confirms the cap fires before the seed reaches HKDF.
 	config := `
 output "test" { value = provider::burnham::ecdsa_p256_key_from_seed(format("%-8388609s", " ")) }
 `
 	runErrorTest(t, config, regexp.MustCompile(`(?is)seed\s+exceeds\s+maximum\s+length`))
+}
+
+// ─── ed25519_key_from_seed ──────────────────────────────────────────────
+
+func TestAcc_Ed25519KeyFromSeed_ReturnsPKCS8PEM(t *testing.T) {
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::ed25519_key_from_seed("burnham-ed25519-test") }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.StringRegexp(regexp.MustCompile(`(?s)^-----BEGIN PRIVATE KEY-----\n.+\n-----END PRIVATE KEY-----\n$`))),
+	)
+}
+
+func TestAcc_Ed25519KeyFromSeed_DeterministicSameSeed(t *testing.T) {
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::ed25519_key_from_seed("same-seed") == provider::burnham::ed25519_key_from_seed("same-seed") }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.Bool(true)),
+	)
+}
+
+func TestAcc_Ed25519KeyFromSeed_DifferentSeedsDiffer(t *testing.T) {
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::ed25519_key_from_seed("seed-a") == provider::burnham::ed25519_key_from_seed("seed-b") }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.Bool(false)),
+	)
+}
+
+func TestAcc_Ed25519KeyFromSeed_DiffersFromECDSAForSameSeed(t *testing.T) {
+	// Same seed bytes, different derivation algorithm + HKDF info string + output format → outputs must not collide. Guards against a refactor that accidentally collapses the two derivation paths.
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::ecdsa_p256_key_from_seed("seed") == provider::burnham::ed25519_key_from_seed("seed") }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.Bool(false)),
+	)
+}
+
+func TestAcc_Ed25519KeyFromSeed_RejectsEmptySeed(t *testing.T) {
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::ed25519_key_from_seed("") }`,
+		regexp.MustCompile(`(?is)seed\s+must\s+not\s+be\s+empty`),
+	)
+}
+
+// ─── x509_self_sign / pkcs7_sign — Ed25519 paths ────────────────────────
+
+func TestAcc_X509SelfSign_AcceptsEd25519Key(t *testing.T) {
+	// Chain ed25519_key_from_seed → x509_self_sign → x509_inspect to assert the cert parses and the public-key algorithm comes back as Ed25519.
+	config := `
+locals {
+  key  = provider::burnham::ed25519_key_from_seed("acc-ed25519")
+  cert = provider::burnham::x509_self_sign(local.key, "burnham.ed25519", "deterministic-serial", "2001-01-01T00:00:00Z", "2099-01-01T00:00:00Z")
+}
+output "subject"   { value = provider::burnham::x509_inspect(local.cert).subject }
+output "algorithm" { value = provider::burnham::x509_inspect(local.cert).public_key_algorithm }
+`
+	runOutputTest(t, config,
+		statecheck.ExpectKnownOutputValue("subject", knownvalue.StringExact("CN=burnham.ed25519")),
+		statecheck.ExpectKnownOutputValue("algorithm", knownvalue.StringExact("Ed25519")),
+	)
+}
+
+func TestAcc_X509SelfSign_DeterministicEd25519(t *testing.T) {
+	config := `
+locals {
+  key = provider::burnham::ed25519_key_from_seed("det")
+  a   = provider::burnham::x509_self_sign(local.key, "burnham.det", "serial-15-bytes", "2001-01-01T00:00:00Z", "2099-01-01T00:00:00Z")
+  b   = provider::burnham::x509_self_sign(local.key, "burnham.det", "serial-15-bytes", "2001-01-01T00:00:00Z", "2099-01-01T00:00:00Z")
+}
+output "test" { value = local.a == local.b }
+`
+	runOutputTest(t, config, statecheck.ExpectKnownOutputValue("test", knownvalue.Bool(true)))
+}
+
+func TestAcc_PKCS7Sign_Ed25519EndToEnd(t *testing.T) {
+	// End-to-end Ed25519 chain: derive identity → self-sign cert → CMS-sign payload → asn1_decode to confirm the SignedData carries the SHA-512 digest algorithm OID in DigestAlgorithms per RFC 8419 §3.
+	//
+	// CMS structure (ContentInfo SEQ → [0] EXPLICIT → SignedData SEQ):
+	//   decoded.children[1].children[0] is the SignedData SEQUENCE
+	//   .children[0]                        = version INTEGER (1)
+	//   .children[1]                        = digestAlgorithms SET (1 entry)
+	//   .children[1].children[0].children[0] = digestAlgorithm OID
+	config := `
+locals {
+  key     = provider::burnham::ed25519_key_from_seed("ed25519-cms-e2e")
+  cert    = provider::burnham::x509_self_sign(local.key, "burnham.ed25519", "serial-15-bytes", "2001-01-01T00:00:00Z", "2099-01-01T00:00:00Z")
+  signed  = provider::burnham::pkcs7_sign("hello, ed25519", local.key, local.cert)
+  decoded = provider::burnham::asn1_decode(local.signed)
+  sd      = local.decoded.children[1].children[0]
+}
+output "outer_type"          { value = local.decoded.type }
+output "signed_data_version" { value = local.sd.children[0].value }
+output "digest_oid"          { value = local.sd.children[1].children[0].children[0].value }
+`
+	runOutputTest(t, config,
+		statecheck.ExpectKnownOutputValue("outer_type", knownvalue.StringExact("SEQUENCE")),
+		statecheck.ExpectKnownOutputValue("signed_data_version", knownvalue.StringExact("1")),
+		// id-sha512 = 2.16.840.1.101.3.4.2.3 per RFC 8419 §3.
+		statecheck.ExpectKnownOutputValue("digest_oid", knownvalue.StringExact("2.16.840.1.101.3.4.2.3")),
+	)
+}
+
+func TestAcc_PKCS7Sign_Ed25519Deterministic(t *testing.T) {
+	config := `
+locals {
+  key  = provider::burnham::ed25519_key_from_seed("det")
+  cert = provider::burnham::x509_self_sign(local.key, "cn", "serial-15-bytes", "2001-01-01T00:00:00Z", "2099-01-01T00:00:00Z")
+  a    = provider::burnham::pkcs7_sign("payload", local.key, local.cert)
+  b    = provider::burnham::pkcs7_sign("payload", local.key, local.cert)
+}
+output "test" { value = local.a == local.b }
+`
+	runOutputTest(t, config, statecheck.ExpectKnownOutputValue("test", knownvalue.Bool(true)))
+}
+
+func TestAcc_PKCS7Sign_Ed25519RejectsMismatchedCert(t *testing.T) {
+	// Cert from ECDSA-P256 identity but signing key is Ed25519 → key/cert public-key types diverge, mismatch check should fire.
+	config := `
+locals {
+  ecdsa_key  = provider::burnham::ecdsa_p256_key_from_seed("seed")
+  ecdsa_cert = provider::burnham::x509_self_sign(local.ecdsa_key, "cn", "serial-15-bytes", "2001-01-01T00:00:00Z", "2099-01-01T00:00:00Z")
+  ed_key     = provider::burnham::ed25519_key_from_seed("seed")
+}
+output "test" { value = provider::burnham::pkcs7_sign("payload", local.ed_key, local.ecdsa_cert) }
+`
+	runErrorTest(t, config, regexp.MustCompile(`(?is)cert_pem\s+public\s+key\s+does\s+not\s+match`))
 }

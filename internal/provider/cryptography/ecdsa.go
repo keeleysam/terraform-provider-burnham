@@ -32,8 +32,8 @@ import (
 const (
 	ecdsaKeyFromSeedInfo = "burnham/ecdsa_p256_key_from_seed"
 
-	// ecdsaSeedMaxBytes caps the `seed` input to defeat adversarial multi-gigabyte payloads. Matches the 8 MiB cap on `asn1_decode.der_base64` — every legitimate seed (hash output, file digest, salt) is orders of magnitude smaller.
-	ecdsaSeedMaxBytes = 8 * 1024 * 1024
+	// signingSeedMaxBytes caps the `seed` input to defeat adversarial multi-gigabyte payloads. Matches the 8 MiB cap on `asn1_decode.der_base64` — every legitimate seed (hash output, file digest, salt) is orders of magnitude smaller.
+	signingSeedMaxBytes = 8 * 1024 * 1024
 )
 
 var _ function.Function = (*ECDSAP256KeyFromSeedFunction)(nil)
@@ -51,7 +51,7 @@ func (f *ECDSAP256KeyFromSeedFunction) Definition(_ context.Context, _ function.
 		Summary: "Derive a deterministic ECDSA P-256 private key from a seed (PEM PKCS#8 output)",
 		MarkdownDescription: fmt.Sprintf("Stretches `seed` to 48 bytes with HKDF-SHA256 (info string `%q`), reduces modulo (n-1) and adds 1 to land in [1, n-1] uniformly, and assembles the resulting scalar into a `secp256r1` private key. Output is PEM PKCS#8.\n\nDeterministic by construction: same `seed` → same key, every time. Useful when you want a stable signing identity that's derived from a checked-in secret or input artefact rather than randomly generated and stored.\n\n```\nprovider::burnham::ecdsa_p256_key_from_seed(sha512(file(\"input.bin\")))\n→ \"-----BEGIN PRIVATE KEY-----\\nMIGHAgEAM…\\n-----END PRIVATE KEY-----\\n\"\n```\n\nPair with [`x509_self_sign`](#function-x509_self_sign) and [`pkcs7_sign`](#function-pkcs7_sign) to build deterministic signing pipelines that are byte-stable across Terraform plans.\n\n%s", ecdsaKeyFromSeedInfo, hclByteHandlingGotcha),
 		Parameters: []function.Parameter{
-			function.StringParameter{Name: "seed", Description: fmt.Sprintf("Input keying material (raw bytes). Any length — HKDF stretches to the 48 bytes the scalar derivation needs. Must not be empty and must not exceed %d bytes (%d MiB). For cryptographic security pass at least 16 bytes of high-entropy input.", ecdsaSeedMaxBytes, ecdsaSeedMaxBytes/(1024*1024))},
+			function.StringParameter{Name: "seed", Description: fmt.Sprintf("Input keying material (raw bytes). Any length — HKDF stretches to the 48 bytes the scalar derivation needs. Must not be empty and must not exceed %d bytes (%d MiB). For cryptographic security pass at least 16 bytes of high-entropy input.", signingSeedMaxBytes, signingSeedMaxBytes/(1024*1024))},
 		},
 		Return: function.StringReturn{},
 	}
@@ -67,8 +67,8 @@ func (f *ECDSAP256KeyFromSeedFunction) Run(ctx context.Context, req function.Run
 		resp.Error = function.NewArgumentFuncError(0, "seed must not be empty")
 		return
 	}
-	if len(seed) > ecdsaSeedMaxBytes {
-		resp.Error = function.NewArgumentFuncError(0, fmt.Sprintf("seed exceeds maximum length: %d bytes; got %d", ecdsaSeedMaxBytes, len(seed)))
+	if len(seed) > signingSeedMaxBytes {
+		resp.Error = function.NewArgumentFuncError(0, fmt.Sprintf("seed exceeds maximum length: %d bytes; got %d", signingSeedMaxBytes, len(seed)))
 		return
 	}
 

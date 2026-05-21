@@ -86,7 +86,7 @@ Keyed hashing, key derivation, certificate / CSR / ASN.1 inspection, and a deter
 
 - **Symmetric:** `hmac` ([RFC 2104](https://www.rfc-editor.org/rfc/rfc2104)), `hkdf` ([RFC 5869](https://www.rfc-editor.org/rfc/rfc5869)).
 - **Inspection:** `pem_decode` ([RFC 7468](https://www.rfc-editor.org/rfc/rfc7468)), `x509_inspect`, `x509_fingerprint`, `csr_inspect`, `asn1_decode` (BER/DER walk).
-- **Deterministic signing (ECDSA P-256, [RFC 6979](https://www.rfc-editor.org/rfc/rfc6979)):** `ecdsa_p256_key_from_seed` (seed → PEM PKCS#8 key), `x509_self_sign` ([RFC 5280](https://www.rfc-editor.org/rfc/rfc5280) v3 self-signed cert), `pkcs7_sign` ([RFC 5652](https://www.rfc-editor.org/rfc/rfc5652) CMS SignedData, no signed attributes — the shape Apple's configuration-profile installer accepts).
+- **Deterministic signing (ECDSA P-256 via [RFC 6979](https://www.rfc-editor.org/rfc/rfc6979); Ed25519 via [RFC 8032](https://www.rfc-editor.org/rfc/rfc8032) PureEdDSA, naturally deterministic):** `ecdsa_p256_key_from_seed`, `ed25519_key_from_seed` (seed → PEM PKCS#8 key), `x509_self_sign` ([RFC 5280](https://www.rfc-editor.org/rfc/rfc5280) v3 self-signed cert, accepts either algorithm), `pkcs7_sign` ([RFC 5652](https://www.rfc-editor.org/rfc/rfc5652) CMS SignedData with no signed attributes, accepts either algorithm — ECDSA P-256 is the shape Apple's configuration-profile installer accepts; Ed25519 follows [RFC 8419](https://www.rfc-editor.org/rfc/rfc8419) for non-Apple consumers).
 
 ## Geographic Functions
 

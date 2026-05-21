@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto"
 	"crypto/ecdsa"
+	"crypto/ed25519"
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/sha256"
@@ -121,11 +122,11 @@ func TestX509SelfSignDeterminism(t *testing.T) {
 	notAfter := time.Date(2099, 1, 1, 0, 0, 0, 0, time.UTC)
 	serial := []byte("serial-bytes-15")
 
-	der1, err := selfSignECDSAP256(key, "test.example", serial, notBefore, notAfter)
+	der1, err := selfSign(&detECDSASigner{priv: key},"test.example", serial, notBefore, notAfter)
 	if err != nil {
 		t.Fatalf("sign 1: %v", err)
 	}
-	der2, err := selfSignECDSAP256(key, "test.example", serial, notBefore, notAfter)
+	der2, err := selfSign(&detECDSASigner{priv: key},"test.example", serial, notBefore, notAfter)
 	if err != nil {
 		t.Fatalf("sign 2: %v", err)
 	}
@@ -159,7 +160,7 @@ func TestX509SelfSignRFC5280Compliance(t *testing.T) {
 	}
 	notBefore := time.Date(2001, 1, 1, 0, 0, 0, 0, time.UTC)
 	notAfter := time.Date(2099, 1, 1, 0, 0, 0, 0, time.UTC)
-	der, err := selfSignECDSAP256(key, "compliance.test", []byte("serial-bytes-15"), notBefore, notAfter)
+	der, err := selfSign(&detECDSASigner{priv: key},"compliance.test", []byte("serial-bytes-15"), notBefore, notAfter)
 	if err != nil {
 		t.Fatalf("sign: %v", err)
 	}
@@ -222,7 +223,7 @@ func TestX509SelfSignRejectsOversizedSerial(t *testing.T) {
 	oversized := append([]byte{0x7F}, bytes.Repeat([]byte{0xFF}, 20)...)
 	notBefore := time.Date(2001, 1, 1, 0, 0, 0, 0, time.UTC)
 	notAfter := time.Date(2099, 1, 1, 0, 0, 0, 0, time.UTC)
-	if _, err := selfSignECDSAP256(key, "cn", oversized, notBefore, notAfter); err == nil {
+	if _, err := selfSign(&detECDSASigner{priv: key},"cn", oversized, notBefore, notAfter); err == nil {
 		t.Fatal("expected oversized-serial rejection per RFC 5280 §4.1.2.2; got nil")
 	}
 }
@@ -243,7 +244,7 @@ func TestPKCS7SignEndToEnd(t *testing.T) {
 	}
 	notBefore := time.Date(2001, 1, 1, 0, 0, 0, 0, time.UTC)
 	notAfter := time.Date(2099, 1, 1, 0, 0, 0, 0, time.UTC)
-	certDER, err := selfSignECDSAP256(key, "burnham-test", []byte("serial-bytes-15"), notBefore, notAfter)
+	certDER, err := selfSign(&detECDSASigner{priv: key},"burnham-test", []byte("serial-bytes-15"), notBefore, notAfter)
 	if err != nil {
 		t.Fatalf("self-sign: %v", err)
 	}
@@ -312,11 +313,15 @@ func TestPKCS7SignEndToEnd(t *testing.T) {
 	}
 
 	// Smoke-test the PEM-string parser path the public Run() functions use.
-	parsedKey, err := parseECDSAP256PrivateKey(keyPEM)
+	parsedSigner, err := parseSigningPrivateKey(keyPEM)
 	if err != nil {
-		t.Fatalf("parseECDSAP256PrivateKey PKCS#8: %v", err)
+		t.Fatalf("parseSigningPrivateKey PKCS#8: %v", err)
 	}
-	if parsedKey.D.Cmp(key.D) != 0 {
+	parsedECDSA, ok := parsedSigner.(*detECDSASigner)
+	if !ok {
+		t.Fatalf("expected *detECDSASigner from ECDSA-P256 PEM, got %T", parsedSigner)
+	}
+	if parsedECDSA.priv.D.Cmp(key.D) != 0 {
 		t.Fatal("parsed key scalar does not match")
 	}
 }
@@ -330,7 +335,7 @@ func TestPKCS7SignRFC5652Compliance(t *testing.T) {
 	}
 	notBefore := time.Date(2001, 1, 1, 0, 0, 0, 0, time.UTC)
 	notAfter := time.Date(2099, 1, 1, 0, 0, 0, 0, time.UTC)
-	certDER, err := selfSignECDSAP256(key, "rfc5652", []byte("serial-bytes-15"), notBefore, notAfter)
+	certDER, err := selfSign(&detECDSASigner{priv: key},"rfc5652", []byte("serial-bytes-15"), notBefore, notAfter)
 	if err != nil {
 		t.Fatalf("cert: %v", err)
 	}
@@ -447,14 +452,14 @@ func TestPKCS7SignKeyCertMismatchRejected(t *testing.T) {
 	}
 	notBefore := time.Date(2001, 1, 1, 0, 0, 0, 0, time.UTC)
 	notAfter := time.Date(2099, 1, 1, 0, 0, 0, 0, time.UTC)
-	certDER, err := selfSignECDSAP256(keyA, "mismatched", []byte("serial-bytes-15"), notBefore, notAfter)
+	certDER, err := selfSign(&detECDSASigner{priv: keyA}, "mismatched", []byte("serial-bytes-15"), notBefore, notAfter)
 	if err != nil {
 		t.Fatalf("cert: %v", err)
 	}
 	keyBPEM := string(pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: mustPKCS8(t, keyB)}))
 	certPEM := string(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: certDER}))
 
-	parsedKey, err := parseECDSAP256PrivateKey(keyBPEM)
+	parsedSigner, err := parseSigningPrivateKey(keyBPEM)
 	if err != nil {
 		t.Fatalf("parse key: %v", err)
 	}
@@ -466,8 +471,15 @@ func TestPKCS7SignKeyCertMismatchRejected(t *testing.T) {
 	if err != nil {
 		t.Fatalf("parse cert: %v", err)
 	}
-	// This is the check the public Run() does. Confirm it actually rejects mismatched pairs.
-	if parsedKey.PublicKey.Equal(parsedCert.PublicKey) {
+	// This is the check the public Run() does. Confirm it actually rejects mismatched pairs. Both ECDSA P-256 and Ed25519 public-key types implement `Equal(crypto.PublicKey) bool`, so the assertion-then-Equal dance is the same shape Run() uses.
+	type publicKeyEqualer interface {
+		Equal(crypto.PublicKey) bool
+	}
+	pub, ok := parsedSigner.Public().(publicKeyEqualer)
+	if !ok {
+		t.Fatalf("signer public key %T does not implement Equal", parsedSigner.Public())
+	}
+	if pub.Equal(parsedCert.PublicKey) {
 		t.Fatal("test setup wrong: keys A and B unexpectedly equal")
 	}
 }
@@ -537,8 +549,8 @@ func mustPKCS8(t *testing.T, key *ecdsa.PrivateKey) []byte {
 	return b
 }
 
-// TestParseECDSAP256PrivateKeyRejectsNonP256 confirms the curve-specific check actually fires when handed a P-384 key.
-func TestParseECDSAP256PrivateKeyRejectsNonP256(t *testing.T) {
+// TestParseSigningPrivateKey_RejectsNonP256ECDSA confirms the curve-specific check actually fires when handed a P-384 key.
+func TestParseSigningPrivateKey_RejectsNonP256ECDSA(t *testing.T) {
 	// Build a P-384 key via the same scalar dance, then marshal+re-parse to drive the public input path.
 	priv := &ecdsa.PrivateKey{
 		PublicKey: ecdsa.PublicKey{Curve: elliptic.P384()},
@@ -550,7 +562,239 @@ func TestParseECDSAP256PrivateKeyRejectsNonP256(t *testing.T) {
 		t.Fatalf("marshal: %v", err)
 	}
 	pemStr := string(pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: der}))
-	if _, err := parseECDSAP256PrivateKey(pemStr); err == nil {
+	if _, err := parseSigningPrivateKey(pemStr); err == nil {
 		t.Fatal("expected P-256 enforcement error, got nil")
 	}
+}
+
+// TestParseSigningPrivateKey_AcceptsEd25519 round-trips an Ed25519 PKCS#8 PEM through the parser and confirms the returned signer's public key matches the input. Companion to the ECDSA-P256 acceptance path covered by TestPKCS7SignEndToEnd's smoke check.
+func TestParseSigningPrivateKey_AcceptsEd25519(t *testing.T) {
+	key, err := ed25519KeyFromSeed([]byte("ed25519 parser accept"))
+	if err != nil {
+		t.Fatalf("derive: %v", err)
+	}
+	der, err := x509.MarshalPKCS8PrivateKey(key)
+	if err != nil {
+		t.Fatalf("marshal pkcs8: %v", err)
+	}
+	pemStr := string(pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: der}))
+	signer, err := parseSigningPrivateKey(pemStr)
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	// Ed25519 keys aren't wrapped (naturally deterministic); the signer should be the raw ed25519.PrivateKey.
+	parsed, ok := signer.(ed25519.PrivateKey)
+	if !ok {
+		t.Fatalf("expected ed25519.PrivateKey, got %T", signer)
+	}
+	if !bytes.Equal(parsed.Public().(ed25519.PublicKey), key.Public().(ed25519.PublicKey)) {
+		t.Fatal("parsed Ed25519 public key does not match input")
+	}
+}
+
+// ─── Ed25519 ─────────────────────────────────────────────────────────────
+
+// TestEd25519KeyFromSeedDeterminism exercises the seed→key derivation directly. Mirrors TestECDSAKeyFromSeedDeterminism for the Ed25519 path.
+func TestEd25519KeyFromSeedDeterminism(t *testing.T) {
+	seedA := []byte("the quick brown fox")
+	seedB := []byte("THE QUICK BROWN FOX")
+
+	k1, err := ed25519KeyFromSeed(seedA)
+	if err != nil {
+		t.Fatalf("derive 1: %v", err)
+	}
+	k2, err := ed25519KeyFromSeed(seedA)
+	if err != nil {
+		t.Fatalf("derive 2: %v", err)
+	}
+	if !bytes.Equal(k1, k2) {
+		t.Fatal("same seed produced different Ed25519 keys")
+	}
+	k3, err := ed25519KeyFromSeed(seedB)
+	if err != nil {
+		t.Fatalf("derive 3: %v", err)
+	}
+	if bytes.Equal(k1, k3) {
+		t.Fatal("different seeds produced same Ed25519 key")
+	}
+
+	// Sanity: key size matches spec (private = 64 bytes per RFC 8032: 32-byte seed || 32-byte public key).
+	if len(k1) != ed25519.PrivateKeySize {
+		t.Fatalf("expected %d-byte Ed25519 private key, got %d", ed25519.PrivateKeySize, len(k1))
+	}
+}
+
+// TestEd25519KeyFromSeedGoldenSeed locks the seed → key mapping for a fixed input. Companion to the ECDSA golden-scalar test. If the HKDF info string ever drifts or the Ed25519 derivation algorithm changes, this fires and the caller's stored signing identity stays predictable across upgrades.
+func TestEd25519KeyFromSeedGoldenSeed(t *testing.T) {
+	key, err := ed25519KeyFromSeed([]byte("golden-test-vector"))
+	if err != nil {
+		t.Fatalf("derive: %v", err)
+	}
+	// `seed` is the 32-byte material handed to `ed25519.NewKeyFromSeed` — it's the first half of the 64-byte ed25519.PrivateKey. Public key derives from it deterministically per RFC 8032 §5.1.5.
+	const wantSeed = "608ad1e53f24ce7b6fbcdbf1e04c6a5e80f91d61fcfb3332f19eb587ab2213f1"
+	if got := hex.EncodeToString(key.Seed()); got != wantSeed {
+		t.Fatalf("seed drift: got %s want %s", got, wantSeed)
+	}
+}
+
+// TestX509SelfSignDeterminism_Ed25519 confirms cert determinism with the Ed25519 path (no rfc6979 wrapper involved — relies on Ed25519's natural determinism per RFC 8032).
+func TestX509SelfSignDeterminism_Ed25519(t *testing.T) {
+	key, err := ed25519KeyFromSeed([]byte("ed25519 cert det seed"))
+	if err != nil {
+		t.Fatalf("derive: %v", err)
+	}
+	notBefore := time.Date(2001, 1, 1, 0, 0, 0, 0, time.UTC)
+	notAfter := time.Date(2099, 1, 1, 0, 0, 0, 0, time.UTC)
+	serial := []byte("serial-bytes-15")
+
+	der1, err := selfSign(key, "ed25519.test", serial, notBefore, notAfter)
+	if err != nil {
+		t.Fatalf("sign 1: %v", err)
+	}
+	der2, err := selfSign(key, "ed25519.test", serial, notBefore, notAfter)
+	if err != nil {
+		t.Fatalf("sign 2: %v", err)
+	}
+	if !bytes.Equal(der1, der2) {
+		t.Fatal("Ed25519 x509_self_sign produced different bytes across calls")
+	}
+
+	cert, err := x509.ParseCertificate(der1)
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	if cert.SignatureAlgorithm != x509.PureEd25519 {
+		t.Fatalf("expected SignatureAlgorithm=PureEd25519, got %v", cert.SignatureAlgorithm)
+	}
+	pub, ok := cert.PublicKey.(ed25519.PublicKey)
+	if !ok {
+		t.Fatalf("expected ed25519.PublicKey, got %T", cert.PublicKey)
+	}
+	if !bytes.Equal(pub, key.Public().(ed25519.PublicKey)) {
+		t.Fatal("cert public key does not match signer")
+	}
+}
+
+// TestPKCS7SignEndToEnd_Ed25519 mirrors TestPKCS7SignEndToEnd for the Ed25519 path: derive key from seed, self-sign cert, CMS-sign payload, then parse and verify the signature math via the embedded pubkey. Different from the ECDSA variant: the signature is PureEdDSA over the raw data (no pre-hash), the encryption OID is `id-Ed25519` (1.3.101.112), and the digest algorithm in the SignerInfo is SHA-512 per RFC 8419 §3.
+func TestPKCS7SignEndToEnd_Ed25519(t *testing.T) {
+	payload := []byte("payload-for-ed25519-cms-test")
+	seed := sha512.Sum512(payload)
+
+	key, err := ed25519KeyFromSeed(seed[:])
+	if err != nil {
+		t.Fatalf("derive key: %v", err)
+	}
+	notBefore := time.Date(2001, 1, 1, 0, 0, 0, 0, time.UTC)
+	notAfter := time.Date(2099, 1, 1, 0, 0, 0, 0, time.UTC)
+	certDER, err := selfSign(key, "burnham-ed25519", []byte("serial-bytes-15"), notBefore, notAfter)
+	if err != nil {
+		t.Fatalf("self-sign: %v", err)
+	}
+	cert, err := x509.ParseCertificate(certDER)
+	if err != nil {
+		t.Fatalf("parse cert: %v", err)
+	}
+
+	sd, err := pkcs7.NewSignedData(payload)
+	if err != nil {
+		t.Fatalf("new signed data: %v", err)
+	}
+	sd.SetDigestAlgorithm(pkcs7.OIDDigestAlgorithmSHA512)
+	if err := sd.SignWithoutAttr(cert, key, pkcs7.SignerInfoConfig{}); err != nil {
+		t.Fatalf("sign: %v", err)
+	}
+	der1, err := sd.Finish()
+	if err != nil {
+		t.Fatalf("finish: %v", err)
+	}
+
+	parsed, err := pkcs7.Parse(der1)
+	if err != nil {
+		t.Fatalf("parse cms: %v", err)
+	}
+	if !bytes.Equal(parsed.Content, payload) {
+		t.Fatal("encapsulated content does not match input")
+	}
+	// PureEdDSA: signature is computed over the raw message. ed25519.Verify takes the message itself (not a digest).
+	pub, ok := parsed.Certificates[0].PublicKey.(ed25519.PublicKey)
+	if !ok {
+		t.Fatalf("embedded pubkey is not Ed25519: %T", parsed.Certificates[0].PublicKey)
+	}
+	if !ed25519.Verify(pub, parsed.Content, parsed.Signers[0].EncryptedDigest) {
+		t.Fatal("CMS Ed25519 signature did not verify against embedded pubkey")
+	}
+
+	// Determinism: re-sign and demand identical DER.
+	sd2, err := pkcs7.NewSignedData(payload)
+	if err != nil {
+		t.Fatalf("new signed data 2: %v", err)
+	}
+	sd2.SetDigestAlgorithm(pkcs7.OIDDigestAlgorithmSHA512)
+	if err := sd2.SignWithoutAttr(cert, key, pkcs7.SignerInfoConfig{}); err != nil {
+		t.Fatalf("sign 2: %v", err)
+	}
+	der2, err := sd2.Finish()
+	if err != nil {
+		t.Fatalf("finish 2: %v", err)
+	}
+	if !bytes.Equal(der1, der2) {
+		t.Fatal("Ed25519 pkcs7_sign produced different DER bytes across calls — determinism regression")
+	}
+
+	// Confirm SignerInfo carries the id-Ed25519 algorithm identifier and digest = id-sha512 per RFC 8419 §3.
+	if !parsed.Signers[0].DigestAlgorithm.Algorithm.Equal(pkcs7.OIDDigestAlgorithmSHA512) {
+		t.Fatalf("RFC 8419 §3: SignerInfo.digestAlgorithm must be id-sha512 for Ed25519; got %v", parsed.Signers[0].DigestAlgorithm.Algorithm)
+	}
+	if !parsed.Signers[0].DigestEncryptionAlgorithm.Algorithm.Equal(asn1.ObjectIdentifier{1, 3, 101, 112}) {
+		t.Fatalf("expected id-Ed25519 encryption OID (1.3.101.112); got %v", parsed.Signers[0].DigestEncryptionAlgorithm.Algorithm)
+	}
+}
+
+// TestPKCS7SignKeyTypesDiverge confirms that the same payload signed with an ECDSA P-256 identity vs an Ed25519 identity produces different DER bytes (they have different algorithm identifiers and different signature sizes — the sizes alone make the DER lengths differ, but this guards against any weird path collapse where the dispatch on key type accidentally short-circuits).
+func TestPKCS7SignKeyTypesDiverge(t *testing.T) {
+	payload := []byte("divergence test")
+	ecdsaKey, err := ecdsaP256KeyFromSeed([]byte("seed"))
+	if err != nil {
+		t.Fatalf("ecdsa derive: %v", err)
+	}
+	edKey, err := ed25519KeyFromSeed([]byte("seed"))
+	if err != nil {
+		t.Fatalf("ed25519 derive: %v", err)
+	}
+	notBefore := time.Date(2001, 1, 1, 0, 0, 0, 0, time.UTC)
+	notAfter := time.Date(2099, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	ecdsaCertDER, err := selfSign(&detECDSASigner{priv: ecdsaKey}, "cn", []byte("serial-bytes-15"), notBefore, notAfter)
+	if err != nil {
+		t.Fatalf("ecdsa cert: %v", err)
+	}
+	edCertDER, err := selfSign(edKey, "cn", []byte("serial-bytes-15"), notBefore, notAfter)
+	if err != nil {
+		t.Fatalf("ed25519 cert: %v", err)
+	}
+	ecdsaCert, _ := x509.ParseCertificate(ecdsaCertDER)
+	edCert, _ := x509.ParseCertificate(edCertDER)
+
+	signA, _ := signCMS(t, payload, &detECDSASigner{priv: ecdsaKey}, ecdsaCert, pkcs7.OIDDigestAlgorithmSHA256)
+	signB, _ := signCMS(t, payload, edKey, edCert, pkcs7.OIDDigestAlgorithmSHA512)
+	if bytes.Equal(signA, signB) {
+		t.Fatal("ECDSA-P256 and Ed25519 CMS outputs unexpectedly identical for the same payload")
+	}
+}
+
+func signCMS(t *testing.T, payload []byte, signer crypto.Signer, cert *x509.Certificate, digestOID asn1.ObjectIdentifier) ([]byte, error) {
+	t.Helper()
+	sd, err := pkcs7.NewSignedData(payload)
+	if err != nil {
+		t.Fatalf("new sd: %v", err)
+	}
+	sd.SetDigestAlgorithm(digestOID)
+	if err := sd.SignWithoutAttr(cert, signer, pkcs7.SignerInfoConfig{}); err != nil {
+		t.Fatalf("sign: %v", err)
+	}
+	der, err := sd.Finish()
+	if err != nil {
+		t.Fatalf("finish: %v", err)
+	}
+	return der, nil
 }
