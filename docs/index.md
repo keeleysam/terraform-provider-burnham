@@ -48,7 +48,8 @@ Common entry points:
 - **Query:** `ip_in_cidr`, `cidr_contains`, `cidrs_overlap_any`, `cidrs_are_disjoint`
 - **Arithmetic:** `ip_add`, `ip_subtract`, `cidr_first_ip`, `cidr_last_ip`, `cidr_host_count`
 - **NAT64 / NPTv6:** `nat64_synthesize`, `nat64_synthesize_cidrs`, `nat64_extract`, `nptv6_translate`
-- **Whimsy:** `pigeon_throughput` (RFC 1149 / RFC 2549 IP-over-Avian-Carriers calculator)
+- **Throughput:** `pigeon_throughput` ([RFC 1149](https://www.rfc-editor.org/rfc/rfc1149) / [RFC 2549](https://www.rfc-editor.org/rfc/rfc2549) IP over Avian Carriers)
+- **Notation:** `ip_idunno_encode`, `ip_idunno_decode` ([RFC 8771](https://www.rfc-editor.org/rfc/rfc8771) I-DUNNO)
 
 ## Query and Patch Functions
 
