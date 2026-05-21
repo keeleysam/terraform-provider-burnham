@@ -7,12 +7,26 @@ on:
 permissions:
   contents: read
 
-# Two parallel jobs:
-#   - test:     build, vet, the full TF_ACC=1 acceptance suite, coverage.
+# Three parallel jobs:
+#   - build:    `go build ./...` + `go vet ./...`. ~30s with a warm module cache. Fast-fail for the common "I broke compilation" case so contributors don't wait the full ~3-5 min `test` cycle to see a missing-import error.
+#   - test:     build, vet, the full TF_ACC=1 acceptance suite, coverage. Repeats the build/vet for self-containment so this job is also runnable in isolation.
 #   - generate: regenerate docs/ and pi_packed.bin, fail if either drifts.
 # The Chudnovsky regen for pi_packed.bin takes ~80s on Actions runners — splitting it off keeps the generate-drift feedback loop separate from the acceptance pass.
 # `-race` is intentionally not enabled here. On `ubuntu-latest` (2-core) runners with the per-test Terraform-subprocess overhead, race-detector wall time blew through Go's default 10-minute per-binary `-timeout`. The provider's real concurrency surface is tiny (slugify's mutex around gosimple/slug's package globals is essentially the whole story) and is well-covered by local dev runs. Add a separate periodic race-detector job if regression risk becomes a concern.
 jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: "go.mod"
+          cache: true
+      - run: go mod download
+      - run: go build ./...
+      - run: go vet ./...
+
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 10
