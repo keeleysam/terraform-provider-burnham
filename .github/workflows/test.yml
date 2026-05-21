@@ -36,14 +36,20 @@ jobs:
         with:
           go-version-file: "go.mod"
           cache: true
+      # Pre-install the Terraform CLI so terraform-plugin-testing's plugintest helper doesn't have to. The runner has no terraform out of the box, so without this every test invocation routes through `hc-install` which writes the binary to a per-process tempdir and execs it. Under `t.Parallel()` in the acceptance suite, many goroutines hit that install path nearly simultaneously and race on the file-write→exec sequence — Linux returns ETXTBSY ("text file busy") because the writable fd hasn't been closed by the time a sibling tries to `fork/exec` the same path. Pre-installing avoids the write entirely; the `TF_ACC_TERRAFORM_PATH` env var below tells plugintest to use the installed binary directly.
+      - uses: hashicorp/setup-terraform@v3
+        id: setup-terraform
+        with:
+          terraform_wrapper: false # The wrapper intercepts `terraform version` output and breaks plugintest's version probe.
       - run: go mod download
       - run: go build ./...
       - run: go vet ./...
       # `-coverpkg=./internal/...` captures cross-package coverage. The acceptance tests live in package provider but exercise package dataformat and package network through the protocol layer; without -coverpkg, that work doesn't count toward those packages and the per-package numbers look much worse than they actually are. We then write all per-package profiles into one merged file and report a single combined coverage figure, which is the number worth tracking.
-      # `TF_ACC=1` opts in to running the `TestAcc_*` acceptance tests (terraform-plugin-testing skips them by default — without this every TestAcc_* call is a no-op). `-p 1` runs test *packages* serially — the long pole is `internal/provider` (~100s; everything else is <3s), and serialising avoids the parallel-package contention that surprised us on Actions runners.
+      # `TF_ACC=1` opts in to running the `TestAcc_*` acceptance tests (terraform-plugin-testing skips them by default — without this every TestAcc_* call is a no-op). `-p 1` runs test *packages* serially — the long pole is `internal/provider` (~100s; everything else is <3s), and serialising avoids the parallel-package contention that surprised us on Actions runners. Within `internal/provider` the TestAcc_* helpers call `t.Parallel()` so all 390 acceptance tests run concurrently up to GOMAXPROCS (= the runner's core count).
       - run: go test ./... -count=1 -p 1 -coverpkg=./internal/... -coverprofile=coverage.out
         env:
           TF_ACC: "1"
+          TF_ACC_TERRAFORM_PATH: ${{ steps.setup-terraform.outputs.terraform-path }}
       - name: Combined coverage across all internal packages
         run: go tool cover -func=coverage.out | tail -1
 
