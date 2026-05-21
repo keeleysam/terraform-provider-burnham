@@ -37,7 +37,7 @@ jobs:
           go-version-file: "go.mod"
           cache: true
       # Pre-install the Terraform CLI so terraform-plugin-testing's plugintest helper doesn't have to. The runner has no terraform out of the box, so without this every test invocation routes through `hc-install` which writes the binary to a per-process tempdir and execs it. Under `t.Parallel()` in the acceptance suite, many goroutines hit that install path nearly simultaneously and race on the file-write→exec sequence — Linux returns ETXTBSY ("text file busy") because the writable fd hasn't been closed by the time a sibling tries to `fork/exec` the same path. Pre-installing avoids the write entirely; the `TF_ACC_TERRAFORM_PATH` env var below tells plugintest to use the installed binary directly.
-      - uses: hashicorp/setup-terraform@v3
+      - uses: hashicorp/setup-terraform@v4
         id: setup-terraform
         with:
           terraform_wrapper: false # The wrapper intercepts `terraform version` output and breaks plugintest's version probe.
@@ -63,7 +63,7 @@ jobs:
           go-version-file: "go.mod"
           cache: true
       # tfplugindocs (called from `go generate ./...` below) needs `terraform` on PATH to extract the provider schema via `terraform providers schema -json`. Without a pre-installed binary it falls back to `hc-install` and downloads the latest version every run — an extra ~5-10s of network work plus a possible flake source. Pre-installing pins the version and skips the download.
-      - uses: hashicorp/setup-terraform@v3
+      - uses: hashicorp/setup-terraform@v4
         with:
           terraform_wrapper: false # tfplugindocs parses raw `terraform version` output; the wrapper's prefixing would break that.
       - run: go mod download
