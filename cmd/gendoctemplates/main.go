@@ -18,6 +18,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/function"
 
+	"github.com/keeleysam/terraform-burnham/internal/provider/compression"
 	"github.com/keeleysam/terraform-burnham/internal/provider/cryptography"
 	"github.com/keeleysam/terraform-burnham/internal/provider/dataformat"
 	"github.com/keeleysam/terraform-burnham/internal/provider/geographic"
@@ -33,6 +34,7 @@ var families = []struct {
 	subcategory string
 	functions   []func() function.Function
 }{
+	{"Compression", compression.Functions()},
 	{"Structured Data", dataformat.Functions()},
 	{"Networking", network.Functions()},
 	{"Query and Patch", transform.Functions()},

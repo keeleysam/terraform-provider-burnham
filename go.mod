@@ -3,10 +3,12 @@ module github.com/keeleysam/terraform-burnham
 go 1.26.1
 
 require (
+	github.com/andybalholm/brotli v1.2.1
 	github.com/andygrunwald/vdf v1.1.0
 	github.com/calico32/kdl-go v0.15.0
 	github.com/digitorus/pkcs7 v0.0.0-20250730155240-ffadbf3f398c
 	github.com/evanphx/json-patch/v5 v5.9.11
+	github.com/foobaz/go-zopfli v0.0.0-20260611111302-2b73a4c8c2e9
 	github.com/fxamacker/cbor/v2 v2.9.2
 	github.com/gersonkurz/go-regis3 v0.0.0-20260204141052-9cc701fe149b
 	github.com/google/open-location-code/go v0.0.0-20250620134813-83986da0156b

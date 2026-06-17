@@ -10,9 +10,13 @@ description: |-
 > *"Aim high in hope and work, remembering that a noble, logical diagram once recorded will never die."*
 > — Daniel Burnham
 
-A pure provider-defined function provider — structured data formats, IP/CIDR arithmetic, query and patch over decoded values, deterministic identifiers, text manipulation, cryptography (HMAC / HKDF / X.509 / CSR / ASN.1 / deterministic CMS signing), geographic encoding, and a small numerics family. No resources, no data sources, no remote API calls — every function evaluates at plan time.
+A pure provider-defined function provider — structured data formats, compression (Zopfli gzip and Brotli), IP/CIDR arithmetic, query and patch over decoded values, deterministic identifiers, text manipulation, cryptography (HMAC / HKDF / X.509 / CSR / ASN.1 / deterministic CMS signing), geographic encoding, and a small numerics family. No resources, no data sources, no remote API calls — every function evaluates at plan time.
 
-Burnham is organized into eight families. Per-function reference for all families lives in the sidebar.
+Burnham is organized into nine families. Per-function reference for all families lives in the sidebar.
+
+## Compression Functions
+
+Compress a string and base64-encode the result. `base64zopfli` is a tighter, drop-in replacement for the built-in `base64gzip` (ordinary RFC 1952 gzip output via Zopfli's iterative DEFLATE encoder — `gunzip` on the consumer side is unchanged); `base64brotli` is RFC 7932 Brotli (~8–10% smaller on text, needs a `brotli` decompressor on the consumer side). Both are pure-Go and deterministic, so plans stay stable.
 
 ## Structured Data Functions
 

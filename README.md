@@ -17,9 +17,10 @@ Your configuration profiles, ACL policies, and structured documents become first
 
 The result is Terraform code that reads like a blueprint — clear, logical, and built to last.
 
-Burnham is organized into eight families of functions:
+Burnham is organized into nine families of functions:
 
 - **[Structured Data Functions](#structured-data-functions)** — encode/decode for JSON (pretty), HuJSON, plist, INI, CSV, YAML, .reg, VDF, KDL, NDJSON, MessagePack, CBOR, dotenv, Java .properties, Apple .strings, and general HCL.
+- **[Compression Functions](#compression-functions)** — `base64zopfli` (RFC 1952 gzip via Zopfli, a tighter drop-in for `base64gzip`) and `base64brotli` (RFC 7932 Brotli).
 - **[Networking Functions](#networking-functions)** — CIDR set operations, queries, IP arithmetic, NAT64 (RFC 6052), NPTv6 (RFC 6296), IPAM helpers, and a faithful RFC 1149 / RFC 2549 (IP over Avian Carriers) throughput calculator.
 - **[Query and Patch Functions](#query-and-patch-functions)** — JMESPath, JSONPath (RFC 9535), JSON Patch (RFC 6902), and JSON Merge Patch (RFC 7396) over decoded structures.
 - **[Numerics Functions](#numerics-functions)** — RFC 3091 (Pi Digit Generation Protocol), statistics, and small math helpers.
@@ -66,6 +67,17 @@ Burnham is organized into eight families of functions:
 | `regqword(uint64)` | tagged `REG_QWORD` | `regencode` — accepts `[0, 18446744073709551615]` |
 
 Per-function documentation — including parameters, options, and return values — lives under [`docs/functions/`](docs/functions/) and on [registry.terraform.io](https://registry.terraform.io/providers/keeleysam/burnham/latest/docs). The pages there are auto-generated from the function metadata in source, so they always match the latest published version.
+
+## Compression Functions
+
+Compress a string and base64-encode the result, for payloads like EC2 `user_data` that bump against size limits. Terraform's built-in `base64gzip` is the standards baseline; these are opt-in alternatives that trade a little plan-time CPU (or a consumer-side decompressor) for smaller output. Both are pure and **deterministic** — identical input and options always produce byte-identical output, so plans never churn.
+
+| Function | Format | Decompresses with | Notes |
+|--------|--------|--------|-------|
+| `base64zopfli` | gzip ([RFC 1952](https://www.rfc-editor.org/rfc/rfc1952) / [RFC 1951](https://www.rfc-editor.org/rfc/rfc1951)) | `gunzip`, `zcat`, any gzip decoder | Drop-in replacement for `base64gzip` using [Zopfli](https://github.com/google/zopfli)'s iterative DEFLATE encoder — a few percent smaller, consumer side unchanged. Header pinned to `MTIME=0` / `XFL=2` / `OS=255`. Optional `{ iterations }` (default 15). |
+| `base64brotli` | Brotli ([RFC 7932](https://www.rfc-editor.org/rfc/rfc7932)) | `brotli -d`, browser `Content-Encoding: br` | ~8–10% smaller than `base64gzip` on text, but requires a brotli decompressor on the consuming side. Optional `{ quality, lgwin }` (defaults 11 / 22). |
+
+Both are pure Go (`CGO_ENABLED=0`), via [`foobaz/go-zopfli`](https://github.com/foobaz/go-zopfli) and [`andybalholm/brotli`](https://github.com/andybalholm/brotli). The RFC 7932 §10 encoder `mode` hint isn't exposed on `base64brotli` — the pure-Go encoder doesn't apply it (`text` and `generic` are byte-identical, `font` is unreachable), so it would be a no-op rather than an honest knob.
 
 ## Networking Functions
 
