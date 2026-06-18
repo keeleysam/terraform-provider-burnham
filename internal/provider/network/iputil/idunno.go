@@ -49,18 +49,18 @@ const idunnoMaxPadBits = 20
 // consume the first 28 bits, then a 3-byte UTF-8 sequence with 12 bits of
 // padding lets the encoder pick any codepoint in U+0000–U+FFFF that's ≥ U+0800).
 var idunnoIPv4Layouts = [][]int{
-	{7, 7, 7, 11},        // 32 bits, RFC §5 example. Works when bits[21:32] ≥ 0x80.
-	{16, 16},             // 32 bits, all 3-byte. Both chunks must be ≥ 0x800 and not surrogate.
-	{21, 11},             // 32 bits. First chunk must be ≥ U+10000.
-	{11, 21},             // 32 bits.
-	{11, 11, 11, 7},      // 32 bits. All 11-bit chunks must be ≥ 0x80.
-	{7, 11, 7, 7},        // 32 bits.
-	{7, 7, 11, 7},        // 32 bits.
-	{11, 7, 7, 7},        // 32 bits.
-	{7, 7, 7, 7, 11},     // 39 bits, 7 pad. Works when last nibble != 0 (gives padding room).
-	{7, 7, 7, 16},        // 37 bits, 5 pad. Works when bits[21:32] ≥ 0x40.
-	{7, 7, 7, 21},        // 42 bits, 10 pad. Final chunk needs value in [0x10000, 0x10FFFF].
-	{7, 7, 7, 7, 16},     // 44 bits, 12 pad. UNIVERSAL FALLBACK — always works.
+	{7, 7, 7, 11},    // 32 bits, RFC §5 example. Works when bits[21:32] ≥ 0x80.
+	{16, 16},         // 32 bits, all 3-byte. Both chunks must be ≥ 0x800 and not surrogate.
+	{21, 11},         // 32 bits. First chunk must be ≥ U+10000.
+	{11, 21},         // 32 bits.
+	{11, 11, 11, 7},  // 32 bits. All 11-bit chunks must be ≥ 0x80.
+	{7, 11, 7, 7},    // 32 bits.
+	{7, 7, 11, 7},    // 32 bits.
+	{11, 7, 7, 7},    // 32 bits.
+	{7, 7, 7, 7, 11}, // 39 bits, 7 pad. Works when last nibble != 0 (gives padding room).
+	{7, 7, 7, 16},    // 37 bits, 5 pad. Works when bits[21:32] ≥ 0x40.
+	{7, 7, 7, 21},    // 42 bits, 10 pad. Final chunk needs value in [0x10000, 0x10FFFF].
+	{7, 7, 7, 7, 16}, // 44 bits, 12 pad. UNIVERSAL FALLBACK — always works.
 }
 
 // idunnoIPv6Layouts is the priority list for 128-bit IPv6 addresses. Layouts
@@ -71,18 +71,18 @@ var idunnoIPv4Layouts = [][]int{
 // sequence with 14 bits of padding covers the last 2 address bits + any
 // valid BMP codepoint ≥ U+0800.
 var idunnoIPv6Layouts = [][]int{
-	{16, 16, 16, 16, 16, 16, 16, 16},                                                       // 128 bits, 8×3-byte
-	{21, 16, 16, 16, 16, 16, 16, 11},                                                       // 128 bits
-	{21, 21, 21, 21, 21, 21, 7},                                                            // 133 bits, 5 pad
-	{21, 21, 21, 21, 21, 21, 11},                                                           // 137 bits, 9 pad
-	{21, 21, 21, 21, 21, 16, 16},                                                           // 137 bits, 9 pad
-	{11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 7},                                        // 128 bits
-	{16, 16, 16, 16, 16, 16, 16, 7, 11},                                                    // 130 bits, 2 pad
-	{16, 16, 16, 16, 16, 16, 16, 16, 7},                                                    // 135 bits, 7 pad
-	{16, 16, 16, 16, 16, 16, 16, 16, 11},                                                   // 139 bits, 11 pad
-	{16, 16, 16, 16, 16, 16, 16, 16, 16},                                                   // 144 bits, 16 pad
-	{7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 11},                             // 137 bits, 9 pad (long-prefix for sparse addresses)
-	{7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 16},                             // 142 bits, 14 pad — UNIVERSAL FALLBACK
+	{16, 16, 16, 16, 16, 16, 16, 16},                           // 128 bits, 8×3-byte
+	{21, 16, 16, 16, 16, 16, 16, 11},                           // 128 bits
+	{21, 21, 21, 21, 21, 21, 7},                                // 133 bits, 5 pad
+	{21, 21, 21, 21, 21, 21, 11},                               // 137 bits, 9 pad
+	{21, 21, 21, 21, 21, 16, 16},                               // 137 bits, 9 pad
+	{11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 7},            // 128 bits
+	{16, 16, 16, 16, 16, 16, 16, 7, 11},                        // 130 bits, 2 pad
+	{16, 16, 16, 16, 16, 16, 16, 16, 7},                        // 135 bits, 7 pad
+	{16, 16, 16, 16, 16, 16, 16, 16, 11},                       // 139 bits, 11 pad
+	{16, 16, 16, 16, 16, 16, 16, 16, 16},                       // 144 bits, 16 pad
+	{7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 11}, // 137 bits, 9 pad (long-prefix for sparse addresses)
+	{7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 16}, // 142 bits, 14 pad — UNIVERSAL FALLBACK
 }
 
 // IDunnoEncode produces the I-DUNNO representation of an IPv4 or IPv6 address

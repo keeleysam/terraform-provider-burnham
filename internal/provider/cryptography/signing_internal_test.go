@@ -122,11 +122,11 @@ func TestX509SelfSignDeterminism(t *testing.T) {
 	notAfter := time.Date(2099, 1, 1, 0, 0, 0, 0, time.UTC)
 	serial := []byte("serial-bytes-15")
 
-	der1, err := selfSign(&detECDSASigner{priv: key},"test.example", serial, notBefore, notAfter)
+	der1, err := selfSign(&detECDSASigner{priv: key}, "test.example", serial, notBefore, notAfter)
 	if err != nil {
 		t.Fatalf("sign 1: %v", err)
 	}
-	der2, err := selfSign(&detECDSASigner{priv: key},"test.example", serial, notBefore, notAfter)
+	der2, err := selfSign(&detECDSASigner{priv: key}, "test.example", serial, notBefore, notAfter)
 	if err != nil {
 		t.Fatalf("sign 2: %v", err)
 	}
@@ -160,7 +160,7 @@ func TestX509SelfSignRFC5280Compliance(t *testing.T) {
 	}
 	notBefore := time.Date(2001, 1, 1, 0, 0, 0, 0, time.UTC)
 	notAfter := time.Date(2099, 1, 1, 0, 0, 0, 0, time.UTC)
-	der, err := selfSign(&detECDSASigner{priv: key},"compliance.test", []byte("serial-bytes-15"), notBefore, notAfter)
+	der, err := selfSign(&detECDSASigner{priv: key}, "compliance.test", []byte("serial-bytes-15"), notBefore, notAfter)
 	if err != nil {
 		t.Fatalf("sign: %v", err)
 	}
@@ -223,7 +223,7 @@ func TestX509SelfSignRejectsOversizedSerial(t *testing.T) {
 	oversized := append([]byte{0x7F}, bytes.Repeat([]byte{0xFF}, 20)...)
 	notBefore := time.Date(2001, 1, 1, 0, 0, 0, 0, time.UTC)
 	notAfter := time.Date(2099, 1, 1, 0, 0, 0, 0, time.UTC)
-	if _, err := selfSign(&detECDSASigner{priv: key},"cn", oversized, notBefore, notAfter); err == nil {
+	if _, err := selfSign(&detECDSASigner{priv: key}, "cn", oversized, notBefore, notAfter); err == nil {
 		t.Fatal("expected oversized-serial rejection per RFC 5280 §4.1.2.2; got nil")
 	}
 }
@@ -244,7 +244,7 @@ func TestPKCS7SignEndToEnd(t *testing.T) {
 	}
 	notBefore := time.Date(2001, 1, 1, 0, 0, 0, 0, time.UTC)
 	notAfter := time.Date(2099, 1, 1, 0, 0, 0, 0, time.UTC)
-	certDER, err := selfSign(&detECDSASigner{priv: key},"burnham-test", []byte("serial-bytes-15"), notBefore, notAfter)
+	certDER, err := selfSign(&detECDSASigner{priv: key}, "burnham-test", []byte("serial-bytes-15"), notBefore, notAfter)
 	if err != nil {
 		t.Fatalf("self-sign: %v", err)
 	}
@@ -335,7 +335,7 @@ func TestPKCS7SignRFC5652Compliance(t *testing.T) {
 	}
 	notBefore := time.Date(2001, 1, 1, 0, 0, 0, 0, time.UTC)
 	notAfter := time.Date(2099, 1, 1, 0, 0, 0, 0, time.UTC)
-	certDER, err := selfSign(&detECDSASigner{priv: key},"rfc5652", []byte("serial-bytes-15"), notBefore, notAfter)
+	certDER, err := selfSign(&detECDSASigner{priv: key}, "rfc5652", []byte("serial-bytes-15"), notBefore, notAfter)
 	if err != nil {
 		t.Fatalf("cert: %v", err)
 	}

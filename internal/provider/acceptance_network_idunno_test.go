@@ -42,8 +42,7 @@ func TestAcc_IPIDunnoEncode_DifferentIPsDiffer(t *testing.T) {
 func TestAcc_IPIDunnoDecode_RFCExampleRoundTrip(t *testing.T) {
 	// Decode the exact RFC §5 byte sequence back to its IPv4 address.
 	runOutputTest(t,
-		`output "test" { value = provider::burnham::ip_idunno_decode("clҤ") }`,
-		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("198.51.100.164")),
+		`output "test" { value = provider::burnham::ip_idunno_decode("clҤ") }`, statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("198.51.100.164")),
 	)
 }
 
