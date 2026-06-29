@@ -3,7 +3,7 @@ module github.com/keeleysam/terraform-burnham
 go 1.26.1
 
 require (
-	github.com/andybalholm/brotli v1.2.1
+	github.com/andybalholm/brotli v1.2.2
 	github.com/andygrunwald/vdf v1.1.0
 	github.com/calico32/kdl-go v0.15.0
 	github.com/digitorus/pkcs7 v0.0.0-20250730155240-ffadbf3f398c
