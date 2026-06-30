@@ -16,10 +16,10 @@ import (
 	"encoding/base64"
 	"fmt"
 
-	brrr "github.com/molecule-man/go-brrr"
 	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/keeleysam/terraform-burnham/internal/provider/optionsutil"
+	brrr "github.com/molecule-man/go-brrr"
 )
 
 // Option bounds. Defaults favor maximum ratio because user_data is compressed once at plan time and decompressed many times. Ranges are exactly those of RFC 7932 / the brotli encoder.
