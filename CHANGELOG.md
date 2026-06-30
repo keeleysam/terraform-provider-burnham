@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Numerics expansion: `mean`, `median`, `mode`, `percentile`, `variance`, `stddev`, `clamp`, `mod_floor`.
 - Network expansion: `pigeon_throughput` — RFC 1149 / RFC 2549 IP-over-Avian-Carriers throughput calculator.
 - Network expansion: `ip_idunno_encode` / `ip_idunno_decode` — RFC 8771 Internationalized Deliberately Unreadable Network Notation. Dual-stack, reaches the §4.1 Minimum Confusion Level on every output, and reproduces the §5 worked example bit-for-bit.
+- Query and Patch expansion: `jq` — evaluate a [jq](https://jqlang.github.io/jq/) program against a decoded value via pure-Go [itchyny/gojq](https://github.com/itchyny/gojq), the expressive sibling of `jmespath_query` / `jsonpath_query`. A jq program is a stream, so the result is always a list (one element per value produced); an optional `{ vars }` object binds jq variables (`$name`). The full jq language is available, including the time builtins — `now` / `localtime` work but are non-deterministic, so programs deriving from them will churn the plan (documented on the function). `env` / `$ENV` return an empty object (the host process environment is not exposed) and `input` / `inputs` error (there is no secondary input stream).
 - `cmd/gendoctemplates` writes per-function `subcategory:` headers so the registry sidebar groups functions by family.
 
 ### Changed

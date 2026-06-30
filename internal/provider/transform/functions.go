@@ -7,6 +7,7 @@ func Functions() []func() function.Function {
 	return []func() function.Function{
 		NewJMESPathQueryFunction,
 		NewJSONPathQueryFunction,
+		NewJQFunction,
 		NewJSONPatchFunction,
 		NewJSONMergePatchFunction,
 	}

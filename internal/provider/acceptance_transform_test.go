@@ -135,6 +135,81 @@ func TestAcc_JSONPathQuery_InvalidExpression(t *testing.T) {
 	)
 }
 
+// ─── jq ─────────────────────────────────────────────────────────
+
+func TestAcc_JQ_FieldExtract(t *testing.T) {
+	// A single-value program still returns a one-element list.
+	runOutputTest(t,
+		`output "test" {
+			value = provider::burnham::jq(
+				{ user = { name = "alice" } },
+				".user.name",
+			)
+		}`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.TupleExact([]knownvalue.Check{
+			knownvalue.StringExact("alice"),
+		})),
+	)
+}
+
+func TestAcc_JQ_StreamBecomesList(t *testing.T) {
+	runOutputTest(t,
+		`output "test" {
+			value = provider::burnham::jq(
+				{ items = [{ id = 1 }, { id = 2 }, { id = 3 }] },
+				".items[].id",
+			)
+		}`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.TupleExact([]knownvalue.Check{
+			knownvalue.Int64Exact(1),
+			knownvalue.Int64Exact(2),
+			knownvalue.Int64Exact(3),
+		})),
+	)
+}
+
+func TestAcc_JQ_Vars(t *testing.T) {
+	runOutputTest(t,
+		`output "test" {
+			value = provider::burnham::jq(
+				{ items = [{ tier = "prod", id = 1 }, { tier = "dev", id = 2 }] },
+				".items[] | select(.tier == $tier) | .id",
+				{ vars = { tier = "prod" } },
+			)
+		}`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.TupleExact([]knownvalue.Check{
+			knownvalue.Int64Exact(1),
+		})),
+	)
+}
+
+func TestAcc_JQ_NoOutput(t *testing.T) {
+	runOutputTest(t,
+		`output "test" {
+			value = provider::burnham::jq([1, 2, 3], ".[] | select(. > 5)")
+		}`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.TupleExact([]knownvalue.Check{})),
+	)
+}
+
+func TestAcc_JQ_TimeBuiltinAllowed(t *testing.T) {
+	// now is permitted (nondeterministic, documented); assert on its type so the
+	// test stays deterministic.
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::jq({}, "now | type") }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.TupleExact([]knownvalue.Check{
+			knownvalue.StringExact("number"),
+		})),
+	)
+}
+
+func TestAcc_JQ_InvalidProgram(t *testing.T) {
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::jq({}, ".[") }`,
+		regexp.MustCompile(`(?i)jq|parse|unexpected`),
+	)
+}
+
 // ─── json_patch (RFC 6902) ────────────────────────────────
 
 func TestAcc_JSONPatch_AddReplaceRemove(t *testing.T) {
