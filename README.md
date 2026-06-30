@@ -26,7 +26,7 @@ Burnham is organized into ten families of functions:
 - **[Query and Patch Functions](#query-and-patch-functions)** — jq, JMESPath, JSONPath (RFC 9535), JSON Patch (RFC 6902), and JSON Merge Patch (RFC 7396) over decoded structures.
 - **[Numerics Functions](#numerics-functions)** — RFC 3091 (Pi Digit Generation Protocol), statistics, and small math helpers.
 - **[Identifiers Functions](#identifiers-functions)** — deterministic UUIDs (v5, v7), Nano ID, and petname.
-- **[Text Functions](#text-functions)** — Unicode normalization, transliterating slugify, Levenshtein distance, word-wrap, cowsay, ASCII QR.
+- **[Text Functions](#text-functions)** — Unicode normalization, transliterating slugify, Levenshtein distance, word-wrap, dedent, cowsay, ASCII QR.
 - **[Cryptography Functions](#cryptography-functions)** — HMAC (RFC 2104), HKDF (RFC 5869), PEM block decoding, X.509 / CSR inspection and fingerprinting, generic ASN.1 BER/DER decoding, deterministic ECDSA P-256 + Ed25519 key derivation, deterministic X.509 self-signing (RFC 5280) and CMS/PKCS#7 signing (RFC 5652) — ECDSA via RFC 6979 deterministic `k`, Ed25519 via naturally-deterministic PureEdDSA (RFC 8032 / RFC 8419) — and RFC 1751 human-readable key encoding (`btoe` / `etob`).
 - **[Geographic Functions](#geographic-functions)** — geohash and Open Location Code (Plus codes), encode and decode.
 
@@ -43,7 +43,7 @@ Burnham is organized into ten families of functions:
 | HuJSON / JWCC | `hujsonencode` | `hujsondecode` | JSON with comments and trailing commas |
 | INI | `iniencode` | `inidecode` | Standard `[section]` / `key = value` files |
 | Java .properties | `javapropertiesencode` | `javapropertiesdecode` | `=`/`:`/whitespace separators, line continuation, `\uXXXX` escapes |
-| JSON (pretty-printed) | `jsonencode` | — | Terraform has `jsondecode` built-in |
+| JSON (pretty-printed) | `jsonencode` | — | Terraform has `jsondecode` built-in. Does not HTML-escape `<` `>` `&` by default (`escape_html` option to opt in); configurable `indent` |
 | KDL | `kdlencode` | `kdldecode` | Modern document language, v1 and v2 |
 | MessagePack | `msgpackencode` | `msgpackdecode` | Binary format ([msgpack.org spec](https://github.com/msgpack/msgpack/blob/master/spec.md)); base64-wrapped on the HCL side |
 | NDJSON / JSON Lines | `ndjsonencode` | `ndjsondecode` | One JSON value per line, trailing newline |
@@ -229,6 +229,7 @@ Pure functions for string manipulation and small text-rendering tasks. Carefully
 | Function | Signature | Returns | Backed by |
 |---|---|---|---|
 | `cowsay` | `(message string [, options object])` | `string` | self-contained; no external `cowsay` binary involved |
+| `dedent` | `(s string)` | `string` | `textwrap.dedent` — strips the common leading whitespace from every line (the inverse of core `indent`) |
 | `levenshtein` | `(a string, b string)` | `number` | classic two-row DP, codepoint-aware |
 | `qr_ascii` | `(payload string [, options object])` | `string` | [`rsc.io/qr`](https://pkg.go.dev/rsc.io/qr) + half-block Unicode rendering |
 | `slugify` | `(s string [, options object])` | `string` | [`gosimple/slug`](https://github.com/gosimple/slug) — Unicode → ASCII transliteration |
@@ -300,7 +301,7 @@ A short tour. See [`examples/functions/`](examples/functions/) for a working sni
 
 ### Pretty-printed JSON
 
-Terraform's built-in `jsonencode` produces a single line. Burnham's gives you human-editable output and configurable indentation.
+Terraform's built-in `jsonencode` produces a single line. Burnham's gives you human-editable output and configurable indentation, and it leaves `<`, `>` and `&` as literal characters rather than escaping them to `<` / `>` / `&` — pass `{ escape_html = true }` if you need the escaped form (e.g. embedding JSON in an HTML `<script>`).
 
 ```hcl
 locals {

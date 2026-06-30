@@ -478,13 +478,19 @@ func (o orderedMap) MarshalJSON() ([]byte, error) {
 		if i > 0 {
 			buf.WriteByte(',')
 		}
-		key, err := json.Marshal(entry.Key)
+		// Emit un-escaped bytes for `<`, `>` and `&`. The standard library
+		// re-compacts a Marshaler's output with the *outer* encoder's escape
+		// setting, so leaving them literal here lets the caller choose: plain
+		// json.Marshal (escapeHTML on) re-escapes them, while jsonencode's
+		// non-escaping Encoder keeps them literal. Escaping them here would bake
+		// in `<` that no outer setting could undo.
+		key, err := marshalNoEscapeHTML(entry.Key)
 		if err != nil {
 			return nil, err
 		}
 		buf.Write(key)
 		buf.WriteByte(':')
-		val, err := json.Marshal(entry.Value)
+		val, err := marshalNoEscapeHTML(entry.Value)
 		if err != nil {
 			return nil, err
 		}
@@ -494,14 +500,18 @@ func (o orderedMap) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-// parseOptionsIndent extracts the "indent" string from a dynamic options value.
-// Returns "" if no indent key is present (caller should use default).
-func parseOptionsIndent(opts types.Dynamic) (string, error) {
-	obj, ok := opts.UnderlyingValue().(basetypes.ObjectValue)
-	if !ok {
-		return "", fmt.Errorf("options must be an object, got %T", opts.UnderlyingValue())
+// marshalNoEscapeHTML marshals v to compact JSON without escaping `<`, `>` or
+// `&`. json.Marshal always escapes them; only a json.Encoder with
+// SetEscapeHTML(false) can opt out. Encode appends a trailing newline, trimmed
+// here.
+func marshalNoEscapeHTML(v interface{}) ([]byte, error) {
+	var b bytes.Buffer
+	enc := json.NewEncoder(&b)
+	enc.SetEscapeHTML(false)
+	if err := enc.Encode(v); err != nil {
+		return nil, err
 	}
-	return getStringOption(obj.Attributes(), "indent")
+	return bytes.TrimRight(b.Bytes(), "\n"), nil
 }
 
 // getStringOption extracts an optional string value from an attributes map.

@@ -368,3 +368,21 @@ func TestAcc_QRAscii_ByteExactRegression(t *testing.T) {
 		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact(want)),
 	)
 }
+
+// ─── dedent ─────────────────────────────────────────────────────
+
+func TestAcc_Dedent_StripsCommonIndent(t *testing.T) {
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::dedent("    if x:\n        y") }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("if x:\n    y")),
+	)
+}
+
+func TestAcc_Dedent_NormalizesBlankLineAndKeepsRelative(t *testing.T) {
+	// The whitespace-only middle line is emptied and ignored for the margin;
+	// the deeper indent of the last line is preserved relative to the margin.
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::dedent("    a\n   \n      b") }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("a\n\n  b")),
+	)
+}

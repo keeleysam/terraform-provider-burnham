@@ -15,5 +15,6 @@ func Functions() []func() function.Function {
 		NewWrapFunction,
 		NewCowsayFunction,
 		NewQRAsciiFunction,
+		NewDedentFunction,
 	}
 }
