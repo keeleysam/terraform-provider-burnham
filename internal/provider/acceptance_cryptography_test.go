@@ -793,3 +793,56 @@ output "test" { value = provider::burnham::pkcs7_sign("payload", local.ed_key, l
 `
 	runErrorTest(t, config, regexp.MustCompile(`(?is)cert_pem\s+public\s+key\s+does\s+not\s+match`))
 }
+
+// ─── btoe / etob (RFC 1751) ─────────────────────────────────────
+
+func TestAcc_Btoe_RFCVector(t *testing.T) {
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::btoe("CCAC2AED591056BE4F90FD441C534766") }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("RASH BUSH MILK LOOK BAD BRIM AVID GAFF BAIT ROT POD LOVE")),
+	)
+}
+
+func TestAcc_Btoe_IgnoresWhitespaceInHex(t *testing.T) {
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::btoe("EB33 F77E E73D 4053") }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("TIDE ITCH SLOW REIN RULE MOT")),
+	)
+}
+
+func TestAcc_Etob_RFCVector(t *testing.T) {
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::etob("TIDE ITCH SLOW REIN RULE MOT") }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("eb33f77ee73d4053")),
+	)
+}
+
+func TestAcc_BtoeEtob_RoundTrip(t *testing.T) {
+	runOutputTest(t,
+		`output "test" {
+			value = provider::burnham::etob(provider::burnham::btoe("0123456789ABCDEFFEDCBA9876543210"))
+		}`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("0123456789abcdeffedcba9876543210")),
+	)
+}
+
+func TestAcc_Btoe_BadLength(t *testing.T) {
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::btoe("ABCDEF") }`,
+		regexp.MustCompile(`(?i)multiple of 8`),
+	)
+}
+
+func TestAcc_Etob_ParityError(t *testing.T) {
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::etob("ABE A A A A A") }`,
+		regexp.MustCompile(`(?i)parity`),
+	)
+}
+
+func TestAcc_Etob_UnknownWord(t *testing.T) {
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::etob("ZZZZ ITCH SLOW REIN RULE MOT") }`,
+		regexp.MustCompile(`(?i)not in the RFC 1751`),
+	)
+}

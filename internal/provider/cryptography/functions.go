@@ -17,5 +17,7 @@ func Functions() []func() function.Function {
 		NewECDSAP256KeyFromSeedFunction,
 		NewEd25519KeyFromSeedFunction,
 		NewPKCS7SignFunction,
+		NewBtoeFunction,
+		NewEtobFunction,
 	}
 }

@@ -26,7 +26,7 @@ Burnham is organized into nine families of functions:
 - **[Numerics Functions](#numerics-functions)** — RFC 3091 (Pi Digit Generation Protocol), statistics, and small math helpers.
 - **[Identifiers Functions](#identifiers-functions)** — deterministic UUIDs (v5, v7), Nano ID, and petname.
 - **[Text Functions](#text-functions)** — Unicode normalization, transliterating slugify, Levenshtein distance, word-wrap, cowsay, ASCII QR.
-- **[Cryptography Functions](#cryptography-functions)** — HMAC (RFC 2104), HKDF (RFC 5869), PEM block decoding, X.509 / CSR inspection and fingerprinting, generic ASN.1 BER/DER decoding, deterministic ECDSA P-256 + Ed25519 key derivation, deterministic X.509 self-signing (RFC 5280) and CMS/PKCS#7 signing (RFC 5652) — ECDSA via RFC 6979 deterministic `k`, Ed25519 via naturally-deterministic PureEdDSA (RFC 8032 / RFC 8419).
+- **[Cryptography Functions](#cryptography-functions)** — HMAC (RFC 2104), HKDF (RFC 5869), PEM block decoding, X.509 / CSR inspection and fingerprinting, generic ASN.1 BER/DER decoding, deterministic ECDSA P-256 + Ed25519 key derivation, deterministic X.509 self-signing (RFC 5280) and CMS/PKCS#7 signing (RFC 5652) — ECDSA via RFC 6979 deterministic `k`, Ed25519 via naturally-deterministic PureEdDSA (RFC 8032 / RFC 8419) — and RFC 1751 human-readable key encoding (`btoe` / `etob`).
 - **[Geographic Functions](#geographic-functions)** — geohash and Open Location Code (Plus codes), encode and decode.
 
 ## Structured Data Functions
@@ -228,9 +228,11 @@ Pure functions for keyed hashing, key derivation, certificate / CSR / ASN.1 insp
 | Function | Signature | Returns | Backed by |
 |---|---|---|---|
 | `asn1_decode` | `(der_base64 string)` | recursive object | `encoding/asn1.RawValue` walked by hand |
+| `btoe` | `(hex string)` | `string` (words) | custom (RFC 1751 §, faithful port). Encodes a key (hex, length a multiple of 8 bytes) as RFC 1751 English words |
 | `csr_inspect` | `(pem string)` | object | stdlib `crypto/x509` (`ParseCertificateRequest`) |
 | `ecdsa_p256_key_from_seed` | `(seed string)` | `string` (PEM PKCS#8) | stdlib `crypto/ecdsa` + `golang.org/x/crypto/hkdf` |
 | `ed25519_key_from_seed` | `(seed string)` | `string` (PEM PKCS#8) | stdlib `crypto/ed25519` + `golang.org/x/crypto/hkdf`, RFC 8032 |
+| `etob` | `(words string)` | `string` (hex) | custom (RFC 1751 §, faithful port). Decodes RFC 1751 English words back to a key, verifying the embedded parity |
 | `hkdf` | `(algorithm string, secret string, salt string, info string, length number)` | `string` (hex) | [`golang.org/x/crypto/hkdf`](https://pkg.go.dev/golang.org/x/crypto/hkdf), RFC 5869 |
 | `hmac` | `(algorithm string, key string, message string)` | `string` (hex) | stdlib `crypto/hmac`, RFC 2104 |
 | `pem_decode` | `(pem string)` | `list(object)` | stdlib `encoding/pem`, RFC 7468 |
