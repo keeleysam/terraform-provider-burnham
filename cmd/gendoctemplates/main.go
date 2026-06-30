@@ -21,6 +21,7 @@ import (
 	"github.com/keeleysam/terraform-burnham/internal/provider/compression"
 	"github.com/keeleysam/terraform-burnham/internal/provider/cryptography"
 	"github.com/keeleysam/terraform-burnham/internal/provider/dataformat"
+	"github.com/keeleysam/terraform-burnham/internal/provider/encoding"
 	"github.com/keeleysam/terraform-burnham/internal/provider/geographic"
 	"github.com/keeleysam/terraform-burnham/internal/provider/identifiers"
 	"github.com/keeleysam/terraform-burnham/internal/provider/network"
@@ -43,6 +44,7 @@ var families = []struct {
 	{"Text", text.Functions()},
 	{"Cryptography", cryptography.Functions()},
 	{"Geographic", geographic.Functions()},
+	{"Encoding", encoding.Functions()},
 }
 
 // perFunctionTemplate mirrors tfplugindocs's defaultFunctionTemplate (internal to that module) with one substitution: `subcategory` is hard-coded per function instead of left empty. The %s is replaced with the family-specific value at generation time. Anything not specific to subcategory should match the upstream default exactly so we don't drift.

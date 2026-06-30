@@ -17,10 +17,11 @@ Your configuration profiles, ACL policies, and structured documents become first
 
 The result is Terraform code that reads like a blueprint — clear, logical, and built to last.
 
-Burnham is organized into nine families of functions:
+Burnham is organized into ten families of functions:
 
 - **[Structured Data Functions](#structured-data-functions)** — encode/decode for JSON (pretty), HuJSON, plist, INI, CSV, YAML, .reg, VDF, KDL, NDJSON, MessagePack, CBOR, dotenv, Java .properties, Apple .strings, and general HCL.
 - **[Compression Functions](#compression-functions)** — `base64zopfli` (RFC 1952 gzip via Zopfli, a tighter drop-in for `base64gzip`) and `base64brotli` (RFC 7932 Brotli).
+- **[Encoding Functions](#encoding-functions)** — hex and base64 byte codecs (RFC 4648): `hexencode` / `hexdecode` (the hex decode core lacks), and `base64encode` / `base64decode` with URL-safe and no-padding options and a lenient decoder.
 - **[Networking Functions](#networking-functions)** — CIDR set operations, queries, IP arithmetic, NAT64 (RFC 6052), NPTv6 (RFC 6296), IPAM helpers, and a faithful RFC 1149 / RFC 2549 (IP over Avian Carriers) throughput calculator.
 - **[Query and Patch Functions](#query-and-patch-functions)** — jq, JMESPath, JSONPath (RFC 9535), JSON Patch (RFC 6902), and JSON Merge Patch (RFC 7396) over decoded structures.
 - **[Numerics Functions](#numerics-functions)** — RFC 3091 (Pi Digit Generation Protocol), statistics, and small math helpers.
@@ -78,6 +79,21 @@ Compress a string and base64-encode the result, for payloads like EC2 `user_data
 | `base64brotli` | Brotli ([RFC 7932](https://www.rfc-editor.org/rfc/rfc7932)) | `brotli -d`, browser `Content-Encoding: br` | ~8–10% smaller than `base64gzip` on text, but requires a brotli decompressor on the consuming side. Optional `{ quality, lgwin }` (defaults 11 / 22). |
 
 Both are pure Go (`CGO_ENABLED=0`), via [`foobaz/go-zopfli`](https://github.com/foobaz/go-zopfli) and [`andybalholm/brotli`](https://github.com/andybalholm/brotli). The RFC 7932 §10 encoder `mode` hint isn't exposed on `base64brotli` — the pure-Go encoder doesn't apply it (`text` and `generic` are byte-identical, `font` is unreachable), so it would be a no-op rather than an honest knob.
+
+## Encoding Functions
+
+Byte codecs that fill gaps in Terraform core. Core ships no hex decoder at all, and its `base64encode` / `base64decode` only speak standard, padded base64. Inputs are taken as raw bytes (the literal UTF-8 bytes of the string); decoders return a byte string, usually fed into another function rather than printed. All [RFC 4648](https://www.rfc-editor.org/rfc/rfc4648), pure and deterministic.
+
+The encoders take an options object for the variant; the **decoders are deliberately lenient** so they accept whatever an encoder on the other side produced — making `base64decode` a friction-free superset of core's stricter decoder.
+
+| Function | Signature | Notes |
+|---|---|---|
+| `hexencode` | `(input string)` | Bytes → lowercase hex |
+| `hexdecode` | `(input string)` | Hex → bytes. Case-insensitive; ASCII whitespace ignored. Closes the gap that left `hmac` / `hkdf` unable to take a hex key directly |
+| `base64encode` | `(input string [, options object])` | No options = standard padded (identical to core `base64encode`). `{ url_safe }` uses the §5 URL-safe alphabet; `{ padding = false }` omits `=` |
+| `base64decode` | `(input string)` | Accepts either alphabet, padded or not, ASCII whitespace ignored — a superset of core `base64decode` |
+
+Per-function documentation lives under [`docs/functions/`](docs/functions/) and on [registry.terraform.io](https://registry.terraform.io/providers/keeleysam/burnham/latest/docs).
 
 ## Networking Functions
 
