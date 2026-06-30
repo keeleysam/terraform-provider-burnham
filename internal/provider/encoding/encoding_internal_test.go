@@ -104,3 +104,115 @@ func TestBase64Decode_Invalid(t *testing.T) {
 		t.Error("expected error for invalid base64")
 	}
 }
+
+// ─── base32 (RFC 4648 §10 test vectors) ─────────────────────────
+
+func TestBase32Encode_RFCVectors(t *testing.T) {
+	if got := base32Encode([]byte("foobar"), false, true); got != "MZXW6YTBOI======" {
+		t.Errorf("std padded = %q, want MZXW6YTBOI======", got)
+	}
+	if got := base32Encode([]byte("foobar"), false, false); got != "MZXW6YTBOI" {
+		t.Errorf("std unpadded = %q, want MZXW6YTBOI", got)
+	}
+	if got := base32Encode([]byte("foobar"), true, true); got != "CPNMUOJ1E8======" {
+		t.Errorf("hex padded = %q, want CPNMUOJ1E8======", got)
+	}
+}
+
+func TestBase32Decode_Lenient(t *testing.T) {
+	// padded, unpadded, lowercase (case-insensitive), and with whitespace all → "foobar"
+	for _, in := range []string{"MZXW6YTBOI======", "MZXW6YTBOI", "mzxw6ytboi", "MZXW 6YTB OI"} {
+		got, err := base32DecodeLenient(in, false)
+		if err != nil {
+			t.Fatalf("base32DecodeLenient(%q): %v", in, err)
+		}
+		if string(got) != "foobar" {
+			t.Errorf("base32DecodeLenient(%q) = %q, want foobar", in, got)
+		}
+	}
+}
+
+func TestBase32Decode_HexAlphabet(t *testing.T) {
+	got, err := base32DecodeLenient("CPNMUOJ1E8======", true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(got) != "foobar" {
+		t.Errorf("got %q, want foobar", got)
+	}
+}
+
+func TestBase32_RoundTripAllVariants(t *testing.T) {
+	in := []byte{0x00, 0xff, 0x10, 0x80, 0x7f, 0x01, 0x02}
+	for _, hexAlpha := range []bool{false, true} {
+		for _, pad := range []bool{false, true} {
+			enc := base32Encode(in, hexAlpha, pad)
+			got, err := base32DecodeLenient(enc, hexAlpha)
+			if err != nil {
+				t.Fatalf("decode(%q) [hex=%v pad=%v]: %v", enc, hexAlpha, pad, err)
+			}
+			if !bytes.Equal(got, in) {
+				t.Errorf("round-trip mismatch [hex=%v pad=%v]: %x != %x", hexAlpha, pad, got, in)
+			}
+		}
+	}
+}
+
+func TestBase32Decode_Invalid(t *testing.T) {
+	if _, err := base32DecodeLenient("0189", false); err == nil {
+		t.Error("expected error: 0/1/8/9 are not in the standard base32 alphabet")
+	}
+}
+
+// ─── url encode / decode ────────────────────────────────────────
+
+func TestURLEncode_Modes(t *testing.T) {
+	cases := []struct {
+		mode, in, want string
+	}{
+		{"query", "a b+c/d", "a+b%2Bc%2Fd"},       // form: space→+, +→%2B, /→%2F
+		{"path", "a b+c/d", "a%20b+c%2Fd"},        // segment: space→%20, + literal, /→%2F
+		{"component", "a b+c/d", "a%20b%2Bc%2Fd"}, // strict: everything non-unreserved escaped
+	}
+	for _, c := range cases {
+		if got := urlEncode(c.in, c.mode); got != c.want {
+			t.Errorf("urlEncode(%q, %q) = %q, want %q", c.in, c.mode, got, c.want)
+		}
+	}
+}
+
+func TestURLEncode_QueryMatchesCoreDefault(t *testing.T) {
+	// query mode is the drop-in for core's urlencode (application/x-www-form-urlencoded).
+	if got := urlEncode("a b", "query"); got != "a+b" {
+		t.Errorf("got %q, want a+b", got)
+	}
+}
+
+func TestURLDecode_PlusAmbiguity(t *testing.T) {
+	// The reason decode needs a mode: + means space in query, literal in path.
+	if got, _ := urlDecode("1+1", "query"); got != "1 1" {
+		t.Errorf("query: got %q, want \"1 1\"", got)
+	}
+	if got, _ := urlDecode("1+1", "path"); got != "1+1" {
+		t.Errorf("path: got %q, want \"1+1\"", got)
+	}
+}
+
+func TestURLDecode_PercentAndRoundTrip(t *testing.T) {
+	for _, mode := range []string{"query", "path", "component"} {
+		enc := urlEncode("hello world/ä?&=", mode)
+		got, err := urlDecode(enc, mode)
+		if err != nil {
+			t.Fatalf("urlDecode(%q, %q): %v", enc, mode, err)
+		}
+		if got != "hello world/ä?&=" {
+			t.Errorf("round-trip [%s] = %q", mode, got)
+		}
+	}
+}
+
+func TestURLDecode_Invalid(t *testing.T) {
+	if _, err := urlDecode("%ZZ", "query"); err == nil {
+		t.Error("expected error for invalid percent-escape")
+	}
+}

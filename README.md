@@ -21,7 +21,7 @@ Burnham is organized into ten families of functions:
 
 - **[Structured Data Functions](#structured-data-functions)** — encode/decode for JSON (pretty), HuJSON, plist, INI, CSV, YAML, .reg, VDF, KDL, NDJSON, MessagePack, CBOR, dotenv, Java .properties, Apple .strings, and general HCL.
 - **[Compression Functions](#compression-functions)** — `base64zopfli` (RFC 1952 gzip via Zopfli, a tighter drop-in for `base64gzip`) and `base64brotli` (RFC 7932 Brotli).
-- **[Encoding Functions](#encoding-functions)** — hex and base64 byte codecs (RFC 4648): `hexencode` / `hexdecode` (the hex decode core lacks), and `base64encode` / `base64decode` with URL-safe and no-padding options and a lenient decoder.
+- **[Encoding Functions](#encoding-functions)** — byte codecs that fill core gaps: hex (`hexencode`/`hexdecode`), base64 and base32 with alphabet/padding options and lenient decoders, and `urlencode` (with `query`/`path`/`component` modes) / `urldecode` (the decoder core lacks).
 - **[Networking Functions](#networking-functions)** — CIDR set operations, queries, IP arithmetic, NAT64 (RFC 6052), NPTv6 (RFC 6296), IPAM helpers, and a faithful RFC 1149 / RFC 2549 (IP over Avian Carriers) throughput calculator.
 - **[Query and Patch Functions](#query-and-patch-functions)** — jq, JMESPath, JSONPath (RFC 9535), JSON Patch (RFC 6902), and JSON Merge Patch (RFC 7396) over decoded structures.
 - **[Numerics Functions](#numerics-functions)** — RFC 3091 (Pi Digit Generation Protocol), statistics, and small math helpers.
@@ -82,9 +82,9 @@ Both are pure Go (`CGO_ENABLED=0`), via [`foobaz/go-zopfli`](https://github.com/
 
 ## Encoding Functions
 
-Byte codecs that fill gaps in Terraform core. Core ships no hex decoder at all, and its `base64encode` / `base64decode` only speak standard, padded base64. Inputs are taken as raw bytes (the literal UTF-8 bytes of the string); decoders return a byte string, usually fed into another function rather than printed. All [RFC 4648](https://www.rfc-editor.org/rfc/rfc4648), pure and deterministic.
+Byte codecs that fill gaps in Terraform core. Core ships no hex decoder, no base32 codec, and no URL decoder, and its `base64encode` / `urlencode` lack options. Inputs are taken as raw bytes (the literal UTF-8 bytes of the string); decoders return a byte string, usually fed into another function rather than printed. The RFC 4648 codecs are pure and deterministic.
 
-The encoders take an options object for the variant; the **decoders are deliberately lenient** so they accept whatever an encoder on the other side produced — making `base64decode` a friction-free superset of core's stricter decoder.
+Family rule: **encoders take options to pick an output; decoders take an option only when the input is ambiguous** — `base64decode` needs none (its alphabets are disjoint), `base32decode` needs the alphabet (standard and hex overlap), `urldecode` needs the mode (`+` means space in a query, literal in a path). Where a core function of the same name exists, calling burnham's with no options matches core.
 
 | Function | Signature | Notes |
 |---|---|---|
@@ -92,6 +92,10 @@ The encoders take an options object for the variant; the **decoders are delibera
 | `hexdecode` | `(input string)` | Hex → bytes. Case-insensitive; ASCII whitespace ignored. Closes the gap that left `hmac` / `hkdf` unable to take a hex key directly |
 | `base64encode` | `(input string [, options object])` | No options = standard padded (identical to core `base64encode`). `{ url_safe }` uses the §5 URL-safe alphabet; `{ padding = false }` omits `=` |
 | `base64decode` | `(input string)` | Accepts either alphabet, padded or not, ASCII whitespace ignored — a superset of core `base64decode` |
+| `base32encode` | `(input string [, options object])` | RFC 4648 base32 (core has none). No options = standard padded; `{ hex_alphabet }` uses the `0–9A–V` alphabet (NSEC3); `{ padding = false }` for TOTP-style secrets |
+| `base32decode` | `(input string [, options object])` | Lenient: case-insensitive, padding optional, whitespace ignored. `{ hex_alphabet = true }` to decode the hex alphabet (can't be auto-detected — the alphabets overlap) |
+| `urlencode` | `(input string [, options object])` | Percent-encode. No options = `query` mode (`application/x-www-form-urlencoded`, identical to core `urlencode`); `{ mode = "path" }` / `"component"` use RFC 3986 `%20` instead of `+` |
+| `urldecode` | `(input string [, options object])` | Percent-decode — **the function core lacks entirely**. `{ mode }` controls `+`: space in `query` (default), literal in `path` |
 
 Per-function documentation lives under [`docs/functions/`](docs/functions/) and on [registry.terraform.io](https://registry.terraform.io/providers/keeleysam/burnham/latest/docs).
 

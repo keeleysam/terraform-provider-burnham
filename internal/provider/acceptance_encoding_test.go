@@ -89,3 +89,86 @@ func TestAcc_Base64Encode_RejectsUnknownOption(t *testing.T) {
 		regexp.MustCompile(`(?i)unknown option key`),
 	)
 }
+
+// ─── base32encode / base32decode ────────────────────────────────
+
+func TestAcc_Base32Encode_RFCVector(t *testing.T) {
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::base32encode("foobar") }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("MZXW6YTBOI======")),
+	)
+}
+
+func TestAcc_Base32Encode_HexAlphabetNoPadding(t *testing.T) {
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::base32encode("foobar", { hex_alphabet = true, padding = false }) }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("CPNMUOJ1E8")),
+	)
+}
+
+func TestAcc_Base32Decode_LenientCaseAndPadding(t *testing.T) {
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::base32decode("mzxw6ytboi") }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("foobar")),
+	)
+}
+
+func TestAcc_Base32_RoundTrip(t *testing.T) {
+	runOutputTest(t,
+		`output "test" {
+			value = provider::burnham::base32decode(provider::burnham::base32encode("burnham"))
+		}`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("burnham")),
+	)
+}
+
+func TestAcc_Base32Decode_Invalid(t *testing.T) {
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::base32decode("0189") }`,
+		regexp.MustCompile(`(?i)invalid base32`),
+	)
+}
+
+// ─── urlencode / urldecode ──────────────────────────────────────
+
+func TestAcc_URLEncode_DefaultMatchesCore(t *testing.T) {
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::urlencode("a b/c") == urlencode("a b/c") }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.Bool(true)),
+	)
+}
+
+func TestAcc_URLEncode_PathMode(t *testing.T) {
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::urlencode("a b/c", { mode = "path" }) }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("a%20b%2Fc")),
+	)
+}
+
+func TestAcc_URLDecode_QueryPlusIsSpace(t *testing.T) {
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::urldecode("a+b%2Fc") }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("a b/c")),
+	)
+}
+
+func TestAcc_URLDecode_PathPlusIsLiteral(t *testing.T) {
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::urldecode("1+1", { mode = "path" }) }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("1+1")),
+	)
+}
+
+func TestAcc_URLDecode_Invalid(t *testing.T) {
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::urldecode("%ZZ") }`,
+		regexp.MustCompile(`(?i)invalid URL-encoded`),
+	)
+}
+
+func TestAcc_URLEncode_RejectsBadMode(t *testing.T) {
+	runErrorTest(t,
+		`output "test" { value = provider::burnham::urlencode("x", { mode = "raw" }) }`,
+		regexp.MustCompile(`(?i)mode must be one of`),
+	)
+}
