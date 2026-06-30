@@ -14,6 +14,10 @@ func Functions() []func() function.Function {
 		NewHexDecodeFunction,
 		NewBase64EncodeFunction,
 		NewBase64DecodeFunction,
+		NewBase32EncodeFunction,
+		NewBase32DecodeFunction,
+		NewURLEncodeFunction,
+		NewURLDecodeFunction,
 	}
 }
 
