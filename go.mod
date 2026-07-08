@@ -25,7 +25,7 @@ require (
 	github.com/magiconair/properties v1.8.10
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/mmcloughlin/geohash v0.10.0
-	github.com/molecule-man/go-brrr v1.0.0
+	github.com/molecule-man/go-brrr v1.0.1
 	github.com/nspcc-dev/rfc6979 v0.2.4
 	github.com/tailscale/hujson v0.0.0-20260302212456-ecc657c15afd
 	github.com/theory/jsonpath v0.12.0
