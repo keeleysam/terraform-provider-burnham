@@ -18,13 +18,13 @@ import (
 // multi-line) comments placed before the matching key/element. Nested objects
 // recurse. Missing keys are silently skipped, matching the behavior of the
 // default (compact) path.
-func prettyEncodeHuJSON(value any, comments attr.Value, indent string) string {
+func prettyEncodeHuJSON(value any, comments attr.Value, indent string, escapeHTML bool) string {
 	var b strings.Builder
-	encodePrettyValue(&b, value, comments, indent, 0)
+	encodePrettyValue(&b, value, comments, indent, 0, escapeHTML)
 	return b.String()
 }
 
-func encodePrettyValue(b *strings.Builder, v any, comments attr.Value, indent string, depth int) {
+func encodePrettyValue(b *strings.Builder, v any, comments attr.Value, indent string, depth int, escapeHTML bool) {
 	switch x := v.(type) {
 	case nil:
 		b.WriteString("null")
@@ -37,11 +37,11 @@ func encodePrettyValue(b *strings.Builder, v any, comments attr.Value, indent st
 	case json.Number:
 		b.WriteString(string(x))
 	case string:
-		b.WriteString(jsonQuote(x))
+		b.WriteString(jsonQuote(x, escapeHTML))
 	case []any:
-		encodePrettyArray(b, x, comments, indent, depth)
+		encodePrettyArray(b, x, comments, indent, depth, escapeHTML)
 	case map[string]any:
-		encodePrettyObject(b, x, comments, indent, depth)
+		encodePrettyObject(b, x, comments, indent, depth, escapeHTML)
 	default:
 		// Fallback: anything else (e.g. numbers from a non-UseNumber decoder)
 		// goes through json.Marshal so we still emit valid JSON.
@@ -54,7 +54,7 @@ func encodePrettyValue(b *strings.Builder, v any, comments attr.Value, indent st
 	}
 }
 
-func encodePrettyObject(b *strings.Builder, m map[string]any, comments attr.Value, indent string, depth int) {
+func encodePrettyObject(b *strings.Builder, m map[string]any, comments attr.Value, indent string, depth int, escapeHTML bool) {
 	if len(m) == 0 {
 		b.WriteString("{}")
 		return
@@ -75,16 +75,16 @@ func encodePrettyObject(b *strings.Builder, m map[string]any, comments attr.Valu
 			writePrettyComment(b, leafComment, childPad)
 		}
 		b.WriteString(childPad)
-		b.WriteString(jsonQuote(k))
+		b.WriteString(jsonQuote(k, escapeHTML))
 		b.WriteString(": ")
-		encodePrettyValue(b, m[k], childComments, indent, depth+1)
+		encodePrettyValue(b, m[k], childComments, indent, depth+1, escapeHTML)
 		b.WriteString(",\n")
 	}
 	b.WriteString(pad)
 	b.WriteString("}")
 }
 
-func encodePrettyArray(b *strings.Builder, arr []any, comments attr.Value, indent string, depth int) {
+func encodePrettyArray(b *strings.Builder, arr []any, comments attr.Value, indent string, depth int, escapeHTML bool) {
 	if len(arr) == 0 {
 		b.WriteString("[]")
 		return
@@ -99,7 +99,7 @@ func encodePrettyArray(b *strings.Builder, arr []any, comments attr.Value, inden
 			writePrettyComment(b, leafComment, childPad)
 		}
 		b.WriteString(childPad)
-		encodePrettyValue(b, el, childComments, indent, depth+1)
+		encodePrettyValue(b, el, childComments, indent, depth+1, escapeHTML)
 		b.WriteString(",\n")
 	}
 	b.WriteString(pad)
@@ -145,7 +145,76 @@ func writePrettyComment(b *strings.Builder, comment, pad string) {
 	b.WriteString("\n")
 }
 
-func jsonQuote(s string) string {
-	out, _ := json.Marshal(s)
+// escapeHTMLInStrings rewrites `<`, `>` and `&` to their `\uXXXX` escapes, but
+// only inside JSON string literals — never inside `//` or `/* */` comments or
+// structural syntax. It exists for the compact path: hujson.Format/Pack
+// normalizes `\uXXXX` escapes back to literal characters, so honoring
+// escape_html=true there means re-escaping the packed output.
+func escapeHTMLInStrings(s string) string {
+	const (
+		normal = iota
+		inString
+		inLineComment
+		inBlockComment
+	)
+	var b strings.Builder
+	b.Grow(len(s))
+	state := normal
+	escaped := false // previous byte was a backslash inside a string
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		switch state {
+		case normal:
+			switch {
+			case c == '"':
+				state = inString
+			case c == '/' && i+1 < len(s) && s[i+1] == '/':
+				state = inLineComment
+			case c == '/' && i+1 < len(s) && s[i+1] == '*':
+				state = inBlockComment
+			}
+			b.WriteByte(c)
+		case inString:
+			switch {
+			case escaped:
+				escaped = false
+				b.WriteByte(c)
+			case c == '\\':
+				escaped = true
+				b.WriteByte(c)
+			case c == '"':
+				state = normal
+				b.WriteByte(c)
+			case c == '<' || c == '>' || c == '&':
+				fmt.Fprintf(&b, "\\u%04x", c)
+			default:
+				b.WriteByte(c)
+			}
+		case inLineComment:
+			if c == '\n' {
+				state = normal
+			}
+			b.WriteByte(c)
+		case inBlockComment:
+			b.WriteByte(c)
+			if c == '*' && i+1 < len(s) && s[i+1] == '/' {
+				i++
+				b.WriteByte(s[i])
+				state = normal
+			}
+		}
+	}
+	return b.String()
+}
+
+// jsonQuote renders s as a JSON string literal. When escapeHTML is false it
+// leaves `<`, `>` and `&` literal (the default, matching jsonencode); when true
+// it escapes them to their `\uXXXX` forms as Go's encoder does.
+func jsonQuote(s string, escapeHTML bool) string {
+	if escapeHTML {
+		out, _ := json.Marshal(s)
+		return string(out)
+	}
+	out, _ := marshalNoEscapeHTML(s)
 	return string(out)
 }

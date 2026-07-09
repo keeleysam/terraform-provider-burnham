@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - `jsonencode` no longer HTML-escapes `<`, `>` and `&` by default — they are written as literal characters, which is what a pretty-printer for human-reviewed output and `local_file` writes almost always wants (Terraform's built-in `jsonencode` and Go's encoder escape them to `<` / `>` / `&`). Pass the new `{ escape_html = true }` option to restore the escaped form, e.g. when embedding JSON in an HTML `<script>` context. Output for values containing `<`/`>`/`&` therefore changes.
+- `hujsonencode` matches `jsonencode`'s new default: `<`, `>` and `&` are written literally rather than HTML-escaped. Its expanded (default) path previously escaped them via `json.Marshal`; the compact path already emitted them literally because `hujson.Format` normalizes `\uXXXX` escapes back to characters. Pass `{ escape_html = true }` to escape them to their `\uXXXX` forms on both paths — on the compact path this re-escapes the packed output, restricting the rewrite to string literals so `//` and `/* */` comments are left untouched.
 - Provider Schema description rewritten to enumerate all nine families.
 - README adds a "Tagged-value helpers" sub-table covering `plistdata`/`plistdate`/`plistreal` and `regbinary`/`regdword`/`regexpandsz`/`regmulti`/`regqword`, which were registered but not previously documented in the README.
 - All `MarkdownDescription` strings across `dataformat/`, `network/`, and `transform/` collapsed to single literals (no mid-paragraph `+` joins).

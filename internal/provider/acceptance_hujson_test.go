@@ -36,6 +36,21 @@ func TestAcc_HuJSONEncode_Basic(t *testing.T) {
 	)
 }
 
+func TestAcc_HuJSONEncode_DoesNotEscapeHTMLByDefault(t *testing.T) {
+	// Like jsonencode, hujsonencode emits <, > and & literally by default.
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::hujsonencode({ q = "1 < 2 > 0 & ok" }) }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("{\n\t\"q\": \"1 < 2 > 0 & ok\",\n}")),
+	)
+}
+
+func TestAcc_HuJSONEncode_EscapeHTMLOptIn(t *testing.T) {
+	runOutputTest(t,
+		`output "test" { value = provider::burnham::hujsonencode({ q = "a > b" }, { escape_html = true }) }`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("{\n\t\"q\": \"a \\u003e b\",\n}")),
+	)
+}
+
 func TestAcc_HuJSONEncode_WithComments(t *testing.T) {
 	runOutputTest(t,
 		`

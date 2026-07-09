@@ -202,6 +202,71 @@ func TestHuJSONEncode_SmallObject_Compact(t *testing.T) {
 	}
 }
 
+func htmlChars() (attr.Value, string) {
+	obj := types.ObjectValueMust(
+		map[string]attr.Type{"q": types.StringType},
+		map[string]attr.Value{"q": types.StringValue("1 < 2 > 0 & ok")},
+	)
+	return obj, "1 < 2 > 0 & ok"
+}
+
+func assertNoHTMLEscape(t *testing.T, result, literal string) {
+	t.Helper()
+	if !strings.Contains(result, literal) {
+		t.Errorf("expected literal %q in output, got:\n%s", literal, result)
+	}
+	for _, esc := range []string{"\\u003c", "\\u003e", "\\u0026"} {
+		if strings.Contains(result, esc) {
+			t.Errorf("expected no HTML escaping (found %s), got:\n%s", esc, result)
+		}
+	}
+}
+
+func TestHuJSONEncode_DoesNotEscapeHTMLByDefault(t *testing.T) {
+	obj, literal := htmlChars()
+	result, err := runHuJSONEncode(t, obj)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	assertNoHTMLEscape(t, result, literal)
+}
+
+func TestHuJSONEncode_DoesNotEscapeHTMLByDefault_Compact(t *testing.T) {
+	obj, literal := htmlChars()
+	result, err := runHuJSONEncode(t, obj, makeBoolOpts("compact", true))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	assertNoHTMLEscape(t, result, literal)
+}
+
+func TestHuJSONEncode_EscapeHTMLOptIn(t *testing.T) {
+	obj, _ := htmlChars()
+	result, err := runHuJSONEncode(t, obj, makeBoolOpts("escape_html", true))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(result, `1 \u003c 2 \u003e 0 \u0026 ok`) {
+		t.Errorf("expected HTML-escaped output, got:\n%s", result)
+	}
+}
+
+func TestHuJSONEncode_EscapeHTMLOptIn_Compact(t *testing.T) {
+	obj, _ := htmlChars()
+	result, err := runHuJSONEncode(t, obj,
+		types.ObjectValueMust(
+			map[string]attr.Type{"compact": types.BoolType, "escape_html": types.BoolType},
+			map[string]attr.Value{"compact": types.BoolValue(true), "escape_html": types.BoolValue(true)},
+		),
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(result, `1 \u003c 2 \u003e 0 \u0026 ok`) {
+		t.Errorf("expected HTML-escaped output, got:\n%s", result)
+	}
+}
+
 func TestHuJSONEncode_CustomIndent(t *testing.T) {
 	obj := types.ObjectValueMust(
 		map[string]attr.Type{

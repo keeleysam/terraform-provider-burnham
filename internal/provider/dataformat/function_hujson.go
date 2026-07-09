@@ -93,7 +93,7 @@ func (f *HuJSONEncodeFunction) Metadata(_ context.Context, _ function.MetadataRe
 func (f *HuJSONEncodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Encode a value as a HuJSON (JWCC) string",
-		MarkdownDescription: "Encodes a Terraform value as a HuJSON string with trailing commas and pretty-printed formatting. By default every object member and array element gets its own line, producing diff-friendly output.\n\nPass an optional `options` object with these keys:\n\n- `indent` (string): override the default tab indentation.\n- `compact` (bool): opt in to hujson.Format's \"fit on one line if it can\" packing instead of the default always-expanded layout.\n- `comments` (object): mirror the data structure with string values that become comments placed before the matching key. Single-line strings render as `//` comments; strings containing `\\n` render as `/* */` block comments. Array elements are addressed by stringified index (`\"0\"`, `\"1\"`, …).\n\n**Common uses:** generating Tailscale ACL files, writing human-editable config snapshots, or producing JSON-like documents where reviewers benefit from inline annotations.",
+		MarkdownDescription: "Encodes a Terraform value as a HuJSON string with trailing commas and pretty-printed formatting. By default every object member and array element gets its own line, producing diff-friendly output.\n\nPass an optional `options` object with these keys:\n\n- `indent` (string): override the default tab indentation.\n- `compact` (bool): opt in to hujson.Format's \"fit on one line if it can\" packing instead of the default always-expanded layout.\n- `escape_html` (bool, default `false`): when `false`, `<`, `>` and `&` are written literally, matching `jsonencode`. Set to `true` to escape them to `\\u003c` / `\\u003e` / `\\u0026` (the form Go's encoder produces), e.g. when embedding output in an HTML `<script>` context.\n- `comments` (object): mirror the data structure with string values that become comments placed before the matching key. Single-line strings render as `//` comments; strings containing `\\n` render as `/* */` block comments. Array elements are addressed by stringified index (`\"0\"`, `\"1\"`, …).\n\n**Common uses:** generating Tailscale ACL files, writing human-editable config snapshots, or producing JSON-like documents where reviewers benefit from inline annotations.",
 		Parameters: []function.Parameter{
 			function.DynamicParameter{
 				Name:        "value",
@@ -102,7 +102,7 @@ func (f *HuJSONEncodeFunction) Definition(_ context.Context, _ function.Definiti
 		},
 		VariadicParameter: function.DynamicParameter{
 			Name:        "options",
-			Description: "An optional options object. Supported keys: \"indent\" (string) — indentation string, default \"\\t\"; \"compact\" (bool) — when true, use hujson.Format's \"fit on one line if it can\" packing instead of the default always-expanded layout; \"comments\" (object) — a mirrored structure where string values become comments placed before the matching key. Pass at most one.",
+			Description: "An optional options object. Supported keys: \"indent\" (string) — indentation string, default \"\\t\"; \"compact\" (bool) — when true, use hujson.Format's \"fit on one line if it can\" packing instead of the default always-expanded layout; \"escape_html\" (bool, default false) — when true, escape \"<\", \">\" and \"&\" to \\u003c / \\u003e / \\u0026; \"comments\" (object) — a mirrored structure where string values become comments placed before the matching key. Pass at most one.",
 		},
 		Return: function.StringReturn{},
 	}
@@ -119,6 +119,7 @@ func (f *HuJSONEncodeFunction) Run(ctx context.Context, req function.RunRequest,
 
 	indent := "\t"
 	compact := false
+	escapeHTML := false
 	var comments attr.Value
 
 	if len(optsArgs) == 1 {
@@ -143,6 +144,13 @@ func (f *HuJSONEncodeFunction) Run(ctx context.Context, req function.RunRequest,
 			return
 		} else {
 			compact = cv
+		}
+
+		if ev, _, err := getBoolOption(attrs, "escape_html"); err != nil {
+			resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError(err.Error()))
+			return
+		} else {
+			escapeHTML = ev
 		}
 
 		if c, ok := attrs["comments"]; ok {
@@ -179,7 +187,7 @@ func (f *HuJSONEncodeFunction) Run(ctx context.Context, req function.RunRequest,
 			resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError("Failed to re-decode JSON: "+err.Error()))
 			return
 		}
-		result := prettyEncodeHuJSON(generic, comments, indent)
+		result := prettyEncodeHuJSON(generic, comments, indent, escapeHTML)
 		resp.Error = function.ConcatFuncErrors(resp.Error, resp.Result.Set(ctx, result))
 		return
 	}
@@ -224,6 +232,12 @@ func (f *HuJSONEncodeFunction) Run(ctx context.Context, req function.RunRequest,
 			}
 		}
 		result = strings.Join(lines, "\n")
+	}
+
+	// hujson.Format/Pack normalizes `\uXXXX` escapes back to literal characters,
+	// so escape_html=true has to re-escape `<`, `>` and `&` in the packed output.
+	if escapeHTML {
+		result = escapeHTMLInStrings(result)
 	}
 
 	resp.Error = function.ConcatFuncErrors(resp.Error, resp.Result.Set(ctx, result))
