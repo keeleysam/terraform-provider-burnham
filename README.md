@@ -17,8 +17,9 @@ Your configuration profiles, ACL policies, and structured documents become first
 
 The result is Terraform code that reads like a blueprint — clear, logical, and built to last.
 
-Burnham is organized into ten families of functions:
+Burnham is organized into eleven families of functions:
 
+- **[CEL Functions](#cel-functions)**: build, validate, format, decode, and evaluate [CEL](https://cel.dev) (Common Expression Language) expressions from HCL data, for GCP IAM / Access Context Manager, Kubernetes, and any other CEL sink.
 - **[Structured Data Functions](#structured-data-functions)** — encode/decode for JSON (pretty), HuJSON, plist, INI, CSV, YAML, .reg, VDF, KDL, NDJSON, MessagePack, CBOR, dotenv, Java .properties, Apple .strings, and general HCL.
 - **[Compression Functions](#compression-functions)** — `base64zopfli` (RFC 1952 gzip via Zopfli, a tighter drop-in for `base64gzip`) and `base64brotli` (RFC 7932 Brotli).
 - **[Encoding Functions](#encoding-functions)** — hex and base64 byte codecs (RFC 4648): `hexencode` / `hexdecode` (the hex decode core lacks), and `base64encode` / `base64decode` with URL-safe and no-padding options and a lenient decoder.
@@ -29,6 +30,20 @@ Burnham is organized into ten families of functions:
 - **[Text Functions](#text-functions)** — Unicode normalization, transliterating slugify, Levenshtein distance, word-wrap, dedent, cowsay, ASCII QR.
 - **[Cryptography Functions](#cryptography-functions)** — HMAC (RFC 2104), HKDF (RFC 5869), PEM block decoding, X.509 / CSR inspection and fingerprinting, generic ASN.1 BER/DER decoding, deterministic ECDSA P-256 + Ed25519 key derivation, deterministic X.509 self-signing (RFC 5280) and CMS/PKCS#7 signing (RFC 5652) — ECDSA via RFC 6979 deterministic `k`, Ed25519 via naturally-deterministic PureEdDSA (RFC 8032 / RFC 8419) — and RFC 1751 human-readable key encoding (`btoe` / `etob`).
 - **[Geographic Functions](#geographic-functions)** — geohash and Open Location Code (Plus codes), encode and decode.
+
+## CEL Functions
+
+[CEL](https://cel.dev) (Common Expression Language) is the expression language behind GCP IAM and Access Context Manager conditions, Kubernetes admission and CRD validation policies, Envoy RBAC, and more. These functions let you build, check, format, round-trip, and evaluate CEL from HCL data at plan time, with no string templating. They are pure and deterministic; `celencode` builds the expression by mirroring the CEL canonical AST (`cel/expr/syntax.proto`), so references, enums, and lists flow in from Terraform variables and loops.
+
+| Function | Purpose |
+|----------|---------|
+| `celencode` | Build a CEL string from an HCL data tree (a readable surface notation or the canonical `syntax.proto` field-name notation, mixable). References are marked `{ ident = "..." }`; everything else is a literal. |
+| `celvalidate` | Report whether a string is syntactically valid CEL (returns a bool, does not fail the plan). `{ strict = true }` checks against base CEL with no extensions. |
+| `celformat` | Parse and return the canonical, optionally pretty-printed CEL string (fails on invalid input). |
+| `celdecode` | The inverse of `celencode`: parse a CEL string back into the data tree, in a chosen notation. `celencode(celdecode(x))` round-trips to the canonical form of `x`. |
+| `celevaluate` | Evaluate a *standard* CEL expression against variable bindings and return the result. Runs cel-go's standard library plus extensions; host-specific functions (GCP `inIpRange`, Kubernetes `quantity`, and the like) are not implemented. |
+
+The encode / validate / format / decode functions are syntax-only and dialect-neutral, so they accept any function name and suit any CEL sink. Only `celevaluate` actually runs the expression, so it is limited to standard CEL. Backed by [cel-go](https://github.com/google/cel-go) (and [celfmt](https://github.com/elastic/celfmt) for pretty-printing).
 
 ## Structured Data Functions
 
