@@ -14,8 +14,12 @@ const (
 	promqlMaxDepth = 1024
 	// promqlMaxNodes caps the total node count traversed in a single conversion.
 	promqlMaxNodes = 1_000_000
-	// promqlMaxInputBytes caps the length of a PromQL query string argument to the string-input functions.
-	promqlMaxInputBytes = 16 << 20 // 16 MiB
+	/*
+		promqlMaxInputBytes caps the length of a PromQL query string argument to the string-input functions (promqlvalidate, promqlformat, promqldecode).
+
+		This is far smaller than the sibling families' caps on purpose: the Prometheus parser is O(n^2) in nesting depth, so a deeply-nested pathological input (millions of parentheses) would take minutes to hours to parse under a multi-megabyte cap, hanging the plan. That would be especially wrong for promqlvalidate, which promises never to fail the plan. A real PromQL query is a few KB at most, so 64 KiB is generous while bounding the pathological worst case to a couple of seconds.
+	*/
+	promqlMaxInputBytes = 64 << 10 // 64 KiB
 )
 
 // errUnknownValue signals that a value in the input tree is unknown at plan time. A plan-time function returns an unknown result in that case rather than failing, so the value can resolve at apply.

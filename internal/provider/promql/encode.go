@@ -85,6 +85,12 @@ func buildObject(m map[string]any) (parser.Expr, error) {
 				return nil, fmt.Errorf("neg: %w", err)
 			}
 			return &parser.UnaryExpr{Op: parser.SUB, Expr: inner}, nil
+		case "pos":
+			inner, err := build(v)
+			if err != nil {
+				return nil, fmt.Errorf("pos: %w", err)
+			}
+			return &parser.UnaryExpr{Op: parser.ADD, Expr: inner}, nil
 		case "raw":
 			return buildRaw(v)
 		default:
@@ -128,9 +134,11 @@ func vectorSelectorFields(spec map[string]any) (*parser.VectorSelector, error) {
 		vs.OriginalOffset = d
 	}
 	if at, ok := spec["at"]; ok && at != nil {
-		if err := setAt(vs, at); err != nil {
+		ts, soe, err := parseAt(at)
+		if err != nil {
 			return nil, err
 		}
+		vs.Timestamp, vs.StartOrEnd = ts, soe
 	}
 	return vs, nil
 }
@@ -325,6 +333,13 @@ func buildSubquery(v any) (parser.Expr, error) {
 			return nil, fmt.Errorf("subquery offset: %w", err)
 		}
 	}
+	if at, ok := spec["at"]; ok && at != nil {
+		ts, soe, aerr := parseAt(at)
+		if aerr != nil {
+			return nil, fmt.Errorf("subquery %w", aerr)
+		}
+		sq.Timestamp, sq.StartOrEnd = ts, soe
+	}
 	return sq, nil
 }
 
@@ -432,28 +447,30 @@ func duration(v any) (time.Duration, error) {
 	return time.Duration(d), nil
 }
 
-// setAt applies an `@` modifier: a number is a Unix timestamp in seconds, or the strings "start"/"end".
-func setAt(vs *parser.VectorSelector, at any) error {
+// parseAt parses an `@` modifier into the timestamp and start/end fields shared by vector selectors and subqueries: a number is a Unix timestamp in seconds, or the strings "start"/"end". Exactly one of the two returns is set.
+func parseAt(at any) (*int64, parser.ItemType, error) {
 	switch a := at.(type) {
 	case string:
 		switch a {
 		case "start":
-			vs.StartOrEnd = parser.START
+			return nil, parser.START, nil
 		case "end":
-			vs.StartOrEnd = parser.END
+			return nil, parser.END, nil
 		default:
-			return fmt.Errorf("at must be a number of seconds or \"start\"/\"end\", got %q", a)
+			return nil, 0, fmt.Errorf("at must be a number of seconds or \"start\"/\"end\", got %q", a)
 		}
-		return nil
 	default:
 		f, err := toFloat(at)
 		if err != nil {
-			return fmt.Errorf("at: %w", err)
+			return nil, 0, fmt.Errorf("at: %w", err)
+		}
+		// Reject values that cannot be a real timestamp in milliseconds; int64(f*1000) on an out-of-range float is implementation-defined and would silently produce a bogus timestamp. 1e15 seconds is already past the year 33000, well beyond any plausible @ modifier.
+		if math.IsNaN(f) || math.IsInf(f, 0) || math.Abs(f) > 1e15 {
+			return nil, 0, fmt.Errorf("at timestamp %v is out of range", f)
 		}
 		// Round rather than truncate, matching the parser's timestamp.FromFloatSeconds.
 		ms := int64(math.Round(f * 1000))
-		vs.Timestamp = &ms
-		return nil
+		return &ms, 0, nil
 	}
 }
 

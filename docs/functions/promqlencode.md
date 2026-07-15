@@ -16,9 +16,10 @@ The tree is modeled on the Prometheus AST, using the node types the experimental
 - `{ vectorSelector = { name = "http_requests_total", matchers = [ { name = "job", type = "=", value = "api" } ], offset = "5m", at = 1609746000 } }` (matcher `type` is `=`, `!=`, `=~`, or `!~`; `offset`/`at` optional).
 - `{ matrixSelector = { name = ..., matchers = [...], range = "5m" } }` (a range vector).
 - `{ call = { func = "rate", args = [ ... ] } }`.
-- `{ aggregation = { op = "sum", by = ["job"], expr = ... } }` (`op` is `sum`/`avg`/`min`/`max`/`count`/`count_values`/`quantile`/`stddev`/`stdvar`/`topk`/`bottomk`/`group`; `by` or `without`; `param` for topk/quantile/count_values).
+- `{ aggregation = { op = "sum", by = ["job"], expr = ... } }` (`op` is `sum`/`avg`/`min`/`max`/`count`/`count_values`/`quantile`/`stddev`/`stdvar`/`topk`/`bottomk`/`group`; `by` or `without`; `param` for topk/bottomk/quantile/count_values).
 - `{ binaryExpr = { op = "/", lhs = ..., rhs = ..., bool = true, on = ["job"], group_left = ["instance"] } }` (`op` is an arithmetic, comparison, or set operator; optional `bool`, and `on`/`ignoring` with `group_left`/`group_right` for vector matching).
-- `{ subquery = { expr = ..., range = "30m", step = "1m" } }`, `{ paren = ... }`, `{ neg = ... }`.
+- `{ subquery = { expr = ..., range = "30m", step = "1m", offset = "5m", at = ... } }` (`step`/`offset`/`at` optional).
+- `{ paren = ... }`, `{ neg = ... }` (unary `-`), `{ pos = ... }` (unary `+`).
 - `{ raw = "<promql>" }` embeds a hand-written fragment (parsed, and so validated).
 
 The parser's own AST is built and re-serialized, so the output is canonical (byte-identical to `promqlformat`) and `promqlencode` never emits an invalid query. Backed by [prometheus/prometheus](https://github.com/prometheus/prometheus)'s own parser.

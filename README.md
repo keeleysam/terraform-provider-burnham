@@ -84,10 +84,11 @@ The encode / validate / format / decode functions are syntax-only and dialect-ne
 | Function | Purpose |
 |----------|---------|
 | `promqlencode` | Build a query from an HCL data tree that mirrors the Prometheus AST. Selectors, matchers (`=`/`!=`/`=~`/`!~`), ranges, `offset`/`@`, function calls, aggregations, binary ops with vector matching, and subqueries; a `{ raw = "..." }` escape embeds a hand-written fragment. Label values are quoted for you, so no fragile interpolation. |
+| `promqldecode` | Parse a query back into the `promqlencode` data tree, so the two round-trip. Lifts a hand-written query into the structured model for editing or inspection; fails on invalid input. |
 | `promqlvalidate` | Report whether a query is valid PromQL (a bool, does not fail the plan). The parser type-checks, so type errors are caught too, not just syntax. |
 | `promqlformat` | Parse and return the canonical query; `{ pretty = true }` gives the multi-line indented form (fails on invalid input). |
 
-`promqlencode` output is parsed back before it is returned, so it never emits an invalid query, and it is byte-identical to `promqlformat`. Backed by [prometheus/prometheus](https://github.com/prometheus/prometheus)'s own parser, so a query that validates here is valid in Prometheus.
+`promqlencode` output is parsed back before it is returned, so it never emits an invalid query, and it is byte-identical to `promqlformat`. `promqlencode(promqldecode(q))` round-trips to the canonical form of `q`. Backed by [prometheus/prometheus](https://github.com/prometheus/prometheus)'s own parser, so a query that validates here is valid in Prometheus.
 
 ## Structured Data Functions
 

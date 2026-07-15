@@ -1,6 +1,9 @@
 package promql
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 // rateMatrix is a reusable sub-tree: rate(http_requests_total[5m]).
 func rateMatrix() map[string]any {
@@ -76,6 +79,14 @@ func TestEncode(t *testing.T) {
 		{"raw escape", map[string]any{"raw": `histogram_quantile(0.95, sum by (le) (rate(x[5m])))`}, `histogram_quantile(0.95, sum by (le) (rate(x[5m])))`},
 		{"paren", map[string]any{"paren": map[string]any{"binaryExpr": map[string]any{"op": "+", "lhs": 1, "rhs": 2}}}, `(1 + 2)`},
 		{"neg", map[string]any{"neg": map[string]any{"vectorSelector": map[string]any{"name": "up"}}}, `-up`},
+		{"pos", map[string]any{"pos": map[string]any{"vectorSelector": map[string]any{"name": "up"}}}, `+up`},
+		{
+			"subquery with at",
+			map[string]any{"subquery": map[string]any{"range": "10m", "step": "1m", "at": 100,
+				"expr": rateMatrix(),
+			}},
+			`rate(http_requests_total[5m])[10m:1m] @ 100`,
+		},
 		{
 			"atan2 operator",
 			map[string]any{"binaryExpr": map[string]any{"op": "atan2",
@@ -165,6 +176,23 @@ func TestEncode(t *testing.T) {
 	}
 }
 
+// TestEncodeInvalidOutput covers the second validation stage: a tree that builds
+// into an AST fine but whose serialized form fails the parser's type check, so
+// Encode returns errInvalidOutput rather than emitting an invalid query. Here
+// rate() is applied to an instant vector, which the parser rejects on re-parse.
+func TestEncodeInvalidOutput(t *testing.T) {
+	tree := map[string]any{"call": map[string]any{"func": "rate", "args": []any{
+		map[string]any{"vectorSelector": map[string]any{"name": "up"}},
+	}}}
+	_, err := Encode(tree)
+	if err == nil {
+		t.Fatal("Encode of rate() over an instant vector should error")
+	}
+	if !errors.Is(err, errInvalidOutput) {
+		t.Fatalf("expected errInvalidOutput, got %v", err)
+	}
+}
+
 func TestEncodeErrors(t *testing.T) {
 	cases := []struct {
 		name string
@@ -176,6 +204,8 @@ func TestEncodeErrors(t *testing.T) {
 		{"matrixSelector without range", map[string]any{"matrixSelector": map[string]any{"name": "x"}}},
 		{"bad matcher type", map[string]any{"vectorSelector": map[string]any{"name": "x", "matchers": []any{map[string]any{"name": "a", "type": "?", "value": "b"}}}}},
 		{"multi-key object", map[string]any{"vectorSelector": map[string]any{"name": "x"}, "raw": "up"}},
+		{"experimental function", map[string]any{"call": map[string]any{"func": "mad_over_time", "args": []any{rateMatrix()}}}},
+		{"at out of range", map[string]any{"vectorSelector": map[string]any{"name": "up", "at": 1e300}}},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
