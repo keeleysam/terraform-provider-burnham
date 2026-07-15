@@ -1,0 +1,170 @@
+# Okta Expression Language (OEL) reference corpus.
+#
+# Verbatim example expressions collected from Okta's documentation, for use as
+# encode/format/validate/decode test fixtures. Lines beginning with `#` are
+# comments or `## section` headers; blank lines are ignored; every other line
+# is one expression, copied as-written (quoting and casing preserved).
+#
+# Sections are grouped by construct. The whole corpus parses (and oelencode can
+# emit all of it) with the parser the provider references. The SUPPORTED /
+# NEEDS-UPSTREAM tag is historical: it records whether the construct was in the
+# original upstream parser (SUPPORTED) or was added by our fork
+# (NEEDS-UPSTREAM, i.e. the constructs to contribute back upstream). The tag is
+# informational; TestCorpusParses asserts every line below actually parses.
+#
+# Primary sources:
+#   https://developer.okta.com/docs/reference/okta-expression-language/
+#   https://developer.okta.com/docs/reference/okta-expression-language-in-identity-engine/
+#   https://help.okta.com/en-us/content/topics/users-groups-profiles/usgp-create-group-rules.htm
+#   https://help.okta.com/en-us/content/topics/users-groups-profiles/usgp-attribute-mappings-expressions.htm
+#   https://help.okta.com/oie/en-us/content/topics/identity-governance/access-certification/iga-el-examples.htm
+#   https://help.okta.com/oie/en-us/content/topics/identity-governance/em/policy-rule-el-examples.htm
+#   https://help.okta.com/oie/en-us/content/topics/identity-engine/devices/el-device-attributes.htm
+#   github.com/okta/terraform-provider-okta (examples/resources/okta_group_rule)
+
+## comparison-logical  [SUPPORTED]
+user.city == "San Francisco"
+user.salary > 1000000
+user.salary >= 1000000
+!user.isContractor
+user.salary > 1000000 AND !user.isContractor
+user.department == "Sales" AND user.city == "New York"
+user.status == 'ACTIVE' or user.status == 'PASSWORD_EXPIRED' or user.status == 'LOCKED_OUT' or user.status == 'RECOVERY'
+user.employeeNumber == null
+user.employeeNumber == ""
+user.realmId == "o4cbj6ybZl1QShj0g7"
+
+## string-functions-namespaced  [SUPPORTED]
+String.stringContains(user.department, "Sales")
+String.stringContains(user.department,"Business Technology")
+String.startsWith(user.firstName,"andy")
+String.startsWith(user.firstName,String.toLowerCase("bob"))
+String.append("This is", " a test")
+String.join(",", "This", "is", "a", "test")
+String.len("This")
+String.removeSpaces("This is a test")
+String.replace("This is a test", "is", "at")
+String.replaceFirst("This is a test", "is", "at")
+String.substring("This is a test", 2, 9)
+String.substringAfter("abc@okta.com", "@")
+String.substringBefore("abc@okta.com", "@")
+String.toUpperCase("This")
+String.toLowerCase("ThiS")
+String.stringSwitch("This is a test", "default", "test", "value1")
+
+## array-functions-namespaced  [SUPPORTED]
+Arrays.contains({10, 20, 30}, 10)
+Arrays.size({10, 20, 30})
+Arrays.add(user.arrayAttribute, 40)
+Arrays.remove(user.arrayAttribute, 20)
+Arrays.isEmpty({10, 20})
+Arrays.toCsvString({"This", "is", " a ", "test"})
+Arrays.get({0, 1, 2}, 0)
+Arrays.flatten(10, {20, 30}, 40)
+
+## conversion-functions-namespaced  [SUPPORTED]
+Iso3166Convert.toAlpha2("IND")
+Iso3166Convert.toAlpha3("840")
+Iso3166Convert.toNumeric("USA")
+Iso3166Convert.toName("IN")
+
+## group-membership-bare  [SUPPORTED]
+isMemberOfGroupName("group1")
+isMemberOfGroup("groupId")
+isMemberOfAnyGroup("groupId1", "groupId2", "groupId3")
+isMemberOfGroupNameStartsWith("San Fr")
+isMemberOfGroupNameContains("admin")
+isMemberOfGroupNameRegex("/.*admin.*/")
+
+## ternary-concatenation  [SUPPORTED]
+user.groupCode == 123 ? 'Sales' : 'Other'
+user.firstName + user.lastName
+user.firstName + "." + user.lastName
+user.employeeNumber != "" AND user.employeeNumber != null ? user.employeeNumber : user.nonEmployeeNumber
+
+## real-world-group-rules  [SUPPORTED]
+String.startsWith(user.firstName,String.toLowerCase("bOb"))
+isMemberOfAnyGroup("00gb4o8b4kFEKqzMI0h7")
+String.stringContains(user.email, "@example.com")
+user.Location == "Remote" AND user.workerType == "Employee" AND user.department == "Engineering" AND user.active
+
+## method-calls-classic  [NEEDS-UPSTREAM]
+user.getInternalProperty("status")
+user.getInternalProperty("status") == "ACTIVE"
+user.getLinkedObject("manager").lastName
+user.getGroups({'group.profile.name': 'Engineering.*'})
+
+## bare-functions  [NEEDS-UPSTREAM]
+substringBefore(user.email, '@')
+substringAfter(user.email, '@')
+toUpperCase(source.firstName)
+getManagerUser("active_directory").firstName
+getManagerAppUser("active_directory", "google").firstName
+getAssistantUser("active_directory").firstName
+hasDirectoryUser()
+findDirectoryUser().managerUpn
+hasWorkdayUser() ? findWorkdayUser().employeeID : null
+
+## symbolic-operators  [NEEDS-UPSTREAM]
+security.behaviors.contains('New IP') && security.behaviors.contains('New Device')
+user.profile.isContractor || user.created.withinSeconds(0)
+
+## elvis  [NEEDS-UPSTREAM]
+Groups.startsWith("OKTA", "TEST", 100) ?: {}
+
+## indexing  [NEEDS-UPSTREAM]
+user.arrayProperty[0]
+{1, 2, 3}[0]
+
+# The matches operator is deprecated by Okta; kept here for round-tripping existing expressions.
+## matches-regex  [NEEDS-UPSTREAM]
+user.title matches '(?i)engineer'
+user.department matches "California-[a-zA-Z]+-Sales"
+
+## identity-engine-method-dialect  [NEEDS-UPSTREAM]
+user.profile.firstName.toUpperCase()
+user.profile.firstName.substring(1,3)
+user.profile.email.substringBefore('@')
+user.profile.email.substringAfter('@')
+'hello'.replaceFirst('l', 'p')
+'This is a test'.contains('test')
+user.profile.strArray.size()
+user.profile.intArray.contains(0)
+user.profile.stringDouble.toInteger()
+'USA'.parseCountryCode().toAlpha2()
+DateTime.now()
+DateTime.now().toUnix()
+user.created.plusDays(2)
+user.created.withinDays(1)
+user.created.toString('MM/dd/yyyy')
+Time.now("EST", "YYYY-MM-dd HH:mm:ss")
+Time.now().toZone('Asia/Tokyo')
+
+## group-membership-object  [NEEDS-UPSTREAM]
+user.isMemberOf({'group.profile.name': 'West Coast Users', 'operator': 'EXACT'})
+user.isMemberOf({'group.profile.name': 'West Coast', 'operator': 'STARTS_WITH'})
+user.isMemberOf({'group.id': '00gjitX9HqABSoqTB0g3'})
+user.isMemberOf({'group.id': {'00gjitX9HqABSoqTB0g3', '00garwpuyxHaWOkdV0g4'}})
+user.isMemberOf({'group.id': '00gjitX9HqABSoqTB0g3'}) && user.isMemberOf({'group.id': '00garwpuyxHaWOkdV0g4'})
+!user.isMemberOf({'group.profile.name': 'West Coast Users', 'operator': 'EXACT'})
+
+## collection-projection  [NEEDS-UPSTREAM]
+user.getGroups({'group.profile.name': 'Everyone'}).![profile.name]
+user.getGroups({"group.profile.name": "Everyone", "operator": "STARTS_WITH"}).![name]
+user.findGroupAndGetOwners({'group.id': 'groupId'}, 'USER')[0]
+
+## iga-governance  [NEEDS-UPSTREAM]
+user.realmId == "o4cbj6ybZl1QShj0g7" OR user.realmId == "guo4c8usniIlFgluO0g7" OR user.realmId == "guo4c7skrkbxDgJ140g7"
+user.profile.department == "Human Resources" ? user.profile.managerId : "jsmith@example.com"
+user.isMemberOf({'group.profile.name': 'West Coast Users', 'operator': 'EXACT'}) ? "westcoastreviewer@example.com" : "otherreviewer@example.com"
+user.profile.department != null && user.profile.department == "Finance Department"
+user.profile.department != null && user.profile.department.contains("Finance")
+user.status == 'ACTIVE' && user.profile.department == "Help Desk"
+
+## policy-conditions-device-security  [NEEDS-UPSTREAM]
+device.profile.registered == true && device.profile.managed == true && device.profile.secureHardwarePresent == true
+device.provider.zta.overall <= 60
+device.provider.wsc.fireWall == "GOOD"
+security.risk.level == 'HIGH'
+security.risk.level != 'LOW'
+device.provider.oktaVerify.version.versionGreaterThan('9.43') == true

@@ -24,6 +24,7 @@ require (
 	github.com/itchyny/gojq v0.12.19
 	github.com/jmespath-community/go-jmespath v1.1.1
 	github.com/joho/godotenv v1.5.1
+	github.com/keeleysam/okta-expression-parser v0.0.0-20260715042254-5083b8d7e333 // fork of stevenewson/okta-expression-parser (branch provider-fork) that extends the parser to the full documented Okta EL grammar; pinned until the grammar is contributed upstream
 	github.com/magiconair/properties v1.8.10
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/mmcloughlin/geohash v0.10.0

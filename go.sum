@@ -208,6 +208,8 @@ github.com/jmespath-community/go-jmespath v1.1.1 h1:bFikPhsi/FdmlZhVgSCd2jj1e7G/
 github.com/jmespath-community/go-jmespath v1.1.1/go.mod h1:4gOyFJsR/Gk+05RgTKYrifT7tBPWD8Lubtb5jRrfy9I=
 github.com/joho/godotenv v1.5.1 h1:7eLL/+HRGLY0ldzfGMeQkb7vMd0as4CfYvUVzLqw0N0=
 github.com/joho/godotenv v1.5.1/go.mod h1:f4LDr5Voq0i2e/R5DDNOoa2zzDfwtkZa6DnEwAbqwq4=
+github.com/keeleysam/okta-expression-parser v0.0.0-20260715042254-5083b8d7e333 h1:2iqF/AsMVI3RTQ8+7PgOKgt2Ov446Z7q0dLbCG5gmWU=
+github.com/keeleysam/okta-expression-parser v0.0.0-20260715042254-5083b8d7e333/go.mod h1:xhTu4/M5zW1GPdjlFopAhkHM21SJq2uOccDLolRzGE0=
 github.com/kevinburke/ssh_config v1.2.0 h1:x584FjTGwHzMwvHx18PXxbBVzfnxogHaAReU4gf13a4=
 github.com/kevinburke/ssh_config v1.2.0/go.mod h1:CT57kijsi8u/K/BOFA39wgDQJ9CxiF4nAY/ojJ6r6mM=
 github.com/kr/pretty v0.1.0/go.mod h1:dAy3ld7l9f0ibDNOQOHHMYYIIbhfbHSm3C4ZsoJORNo=

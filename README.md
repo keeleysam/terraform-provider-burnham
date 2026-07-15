@@ -19,7 +19,7 @@ The result is Terraform code that reads like a blueprint — clear, logical, and
 
 Burnham is organized into eleven families of functions:
 
-- **[CEL Functions](#cel-functions)**: build, validate, format, decode, and evaluate [CEL](https://cel.dev) (Common Expression Language) expressions from HCL data, for GCP IAM / Access Context Manager, Kubernetes, and any other CEL sink.
+- **[Expression Language Functions](#expression-language-functions)**: build, validate, format, decode, and evaluate expression-language strings from HCL data. [CEL](https://cel.dev) (Common Expression Language) for GCP IAM / Access Context Manager, Kubernetes, and any other CEL sink; [Okta Expression Language](https://developer.okta.com/docs/reference/okta-expression-language/) for Okta group rules, profile mappings, and policy conditions.
 - **[Structured Data Functions](#structured-data-functions)** — encode/decode for JSON (pretty), HuJSON, plist, INI, CSV, YAML, .reg, VDF, KDL, NDJSON, MessagePack, CBOR, dotenv, Java .properties, Apple .strings, and general HCL.
 - **[Compression Functions](#compression-functions)** — `base64zopfli` (RFC 1952 gzip via Zopfli, a tighter drop-in for `base64gzip`) and `base64brotli` (RFC 7932 Brotli).
 - **[Encoding Functions](#encoding-functions)** — hex and base64 byte codecs (RFC 4648): `hexencode` / `hexdecode` (the hex decode core lacks), and `base64encode` / `base64decode` with URL-safe and no-padding options and a lenient decoder.
@@ -31,9 +31,13 @@ Burnham is organized into eleven families of functions:
 - **[Cryptography Functions](#cryptography-functions)** — HMAC (RFC 2104), HKDF (RFC 5869), PEM block decoding, X.509 / CSR inspection and fingerprinting, generic ASN.1 BER/DER decoding, deterministic ECDSA P-256 + Ed25519 key derivation, deterministic X.509 self-signing (RFC 5280) and CMS/PKCS#7 signing (RFC 5652) — ECDSA via RFC 6979 deterministic `k`, Ed25519 via naturally-deterministic PureEdDSA (RFC 8032 / RFC 8419) — and RFC 1751 human-readable key encoding (`btoe` / `etob`).
 - **[Geographic Functions](#geographic-functions)** — geohash and Open Location Code (Plus codes), encode and decode.
 
-## CEL Functions
+## Expression Language Functions
 
-[CEL](https://cel.dev) (Common Expression Language) is the expression language behind GCP IAM and Access Context Manager conditions, Kubernetes admission and CRD validation policies, Envoy RBAC, and more. These functions let you build, check, format, round-trip, and evaluate CEL from HCL data at plan time, with no string templating. They are pure and deterministic; `celencode` builds the expression by mirroring the CEL canonical AST (`cel/expr/syntax.proto`), so references, enums, and lists flow in from Terraform variables and loops.
+Build, check, format, round-trip, and (for CEL) evaluate expression-language strings from HCL data at plan time, with no string templating and no manual quote escaping. All are pure and deterministic; the `*encode` functions build the expression from a structured HCL value, so references, enums, and lists flow in from Terraform variables and loops.
+
+### CEL
+
+[CEL](https://cel.dev) (Common Expression Language) is the expression language behind GCP IAM and Access Context Manager conditions, Kubernetes admission and CRD validation policies, Envoy RBAC, and more. `celencode` builds the expression by mirroring the CEL canonical AST (`cel/expr/syntax.proto`).
 
 | Function | Purpose |
 |----------|---------|
@@ -44,6 +48,20 @@ Burnham is organized into eleven families of functions:
 | `celevaluate` | Evaluate a *standard* CEL expression against variable bindings and return the result. Runs cel-go's standard library plus extensions; host-specific functions (GCP `inIpRange`, Kubernetes `quantity`, and the like) are not implemented. |
 
 The encode / validate / format / decode functions are syntax-only and dialect-neutral, so they accept any function name and suit any CEL sink. Only `celevaluate` actually runs the expression, so it is limited to standard CEL. Backed by [cel-go](https://github.com/google/cel-go) (and [celfmt](https://github.com/elastic/celfmt) for pretty-printing).
+
+### Okta Expression Language
+
+[Okta Expression Language](https://developer.okta.com/docs/reference/okta-expression-language/) (OEL) is a subset of Spring Expression Language used by Okta group rules, profile mappings, sign-on policy conditions, and Okta Identity Governance policies. `oelencode` assembles these expressions from HCL data so they are no longer hand-written, quote-escaped strings.
+
+| Function | Purpose |
+|----------|---------|
+| `oelencode` | Build an OEL string from an HCL data tree. References are marked `{ ident = "user.department" }`; everything else is a literal. Operators are tokens or aliases (`==`/`eq`, `and`/`or`/`not`, `+`, `cond`, `elvis`, `matches`); calls take a `class`/`method` form (`String.stringContains(...)`), a bare `function` form (`isMemberOfAnyGroup(...)`, `substringBefore(...)`), or a receiver `target`/`method` form (`user.getInternalProperty("status")`, `user.isMemberOf({...})`); plus `select`, `index`, `project`, and `map`. |
+| `oelvalidate` | Report whether a string is syntactically valid OEL (returns a bool, does not fail the plan). |
+| `oelformat` | Parse and return the canonical OEL string (normalized spacing and quoting; fails on invalid input). |
+| `oeldecode` | The inverse of `oelencode`: parse an OEL string back into the data tree, so `oelencode(oeldecode(x))` round-trips to the canonical form of `x`. |
+| `oelevaluate` | Evaluate an OEL expression against a sample `user` profile and group memberships and return the result, for previewing or testing a group rule at plan time. A local approximation of the group-rule subset, not Okta's server-side engine. |
+
+`oelencode` output is parsed back before it is returned, so it never emits a syntactically invalid expression, and it is byte-identical to `oelformat`'s canonical form. `oelencode`, `oelvalidate`, `oelformat`, and `oeldecode` cover the full documented OEL grammar (the classic namespaced subset plus receiver method calls, the Identity Engine method dialect, `isMemberOf({...})`, indexing, projection, Elvis, and `matches`); `oelevaluate` is limited to the group-rule subset it can actually evaluate. Backed by a fork of [okta-expression-parser](https://github.com/keeleysam/okta-expression-parser) that extends the parser to the full grammar (pending upstream contribution).
 
 ## Structured Data Functions
 

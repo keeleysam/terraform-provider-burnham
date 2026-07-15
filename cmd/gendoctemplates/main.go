@@ -27,16 +27,18 @@ import (
 	"github.com/keeleysam/terraform-burnham/internal/provider/identifiers"
 	"github.com/keeleysam/terraform-burnham/internal/provider/network"
 	"github.com/keeleysam/terraform-burnham/internal/provider/numerics"
+	"github.com/keeleysam/terraform-burnham/internal/provider/oel"
 	"github.com/keeleysam/terraform-burnham/internal/provider/text"
 	"github.com/keeleysam/terraform-burnham/internal/provider/transform"
 )
 
-// families pairs each of Burnham's function packages with the docs subcategory string the Terraform Registry should display for its members. To add a new family: add a row here.
+// families pairs each of Burnham's function packages with the docs subcategory string the Terraform Registry should display for its members. To add a new family: add a row here. Several packages may share one subcategory (e.g. the expression-language packages cel and oel), which groups them under a single family in the Registry sidebar.
 var families = []struct {
 	subcategory string
 	functions   []func() function.Function
 }{
-	{"CEL", cel.Functions()},
+	{"Expression Languages", cel.Functions()},
+	{"Expression Languages", oel.Functions()},
 	{"Compression", compression.Functions()},
 	{"Structured Data", dataformat.Functions()},
 	{"Networking", network.Functions()},
