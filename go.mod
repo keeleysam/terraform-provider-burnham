@@ -43,6 +43,8 @@ require (
 	rsc.io/qr v0.2.0
 )
 
+require github.com/cedar-policy/cedar-go v1.8.0
+
 require (
 	cel.dev/expr v0.25.1 // indirect
 	github.com/BurntSushi/toml v1.2.1 // indirect

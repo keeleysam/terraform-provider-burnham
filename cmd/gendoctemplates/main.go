@@ -18,6 +18,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/function"
 
+	"github.com/keeleysam/terraform-burnham/internal/provider/cedar"
 	"github.com/keeleysam/terraform-burnham/internal/provider/cel"
 	"github.com/keeleysam/terraform-burnham/internal/provider/compression"
 	"github.com/keeleysam/terraform-burnham/internal/provider/cryptography"
@@ -38,6 +39,7 @@ var families = []struct {
 	functions   []func() function.Function
 }{
 	{"Expression Languages", cel.Functions()},
+	{"Expression Languages", cedar.Functions()},
 	{"Expression Languages", oel.Functions()},
 	{"Compression", compression.Functions()},
 	{"Structured Data", dataformat.Functions()},

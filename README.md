@@ -19,7 +19,7 @@ The result is Terraform code that reads like a blueprint — clear, logical, and
 
 Burnham is organized into eleven families of functions:
 
-- **[Expression Language Functions](#expression-language-functions)**: build, validate, format, decode, and evaluate expression-language strings from HCL data. [CEL](https://cel.dev) (Common Expression Language) for GCP IAM / Access Context Manager, Kubernetes, and any other CEL sink; [Okta Expression Language](https://developer.okta.com/docs/reference/okta-expression-language/) for Okta group rules, profile mappings, and policy conditions.
+- **[Expression Language Functions](#expression-language-functions)**: build, validate, format, decode, and evaluate expression- and policy-language strings from HCL data. [CEL](https://cel.dev) (Common Expression Language) for GCP IAM / Access Context Manager, Kubernetes, and any other CEL sink; [Okta Expression Language](https://developer.okta.com/docs/reference/okta-expression-language/) for Okta group rules, profile mappings, and policy conditions; [Cedar](https://www.cedarpolicy.com) for Amazon Verified Permissions authorization policies.
 - **[Structured Data Functions](#structured-data-functions)** — encode/decode for JSON (pretty), HuJSON, plist, INI, CSV, YAML, .reg, VDF, KDL, NDJSON, MessagePack, CBOR, dotenv, Java .properties, Apple .strings, and general HCL.
 - **[Compression Functions](#compression-functions)** — `base64zopfli` (RFC 1952 gzip via Zopfli, a tighter drop-in for `base64gzip`) and `base64brotli` (RFC 7932 Brotli).
 - **[Encoding Functions](#encoding-functions)** — byte codecs that fill core gaps: hex (`hexencode`/`hexdecode`), base64 and base32 with alphabet/padding options and lenient decoders, and `urlencode` (with `query`/`path`/`component` modes) / `urldecode` (the decoder core lacks).
@@ -62,6 +62,20 @@ The encode / validate / format / decode functions are syntax-only and dialect-ne
 | `oelevaluate` | Evaluate an OEL expression against a sample `user` profile and group memberships and return the result, for previewing or testing a group rule at plan time. A local approximation of the group-rule subset, not Okta's server-side engine. |
 
 `oelencode` output is parsed back before it is returned, so it never emits a syntactically invalid expression, and it is byte-identical to `oelformat`'s canonical form. `oelencode`, `oelvalidate`, `oelformat`, and `oeldecode` cover the full documented OEL grammar (the classic namespaced subset plus receiver method calls, the Identity Engine method dialect, `isMemberOf({...})`, indexing, projection, Elvis, and `matches`); `oelevaluate` is limited to the group-rule subset it can actually evaluate. Backed by a fork of [okta-expression-parser](https://github.com/keeleysam/okta-expression-parser) that extends the parser to the full grammar (pending upstream contribution).
+
+### Cedar
+
+[Cedar](https://www.cedarpolicy.com) is the authorization policy language behind Amazon Verified Permissions and AWS IAM Access Analyzer. A policy has a human-readable text form and an equivalent canonical JSON form, the EST (Cedar's own JSON policy representation); these functions convert between them, check and canonicalize the text form, and evaluate authorization requests.
+
+| Function | Purpose |
+|----------|---------|
+| `cedarencode` | Build a Cedar policy (DSL) from its EST data tree. Cedar already defines this canonical JSON AST, so no notation is invented. The output is validated and canonical. |
+| `cedardecode` | The inverse of `cedarencode`: parse a policy into its EST data tree, so `cedarencode(cedardecode(x))` round-trips. |
+| `cedarvalidate` | Report whether a document is syntactically valid Cedar (a bool, does not fail the plan). |
+| `cedarformat` | Parse and return the canonical DSL (normalized layout; comments dropped, `@id(...)` annotations kept). |
+| `cedarevaluate` | Authorize a request (principal, action, resource, context, entities) against a policy document and return `{ decision, reasons, errors }`, for unit-testing policies at plan time. |
+
+`cedarencode` and `cedardecode` operate on a single policy statement (the shape of an `aws_verifiedpermissions_policy` static policy); `cedarvalidate`, `cedarformat`, and `cedarevaluate` operate on a document of one or more policies. Because the functions use [cedar-go](https://github.com/cedar-policy/cedar-go), the official Go implementation of Cedar, a `cedarevaluate` decision comes from Cedar's own engine (the one Amazon Verified Permissions is built on) rather than an approximation.
 
 ## Structured Data Functions
 
