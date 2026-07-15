@@ -19,7 +19,7 @@ The result is Terraform code that reads like a blueprint — clear, logical, and
 
 Burnham is organized into eleven families of functions:
 
-- **[Expression Language Functions](#expression-language-functions)**: build, validate, format, decode, and evaluate expression- and policy-language strings from HCL data. [CEL](https://cel.dev) (Common Expression Language) for GCP IAM / Access Context Manager, Kubernetes, and any other CEL sink; [Okta Expression Language](https://developer.okta.com/docs/reference/okta-expression-language/) for Okta group rules, profile mappings, and policy conditions; [Cedar](https://www.cedarpolicy.com) for Amazon Verified Permissions authorization policies.
+- **[Expression Language Functions](#expression-language-functions)**: build, validate, format, decode, and evaluate expression- and policy-language strings from HCL data. [CEL](https://cel.dev) (Common Expression Language) for GCP IAM / Access Context Manager, Kubernetes, and any other CEL sink; [Okta Expression Language](https://developer.okta.com/docs/reference/okta-expression-language/) for Okta group rules, profile mappings, and policy conditions; [Cedar](https://www.cedarpolicy.com) for Amazon Verified Permissions authorization policies; and [PromQL](https://prometheus.io/docs/prometheus/latest/querying/basics/) for Prometheus alerting and recording rules.
 - **[Structured Data Functions](#structured-data-functions)** — encode/decode for JSON (pretty), HuJSON, plist, INI, CSV, YAML, .reg, VDF, KDL, NDJSON, MessagePack, CBOR, dotenv, Java .properties, Apple .strings, and general HCL.
 - **[Compression Functions](#compression-functions)** — `base64zopfli` (RFC 1952 gzip via Zopfli, a tighter drop-in for `base64gzip`) and `base64brotli` (RFC 7932 Brotli).
 - **[Encoding Functions](#encoding-functions)** — byte codecs that fill core gaps: hex (`hexencode`/`hexdecode`), base64 and base32 with alphabet/padding options and lenient decoders, and `urlencode` (with `query`/`path`/`component` modes) / `urldecode` (the decoder core lacks).
@@ -76,6 +76,18 @@ The encode / validate / format / decode functions are syntax-only and dialect-ne
 | `cedarevaluate` | Authorize a request (principal, action, resource, context, entities) against a policy document and return `{ decision, reasons, errors }`, for unit-testing policies at plan time. |
 
 `cedarencode` and `cedardecode` operate on a single policy statement (the shape of an `aws_verifiedpermissions_policy` static policy); `cedarvalidate`, `cedarformat`, and `cedarevaluate` operate on a document of one or more policies. Because the functions use [cedar-go](https://github.com/cedar-policy/cedar-go), the official Go implementation of Cedar, a `cedarevaluate` decision comes from Cedar's own engine (the one Amazon Verified Permissions is built on) rather than an approximation.
+
+### PromQL
+
+[PromQL](https://prometheus.io/docs/prometheus/latest/querying/basics/) is the Prometheus query language, hand-authored in alerting and recording rules (`grafana_rule_group`, Mimir rules, prometheus-operator `PrometheusRule` manifests) and dashboard panels.
+
+| Function | Purpose |
+|----------|---------|
+| `promqlencode` | Build a query from an HCL data tree that mirrors the Prometheus AST. Selectors, matchers (`=`/`!=`/`=~`/`!~`), ranges, `offset`/`@`, function calls, aggregations, binary ops with vector matching, and subqueries; a `{ raw = "..." }` escape embeds a hand-written fragment. Label values are quoted for you, so no fragile interpolation. |
+| `promqlvalidate` | Report whether a query is valid PromQL (a bool, does not fail the plan). The parser type-checks, so type errors are caught too, not just syntax. |
+| `promqlformat` | Parse and return the canonical query; `{ pretty = true }` gives the multi-line indented form (fails on invalid input). |
+
+`promqlencode` output is parsed back before it is returned, so it never emits an invalid query, and it is byte-identical to `promqlformat`. Backed by [prometheus/prometheus](https://github.com/prometheus/prometheus)'s own parser, so a query that validates here is valid in Prometheus.
 
 ## Structured Data Functions
 

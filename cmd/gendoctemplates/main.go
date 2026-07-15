@@ -29,6 +29,7 @@ import (
 	"github.com/keeleysam/terraform-burnham/internal/provider/network"
 	"github.com/keeleysam/terraform-burnham/internal/provider/numerics"
 	"github.com/keeleysam/terraform-burnham/internal/provider/oel"
+	"github.com/keeleysam/terraform-burnham/internal/provider/promql"
 	"github.com/keeleysam/terraform-burnham/internal/provider/text"
 	"github.com/keeleysam/terraform-burnham/internal/provider/transform"
 )
@@ -41,6 +42,7 @@ var families = []struct {
 	{"Expression Languages", cel.Functions()},
 	{"Expression Languages", cedar.Functions()},
 	{"Expression Languages", oel.Functions()},
+	{"Expression Languages", promql.Functions()},
 	{"Compression", compression.Functions()},
 	{"Structured Data", dataformat.Functions()},
 	{"Networking", network.Functions()},
