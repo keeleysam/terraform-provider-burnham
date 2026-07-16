@@ -27,6 +27,41 @@ func TestDecodeEncodeLargeInteger(t *testing.T) {
 	}
 }
 
+// TestEncodeRecordDeterministic guards against non-deterministic record-literal
+// key ordering. cedar-go builds a record node's element slice by iterating a Go
+// map (recordJSON.ToNode), so the EST JSON -> DSL step used to emit keys in
+// random order. A plan-time function that returns different bytes for identical
+// input causes perpetual Terraform diffs.
+func TestEncodeRecordDeterministic(t *testing.T) {
+	src := `permit (principal, action, resource) when { context.x == {a:1, b:2, c:3, d:4, e:5} };`
+	tree, err := Decode(src)
+	if err != nil {
+		t.Fatalf("Decode: %v", err)
+	}
+	first, err := Encode(tree)
+	if err != nil {
+		t.Fatalf("Encode: %v", err)
+	}
+	for i := 0; i < 200; i++ {
+		got, err := Encode(tree)
+		if err != nil {
+			t.Fatalf("Encode: %v", err)
+		}
+		if got != first {
+			t.Fatalf("Encode not deterministic across calls:\n first: %q\n got:   %q", first, got)
+		}
+	}
+	// The source keys are already in sorted order, so the canonical (sorted)
+	// encoding must be byte-identical to what Format produces for the policy.
+	want, err := Format(src)
+	if err != nil {
+		t.Fatalf("Format: %v", err)
+	}
+	if first != want {
+		t.Fatalf("Encode does not match Format:\n want: %q\n got:  %q", want, first)
+	}
+}
+
 // TestDecodeMultiPolicyErrors: cedardecode handles a single policy; a document
 // with several must error rather than silently keep the first.
 func TestDecodeMultiPolicyErrors(t *testing.T) {

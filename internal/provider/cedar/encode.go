@@ -10,8 +10,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
 
-	cedar "github.com/cedar-policy/cedar-go"
+	cedarast "github.com/cedar-policy/cedar-go/ast"
+	xast "github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
 // errInvalidOutput signals that the EST data tree did not describe a valid Cedar policy, so no DSL could be built from it. It lets callers attribute the failure.
@@ -28,9 +30,25 @@ func Encode(tree any) (string, error) {
 	if err := enc.Encode(tree); err != nil {
 		return "", fmt.Errorf("encode EST as JSON: %w", err)
 	}
-	var p cedar.Policy
+	var p cedarast.Policy
 	if err := p.UnmarshalJSON(buf.Bytes()); err != nil {
 		return "", fmt.Errorf("%w: %v", errInvalidOutput, err)
 	}
+	// cedar-go builds a record node's element slice by iterating a Go map (see recordJSON.ToNode), so EST JSON -> AST leaves record-literal keys in random order and MarshalCedar would emit them differently on every call. EST records are JSON objects with no inherent order, so sort keys into one canonical order to keep this plan-time function deterministic (otherwise Terraform sees perpetual diffs).
+	sortRecordKeys(&p)
 	return string(p.MarshalCedar()), nil
+}
+
+// sortRecordKeys rewrites every record literal in the policy's conditions so its keys are in lexicographic order, in place. Inspect hands back each node by value, but the record's Elements slice shares its backing array with the AST, so sorting through that header reorders the real node.
+func sortRecordKeys(p *cedarast.Policy) {
+	for _, cond := range (*xast.Policy)(p).Conditions {
+		xast.Inspect(xast.NewNode(cond.Body), func(n xast.IsNode) bool {
+			if rec, ok := n.(xast.NodeTypeRecord); ok {
+				sort.Slice(rec.Elements, func(i, j int) bool {
+					return rec.Elements[i].Key < rec.Elements[j].Key
+				})
+			}
+			return true
+		})
+	}
 }
