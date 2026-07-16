@@ -76,6 +76,12 @@ func (f *PluscodeEncodeFunction) Run(ctx context.Context, req function.RunReques
 		resp.Error = ferr
 		return
 	}
+	/*
+		Normalize the documented lower bound -180 to +180 before encoding. Longitude -180 and +180 are the same meridian (the antimeridian), but the upstream OLC encoder maps the westmost longitude column (including exactly -180) to an out-of-range integer, producing a code that pluscode_decode / olc.CheckFull reject with "longitude outside range". Encoding +180 hits the same meridian and yields a code the decoder accepts, so the round-trip stays symmetric.
+	*/
+	if lon == -180 {
+		lon = 180
+	}
 	out := olc.Encode(lat, lon, int(length))
 	resp.Error = function.ConcatFuncErrors(resp.Error, resp.Result.Set(ctx, &out))
 }
