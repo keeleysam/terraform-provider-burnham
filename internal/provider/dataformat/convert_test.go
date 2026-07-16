@@ -1,13 +1,16 @@
 package dataformat
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"math/big"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -251,7 +254,7 @@ func TestTerraformValueToGo_Primitives(t *testing.T) {
 	}{
 		{"bool", types.BoolValue(true), true},
 		{"string", types.StringValue("hello"), "hello"},
-		{"number", types.NumberValue(big.NewFloat(42)), float64(42)},
+		{"number", types.NumberValue(big.NewFloat(42)), int64(42)},
 	}
 
 	for _, tt := range tests {
@@ -542,6 +545,133 @@ func TestTryUnpackPlistTaggedObject_InvalidReal(t *testing.T) {
 	_, _, err := tryUnpackPlistTaggedObject(attrs)
 	if err == nil {
 		t.Fatal("expected error for invalid real")
+	}
+}
+
+// makeExactNumber builds a NumberValue whose big.Float carries an exact integer
+// parsed from its decimal digits, mirroring how Terraform hands the provider a
+// high-precision numeric literal. big.NewFloat(<float literal>) would already
+// have rounded the value to float64, so the digits have to come in through
+// big.Int to reproduce integers beyond 2^53 faithfully.
+func makeExactNumber(t *testing.T, digits string) types.Number {
+	t.Helper()
+	bi, ok := new(big.Int).SetString(digits, 10)
+	if !ok {
+		t.Fatalf("bad integer literal %q", digits)
+	}
+	return types.NumberValue(new(big.Float).SetInt(bi))
+}
+
+func runCBOREncodeForTest(t *testing.T, value attr.Value) string {
+	t.Helper()
+	f := &CBOREncodeFunction{}
+	args := function.NewArgumentsData([]attr.Value{types.DynamicValue(value)})
+	req := function.RunRequest{Arguments: args}
+	resp := &function.RunResponse{Result: function.NewResultData(types.StringValue(""))}
+	f.Run(context.Background(), req, resp)
+	if resp.Error != nil {
+		t.Fatalf("cbor encode error: %v", resp.Error)
+	}
+	return resp.Result.Value().(types.String).ValueString()
+}
+
+// TestTerraformValueToGo_IntegerPrecision guards the encode path against
+// collapsing an exact integer to float64. A big.Float carrying 2^53+1 (the
+// smallest positive integer float64 cannot represent) must come back as an exact
+// integer, not a rounded float.
+func TestTerraformValueToGo_IntegerPrecision(t *testing.T) {
+	got, err := terraformValueToGo(makeExactNumber(t, "9007199254740993"), false)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	i, ok := got.(int64)
+	if !ok {
+		t.Fatalf("expected int64, got %T", got)
+	}
+	if i != 9007199254740993 {
+		t.Errorf("precision lost: want 9007199254740993, got %d", i)
+	}
+}
+
+// TestTerraformValueToGo_IntegerBeyondInt64 checks that an integer too large for
+// int64 is carried as a *big.Int rather than a lossy float64.
+func TestTerraformValueToGo_IntegerBeyondInt64(t *testing.T) {
+	got, err := terraformValueToGo(makeExactNumber(t, "12345678901234567890"), false)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	bi, ok := got.(*big.Int)
+	if !ok {
+		t.Fatalf("expected *big.Int, got %T (%v)", got, got)
+	}
+	if bi.String() != "12345678901234567890" {
+		t.Errorf("precision lost: want 12345678901234567890, got %s", bi.String())
+	}
+}
+
+func TestJSONEncode_IntegerPrecision(t *testing.T) {
+	result, err := runJSONEncode(t, makeExactNumber(t, "9007199254740993"))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result != "9007199254740993" {
+		t.Errorf("expected 9007199254740993, got %q", result)
+	}
+}
+
+func TestJSONEncode_IntegerBeyondInt64(t *testing.T) {
+	result, err := runJSONEncode(t, makeExactNumber(t, "12345678901234567890"))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result != "12345678901234567890" {
+		t.Errorf("expected 12345678901234567890, got %q", result)
+	}
+}
+
+func TestCBOREncode_IntegerRoundTrip(t *testing.T) {
+	// This value exceeds uint64 and is not a power of two, so a lossy float64 hop
+	// would corrupt it. Encode then decode and confirm the number survives
+	// bit-for-bit.
+	huge, ok := new(big.Int).SetString("12345678901234567890123", 10)
+	if !ok {
+		t.Fatal("bad literal")
+	}
+	encoded := runCBOREncodeForTest(t, types.NumberValue(new(big.Float).SetInt(huge)))
+
+	got, ferr := runCBORDecode(t, encoded)
+	if ferr != nil {
+		t.Fatalf("decode error: %v", ferr)
+	}
+	n, ok := got.UnderlyingValue().(types.Number)
+	if !ok {
+		t.Fatalf("expected Number, got %T", got.UnderlyingValue())
+	}
+	if n.ValueBigFloat().Cmp(new(big.Float).SetInt(huge)) != 0 {
+		t.Errorf("precision lost: want %s, got %s", huge.String(), n.ValueBigFloat().Text('f', -1))
+	}
+}
+
+func TestPlistEncode_IntegerPrecision(t *testing.T) {
+	result, err := runPlistEncode(t, makeExactNumber(t, "9007199254740993"))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(result, "<integer>9007199254740993</integer>") {
+		t.Errorf("expected <integer>9007199254740993</integer> in output:\n%s", result)
+	}
+}
+
+func TestKDLEncode_IntegerPrecision(t *testing.T) {
+	node := makeKDLNode("n", []attr.Value{makeExactNumber(t, "9007199254740993")}, nil, nil)
+	nodes := types.TupleValueMust([]attr.Type{node.Type(nil)}, []attr.Value{node})
+
+	result, err := runKDLEncode(t, nodes)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(result, "9007199254740993") {
+		t.Errorf("expected 9007199254740993 in output:\n%s", result)
 	}
 }
 

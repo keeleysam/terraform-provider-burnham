@@ -229,7 +229,19 @@ func terraformValueToGoImpl(v attr.Value, plistMode bool, depth int) (interface{
 
 	case basetypes.NumberValue:
 		f := val.ValueBigFloat()
-		// Return as float64 — the caller decides integer vs real based on value.
+		// Preserve integer precision. float64 has only 52 mantissa bits, so an
+		// integral value beyond 2^53 (or one decoded from a big.Int / uint64)
+		// silently rounds if funnelled through float64, corrupting decode |> encode
+		// round-trips. Carry integers as int64 (when they fit) or *big.Int so the
+		// encoders emit the exact integer; only genuinely fractional values fall
+		// back to float64.
+		if f.IsInt() {
+			if i, acc := f.Int64(); acc == big.Exact {
+				return i, nil
+			}
+			bi, _ := f.Int(nil)
+			return bi, nil
+		}
 		result, _ := f.Float64()
 		return result, nil
 
