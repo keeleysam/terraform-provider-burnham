@@ -637,8 +637,8 @@ func nat64PlaceIPv4(raw *[16]byte, v4 [4]byte, pl int) {
 	raw[8] = 0
 	switch pl {
 	case 32:
-		raw[4], raw[5], raw[6], raw[7] = v4[0], v4[1], v4[2], 0
-		raw[8] = v4[3]
+		raw[4], raw[5], raw[6], raw[7] = v4[0], v4[1], v4[2], v4[3]
+		raw[8] = 0
 	case 40:
 		raw[5], raw[6], raw[7] = v4[0], v4[1], v4[2]
 		raw[8] = 0
@@ -665,7 +665,7 @@ func nat64ExtractIPv4(raw [16]byte, pl int) [4]byte {
 	var v4 [4]byte
 	switch pl {
 	case 32:
-		v4[0], v4[1], v4[2], v4[3] = raw[4], raw[5], raw[6], raw[8]
+		v4[0], v4[1], v4[2], v4[3] = raw[4], raw[5], raw[6], raw[7]
 	case 40:
 		v4[0], v4[1], v4[2], v4[3] = raw[5], raw[6], raw[7], raw[9]
 	case 48:

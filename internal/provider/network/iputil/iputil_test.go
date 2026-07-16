@@ -392,6 +392,27 @@ func TestNAT64Extract(t *testing.T) {
 	}
 }
 
+func TestNAT64RFC6052Prefix32(t *testing.T) {
+	// RFC 6052 Section 2.4 vector: for a /32 NAT64 prefix the IPv4 address
+	// occupies bytes 4..7 and the u-octet (byte 8) is zero.
+	// Prefix 2001:db8::/32, IPv4 192.0.2.33 -> 2001:db8:c000:221::
+	const (
+		ipv4   = "192.0.2.33"
+		prefix = "2001:db8::/32"
+		want6  = "2001:db8:c000:221::"
+	)
+	got, err := NAT64Synthesize(ipv4, prefix, false)
+	fatalOnErr(t, err)
+	if got != want6 {
+		t.Errorf("synthesize: got %q, want %q", got, want6)
+	}
+	back, err := NAT64Extract(want6, prefix)
+	fatalOnErr(t, err)
+	if back != ipv4 {
+		t.Errorf("extract: got %q, want %q", back, ipv4)
+	}
+}
+
 func TestNAT64SynthesizeCIDR(t *testing.T) {
 	got, err := NAT64SynthesizeCIDR("192.0.2.0/24", "64:ff9b::/96", false)
 	fatalOnErr(t, err)
