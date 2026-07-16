@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"strings"
 	"testing"
 	"time"
 
@@ -84,5 +85,27 @@ func TestMsgpackDecode_InvalidBase64(t *testing.T) {
 	_, err := runMsgpackDecode(t, "not base64!")
 	if err == nil {
 		t.Error("expected error for invalid base64")
+	}
+}
+
+func TestMsgpackDecode_HostileLengthHeaderIsBounded(t *testing.T) {
+	// A tiny input must not drive an unbounded allocation from a trusted length
+	// header. "3f////8=" is a bare Array32 header (dd ff ff ff ff, n=2^32-1) and
+	// "3/////8=" is the Map32 equivalent (df ff ff ff ff, n=2^32-1). Both must
+	// return a bounded decode error rather than trying to allocate tens of GB.
+	cases := map[string]string{
+		"array32": "3f////8=",
+		"map32":   "3/////8=",
+	}
+	for name, input := range cases {
+		t.Run(name, func(t *testing.T) {
+			_, err := runMsgpackDecode(t, input)
+			if err == nil {
+				t.Fatalf("expected a bounded error for hostile %s length header, got success", name)
+			}
+			if !strings.Contains(err.Error(), "exceeds maximum") {
+				t.Fatalf("expected an 'exceeds maximum' cap error, got: %v", err.Error())
+			}
+		})
 	}
 }

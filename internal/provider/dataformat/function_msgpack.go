@@ -9,7 +9,18 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/vmihailenco/msgpack/v5"
+	"github.com/vmihailenco/msgpack/v5/msgpcode"
 )
+
+// msgpackMaxCollectionElements caps how many array elements or map pairs we will
+// allocate for from a single length header, mirroring the CBOR decoder's
+// MaxArrayElements / MaxMapPairs (131072). MessagePack length prefixes are up to
+// 32 bits wide, so an 8-byte input can claim 2^32-1 elements and drive tens of GB
+// of allocation. The msgpack/v5 library does not cap the []interface{} slice path
+// at all, and our own map decoder sizes the map directly from the header, so we
+// enforce the bound ourselves and return a decode error rather than allocating
+// unboundedly.
+const msgpackMaxCollectionElements = 131072
 
 var _ function.Function = (*MsgpackDecodeFunction)(nil)
 
@@ -54,8 +65,8 @@ func (f *MsgpackDecodeFunction) Run(ctx context.Context, req function.RunRequest
 
 	dec := msgpack.NewDecoder(bytes.NewReader(raw))
 	dec.SetMapDecoder(decodeMsgpackMapStringInterface)
-	var goVal interface{}
-	if err := dec.Decode(&goVal); err != nil {
+	goVal, err := decodeMsgpackValue(dec)
+	if err != nil {
 		resp.Error = function.NewArgumentFuncError(0, "failed to decode MessagePack: "+err.Error())
 		return
 	}
@@ -69,6 +80,41 @@ func (f *MsgpackDecodeFunction) Run(ctx context.Context, req function.RunRequest
 	resp.Error = function.ConcatFuncErrors(resp.Error, resp.Result.Set(ctx, types.DynamicValue(tfVal)))
 }
 
+// decodeMsgpackValue decodes one value, bounding array allocations by the
+// element cap before delegating scalars and maps to the library. The msgpack/v5
+// []interface{} path (DecodeInterface -> decodeSlice) sizes its backing array
+// straight from the header with no limit, so we intercept arrays here and read
+// them element by element after checking the count.
+func decodeMsgpackValue(d *msgpack.Decoder) (interface{}, error) {
+	c, err := d.PeekCode()
+	if err != nil {
+		return nil, err
+	}
+	if msgpcode.IsFixedArray(c) || c == msgpcode.Array16 || c == msgpcode.Array32 {
+		n, err := d.DecodeArrayLen()
+		if err != nil {
+			return nil, err
+		}
+		if n < 0 {
+			return nil, nil
+		}
+		if n > msgpackMaxCollectionElements {
+			return nil, fmt.Errorf("array length %d exceeds maximum of %d elements", n, msgpackMaxCollectionElements)
+		}
+		out := make([]interface{}, 0, n)
+		for i := 0; i < n; i++ {
+			v, err := decodeMsgpackValue(d)
+			if err != nil {
+				return nil, err
+			}
+			out = append(out, v)
+		}
+		return out, nil
+	}
+	// Maps route through decodeMsgpackMapStringInterface via the map decoder hook; everything else (scalars, bin, ext) uses the library's own logic.
+	return d.DecodeInterface()
+}
+
 // decodeMsgpackMapStringInterface forces map keys to strings — without this, msgpack/v5 returns map[interface{}]interface{} which goToTerraformValue can't handle.
 func decodeMsgpackMapStringInterface(d *msgpack.Decoder) (interface{}, error) {
 	n, err := d.DecodeMapLen()
@@ -78,13 +124,16 @@ func decodeMsgpackMapStringInterface(d *msgpack.Decoder) (interface{}, error) {
 	if n < 0 {
 		return nil, nil
 	}
+	if n > msgpackMaxCollectionElements {
+		return nil, fmt.Errorf("map length %d exceeds maximum of %d pairs", n, msgpackMaxCollectionElements)
+	}
 	out := make(map[string]interface{}, n)
 	for i := 0; i < n; i++ {
 		k, err := d.DecodeString()
 		if err != nil {
 			return nil, err
 		}
-		v, err := d.DecodeInterface()
+		v, err := decodeMsgpackValue(d)
 		if err != nil {
 			return nil, err
 		}
