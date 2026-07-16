@@ -19,7 +19,7 @@ Every variable referenced by the expression must be supplied in `vars`; an undec
 
 -> **Note:** Evaluation is deterministic (CEL has no wall-clock or randomness), so results are stable across plan and apply.
 
-Result values map to Terraform as follows (each overridable in options):
+Result values map to Terraform as follows (the timestamp, duration, and bytes renderings are overridable in options):
 
 - A timestamp becomes an RFC 3339 string.
 - A duration becomes a seconds string like `"5400s"`.

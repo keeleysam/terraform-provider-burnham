@@ -7,13 +7,13 @@ Both header versions are auto-detected:
 
 The result is a two-level map: registry key paths at the outer level, value names at the inner level. The default value (`@`) is keyed as `"@"`.
 
-`REG_SZ` values become plain strings. Every other type decodes as a tagged object with `__reg_type` and `value` keys, round-trippable through `regencode`:
+`REG_SZ` values become plain strings. Every other type decodes as a tagged object with `__reg_type` and `value` keys, round-trippable through `regencode`. The `__reg_type` tag holds the lowercase short form shown in backticks below, not the `REG_*` name:
 
-- `REG_DWORD`
-- `REG_QWORD`
-- `REG_BINARY`
-- `REG_MULTI_SZ`
-- `REG_EXPAND_SZ`
-- `REG_NONE` (its `value` is a hex-encoded string)
+- `REG_DWORD` (`__reg_type = "dword"`)
+- `REG_QWORD` (`"qword"`)
+- `REG_BINARY` (`"binary"`)
+- `REG_MULTI_SZ` (`"multi_sz"`)
+- `REG_EXPAND_SZ` (`"expand_sz"`)
+- `REG_NONE` (`"none"`; its `value` is a hex-encoded string)
 
 **Common uses:** importing existing `.reg` exports from a reference machine, normalizing them into a typed Terraform value, or staging registry policy snapshots for diff review before redeployment.

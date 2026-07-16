@@ -4,7 +4,7 @@ Values render in their natural HCL form:
 
 - Nested objects become HCL object literals (`{ ... }`).
 - Lists become bracketed sequences.
-- Primitives render as their natural HCL representation.
+- Primitives (strings, numbers, bools, null) render as HCL literals.
 
 Output is formatted with `hclwrite.Format`, matching Terraform's canonical formatting.
 

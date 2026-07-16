@@ -2,7 +2,7 @@ Builds a [CEL](https://cel.dev) (Common Expression Language) expression string f
 
 The input follows the CEL canonical AST (`cel/expr/syntax.proto`), using its node and field names rather than an invented vocabulary. Two notations are accepted and may be freely mixed: a readable **surface** notation and the verbose **canonical** notation.
 
-Bare integral numbers become a CEL `int`. For other numeric kinds use an explicit typed constant: `{ const = { double_value = ... } }` for a `double`, and `{ const = { uint64_value = ... } }` for an unsigned or large (> 2^63-1) value.
+Bare integral numbers become a CEL `int` and bare non-integral numbers become a CEL `double`. Use `{ const = { double_value = ... } }` to force an integral value (like `1.0`) to a `double`, and `{ const = { uint64_value = ... } }` for an unsigned or large (> 2^63-1) value.
 
 In the surface (readable) notation you mark only references; everything else is a bare literal.
 

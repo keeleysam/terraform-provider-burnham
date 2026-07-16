@@ -4,7 +4,7 @@ Distance is computed over Unicode codepoints, not bytes, so `levenshtein("café"
 
 Classic uses:
 
-- "Did-you-mean" suggestions in dynamic config selection (`closest_match` over a list).
+- "Did-you-mean" suggestions: pick the closest valid option from a list by mapping each candidate to its distance from the input and taking the minimum.
 - Spotting typos in resource names.
 - Deduplicating near-identical entries.
 

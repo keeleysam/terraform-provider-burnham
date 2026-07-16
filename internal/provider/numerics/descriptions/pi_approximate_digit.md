@@ -4,4 +4,4 @@ Returns the n-th decimal digit of 22/7 *following* the decimal point, formatted 
 - `pi_approximate_digit(7)` → `"7:1"` (cycle wraps to start of `"142857"`)
 - `pi_approximate_digit(100)` → `"100:8"`
 
-Because 22/7 cycles with period 6, the n-th digit is just `"142857"[(n-1) mod 6]`, a constant-time lookup. There is no upper bound on `n`: it can be arbitrarily large (up to ~10^150 in Terraform's 512-bit number type) and the function returns instantly.
+Because 22/7 cycles with period 6, the n-th digit is just `"142857"[(n-1) mod 6]`, a constant-time lookup. `n` must be a whole number `>= 1` (a non-integer like `2.5` or a non-finite value errors), but there is no upper bound: it can be arbitrarily large (up to ~10^150 in Terraform's 512-bit number type) and the function returns instantly.

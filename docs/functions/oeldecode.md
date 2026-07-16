@@ -16,7 +16,7 @@ This is primarily a tool for testing and for migrating hand-written expressions 
 The decoding mirrors the `oelencode` surface:
 
 - References decode to `{ ident = "..." }`.
-- Operators decode to their token keys.
+- Operators decode to their operator keys: comparisons and `+` use the symbolic token, boolean logic uses `AND`/`OR`, negation uses `!`, and the ternary uses `cond`.
 - Calls decode to the `call` forms.
 - A dotted path that embeds a group-membership method hop, which has no direct surface form, decodes to a `{ raw = "..." }` escape that `oelencode` re-parses.
 

@@ -6,7 +6,7 @@ The input is Cedar's own JSON policy format, the EST. Cedar defines this format 
 
 - `effect`: `"permit"` or `"forbid"`.
 - `principal`, `action`, `resource`: scope objects (see below).
-- `conditions`: an optional list of `when` / `unless` clauses, each a Cedar EST expression tree (a nested AST).
+- `conditions`: an optional list of clauses, each an object `{ kind = "when" or "unless", body = <Cedar EST expression tree> }`.
 
 ### Scope objects
 

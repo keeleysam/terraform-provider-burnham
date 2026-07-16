@@ -15,7 +15,7 @@ Because 22/7 is a period-6 repeating decimal, the output for any count is just `
 
 - `pi_approximate_digits(12)` → `"142857142857"` (the 6-digit cycle, twice)
 
-~> **Note:** `count` greater than 3,141,592 (= ⌊π × 10⁶⌋) errors, matching `pi_digits` so neither function can be coaxed into materialising a multi-GB string at plan time.
+~> **Note:** `count` greater than 3,141,592 (= ⌊π × 10⁶⌋) errors, matching `pi_digits`. At one byte per digit the output can never exceed a few megabytes, keeping both functions bounded at plan time.
 
 ## Example Usage
 

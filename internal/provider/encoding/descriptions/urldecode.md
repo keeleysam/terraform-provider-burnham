@@ -1,4 +1,4 @@
-Decodes a percent-encoded string, the function Terraform core is missing entirely. Both directions of `%XX` are decoded in every mode; the `mode` only controls how `+` is treated, because `+` is ambiguous (a space in a query string, a literal `+` in a path):
+Decodes a percent-encoded string, the function Terraform core is missing entirely. `%XX` escapes are decoded in every mode; the `mode` only controls how `+` is treated, because `+` is ambiguous (a space in a query string, a literal `+` in a path):
 
 - `"query"` (default): form semantics; `+` → space (and `%2B` → `+`). The inverse of `urlencode`'s default.
 - `"path"` / `"component"`: `+` is left literal; only `%XX` is decoded.

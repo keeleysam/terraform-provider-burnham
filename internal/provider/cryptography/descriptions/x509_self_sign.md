@@ -5,7 +5,7 @@ Signing is deterministic on both supported key types: ECDSA P-256 uses RFC 6979 
 Certificate fields:
 
 - **Version**: 3.
-- **Serial Number**: derived from `serial` (raw bytes; interpreted big-endian, leading-byte high bit cleared so the DER-encoded length stays predictable). must be non-empty and at most 20 bytes (RFC 5280 §4.1.2.2 caps the encoded length at 20 octets); at least 8 bytes is recommended for uniqueness.
+- **Serial Number**: derived from `serial` (raw bytes; interpreted big-endian, leading-byte high bit cleared so the DER-encoded length stays predictable). Must be non-empty and at most 20 bytes (RFC 5280 §4.1.2.2 caps the encoded length at 20 octets); at least 8 bytes is recommended for uniqueness.
 - **Issuer = Subject**: a single Common Name attribute (self-signed).
 - **Validity**: as supplied, RFC 3339.
 - **Basic Constraints**: critical, `CA:FALSE`.

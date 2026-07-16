@@ -35,7 +35,7 @@ Returns an object with:
 - `reasons`: the ids of the policies that determined the decision.
 - `errors`: any evaluation errors.
 
-~> **Note:** A policy with no `@id` annotation is numbered `policy0`, `policy1`, and so on in document order. Add `@id("...")` to get stable names in `reasons`.
+~> **Note:** Policies in `reasons` are always identified positionally as `policy0`, `policy1`, and so on in document order. An `@id("...")` annotation is preserved in the policy text but is not used as the identifier, so it has no effect on `reasons`; stable custom names are not available through this function.
 
 ## Example Usage
 

@@ -13,7 +13,7 @@ Parses `query` and returns its canonical [PromQL](https://prometheus.io/docs/pro
 
 Pass `{ pretty = true }` for the parser's multi-line, indented form, which wraps only long sub-expressions (nice for a long alerting expression).
 
-The output is stable and idempotent, so two queries that differ only in whitespace canonicalize to the same string, and it is byte-identical to what `promqlencode` produces. Two normalizations to expect:
+The output is stable and idempotent, so two queries that differ only in whitespace canonicalize to the same string, and the default single-line output is byte-identical to what `promqlencode` produces. Two normalizations to expect:
 
 - Label matchers within a selector are sorted alphabetically.
 - PromQL `#` comments are dropped.

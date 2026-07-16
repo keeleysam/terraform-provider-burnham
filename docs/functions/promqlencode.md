@@ -22,7 +22,7 @@ The tree is modeled on the Prometheus AST, using the node types the experimental
 
 ### Selectors
 
-- `vectorSelector` takes the optional `name` and `matchers` (supply at least one to form a valid selector, for example just `name = "up"` or just `matchers = [{ name = "job", type = "=", value = "api" }]`), plus the optional `offset` and `at`. Each matcher is `{ name, type, value }`, where `type` is `=`, `!=`, `=~`, or `!~`.
+- `vectorSelector` takes the optional `name` and `matchers` (supply at least one to form a valid selector, for example just `name = "up"` or just `matchers = [{ name = "job", type = "=", value = "api" }]`), plus the optional `offset` and `at`. `at` is a Unix timestamp in seconds (the `@` modifier), or the string `"start"` or `"end"`. Each matcher is `{ name, type, value }`, where `type` is `=`, `!=`, `=~`, or `!~`.
 - `matrixSelector` is a range vector: the same fields plus a required `range` (for example `"5m"`).
 
 ```hcl

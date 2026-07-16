@@ -26,7 +26,7 @@ import (
 	"github.com/keeleysam/terraform-burnham/internal/provider/optionsutil"
 )
 
-// nanoidDefaultAlphabet is the 64-character URL-safe alphabet used by upstream nanoid by default. Order matches the reference implementation.
+// nanoidDefaultAlphabet is the same 64-character URL-safe set upstream nanoid uses by default, but in sorted order rather than upstream's scrambled urlAlphabet ordering (the character set matches; the order does not).
 const nanoidDefaultAlphabet = "_-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 
 // nanoidDefaultSize is upstream nanoid's default output length.

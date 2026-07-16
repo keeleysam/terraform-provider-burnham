@@ -20,7 +20,7 @@ Named bindings are passed through the optional `vars` object and referenced as j
 
 ### Number handling
 
-Numbers use IEEE-754 `float64` precision for non-integers, matching the `jmespath_query` and `jsonpath_query` siblings. Integers beyond 2^53 are preserved exactly.
+Numbers use IEEE-754 `float64` precision for non-integers, matching the `jmespath_query` sibling. Integers beyond 2^53 are preserved exactly. (`jsonpath_query`, by contrast, passes values through untouched and preserves every number at full precision.)
 
 ### Unsupported builtins
 

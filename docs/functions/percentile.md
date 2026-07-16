@@ -15,6 +15,8 @@ Definition: let the sorted observations be `x[0] ≤ x[1] ≤ … ≤ x[N-1]`. C
 
 Valid `p` is a finite number in `[0, 100]`. `p = 0` returns the minimum; `p = 100` returns the maximum; `p = 50` matches `median(numbers)`.
 
+Errors when `numbers` is empty, or when `p` is outside `[0, 100]` or non-finite.
+
 ## Example Usage
 
 ```terraform
