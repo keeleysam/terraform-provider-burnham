@@ -101,6 +101,36 @@ func TestCBORDecode_BignumBecomesNumber(t *testing.T) {
 	}
 }
 
+func TestCBORDecode_NegativeInt64ExactValue(t *testing.T) {
+	// Negative int64 values whose magnitude exceeds 2^53 must decode exactly. Routing an int64 through float64 (big.NewFloat(float64(val))) silently rounds these to the nearest representable float.
+	cases := []struct {
+		name string
+		raw  []byte
+		want int64
+	}{
+		{"just below -2^53", []byte{0x3b, 0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, -9007199254740993},
+		{"MinInt64+1", []byte{0x3b, 0x7f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfe}, -9223372036854775807},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			encoded := base64.StdEncoding.EncodeToString(tc.raw)
+			got, ferr := runCBORDecode(t, encoded)
+			if ferr != nil {
+				t.Fatalf("decode error: %v", ferr)
+			}
+			n, ok := got.UnderlyingValue().(types.Number)
+			if !ok {
+				t.Fatalf("expected Number, got %T", got.UnderlyingValue())
+			}
+			// Build the expectation from the exact int64 (prec 0 keeps it exact) so the comparison itself doesn't round away the defect.
+			want := new(big.Float).SetInt64(tc.want)
+			if n.ValueBigFloat().Cmp(want) != 0 {
+				t.Errorf("precision loss: want %d, got %s", tc.want, n.ValueBigFloat().Text('f', -1))
+			}
+		})
+	}
+}
+
 func TestCBORDecode_InvalidBase64(t *testing.T) {
 	_, err := runCBORDecode(t, "not base64!")
 	if err == nil {

@@ -92,7 +92,8 @@ func goToTerraformValueImpl(v interface{}, plist bool, depth int) (attr.Value, e
 		return types.NumberValue(big.NewFloat(float64(val))), nil
 
 	case int64:
-		return types.NumberValue(big.NewFloat(float64(val))), nil
+		// SetInt64 keeps the full 64-bit magnitude exact; routing through float64 would round values beyond 2^53 (e.g. CBOR/plist decoded integers) to the nearest representable float.
+		return types.NumberValue(new(big.Float).SetInt64(val)), nil
 
 	case uint:
 		return types.NumberValue(new(big.Float).SetUint64(uint64(val))), nil
