@@ -261,22 +261,29 @@ func (f *PercentileFunction) Run(ctx context.Context, req function.RunRequest, r
 		return
 	}
 
-	// h = (p / 100) * (N - 1)
-	h := new(big.Float).SetPrec(prec).Quo(p, hundred)
-	h.Mul(h, new(big.Float).SetPrec(prec).SetInt64(int64(n-1)))
+	/*
+		h = (p / 100) * (N - 1). Compute it as an exact rational, not a binary big.Float, so the "does the index land exactly on an observation" decision is exact.
+		Example: percentile([0..25], 4) has h = 0.04 * 25 = 1 exactly, but 0.04 is not representable in binary, so a big.Float h comes out as 0.999...868. That would miss the integer-index fast path and interpolate, returning 0.999... instead of the exact observation x[1] = 1.
+		p is finite (checked above), so p.Rat is exact; N-1 and 100 are integers, so hRat is the exact value of h.
+	*/
+	pRat := new(big.Rat)
+	p.Rat(pRat)
+	hRat := new(big.Rat).Mul(pRat, big.NewRat(int64(n-1), 100))
 
-	// h is non-negative (we validated p ≥ 0), so big.Float.Int's truncation toward zero coincides with floor.
-	floorInt, _ := h.Int(nil)
-	floorIdxF := new(big.Float).SetPrec(prec).SetInt(floorInt)
-	frac := new(big.Float).SetPrec(prec).Sub(h, floorIdxF)
+	// hRat is non-negative (we validated p ≥ 0), so integer division of numerator by denominator is the floor.
+	floorInt := new(big.Int).Quo(hRat.Num(), hRat.Denom())
 	idx := floorInt.Int64()
 
 	// Exact integer index — no interpolation needed. Covers p = 0, p = 100, and any p that lands on an observation.
-	if frac.Sign() == 0 {
+	if hRat.IsInt() {
 		out := new(big.Float).SetPrec(prec).Copy(sorted[idx])
 		resp.Error = function.ConcatFuncErrors(resp.Error, resp.Result.Set(ctx, out))
 		return
 	}
+
+	// frac = h - ⌊h⌋, taken exactly then rounded to the working precision for interpolation.
+	fracRat := new(big.Rat).Sub(hRat, new(big.Rat).SetInt(floorInt))
+	frac := new(big.Float).SetPrec(prec).SetRat(fracRat)
 
 	lo := sorted[idx]
 	hi := sorted[idx+1]
