@@ -42,6 +42,21 @@ func TestRunJMESPath_Arithmetic(t *testing.T) {
 	}
 }
 
+// TestRunJMESPath_LargeIntegerLosesPrecision locks the documented tradeoff: the
+// JMESPath engine evaluates numbers as float64, so an integer beyond 2^53 comes
+// back rounded. 9007199254740993 (2^53 + 1) is not representable and rounds to
+// 9007199254740992. If a future change preserved precision, update the docs.
+func TestRunJMESPath_LargeIntegerLosesPrecision(t *testing.T) {
+	data := map[string]interface{}{"n": json.Number("9007199254740993")}
+	got, err := runJMESPath(data, "n")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got != float64(9007199254740992) {
+		t.Errorf("got %#v, want the float64-rounded 9007199254740992", got)
+	}
+}
+
 func TestRunJMESPath_NumericFunctions(t *testing.T) {
 	for _, tc := range []struct {
 		expr string
