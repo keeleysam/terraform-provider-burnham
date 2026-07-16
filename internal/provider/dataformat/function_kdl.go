@@ -348,8 +348,14 @@ func terraformToKDLValue(v attr.Value) (kdl.Value, error) {
 	case basetypes.NumberValue:
 		f := val.ValueBigFloat()
 		if f.IsInt() {
-			i, _ := f.Int64()
-			return kdl.NewInt(int(i)), nil
+			// big.Float.Int64 clamps out-of-range magnitudes to MaxInt64,
+			// which would silently corrupt integers wider than int64. Extract
+			// the exact big.Int and only narrow to a plain int when it fits.
+			bi, _ := f.Int(nil)
+			if bi.IsInt64() {
+				return kdl.NewInt(int(bi.Int64())), nil
+			}
+			return kdl.NewBigInt(bi), nil
 		}
 		fv, _ := f.Float64()
 		return kdl.NewFloat(fv), nil

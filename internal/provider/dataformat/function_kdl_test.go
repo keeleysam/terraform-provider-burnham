@@ -249,6 +249,28 @@ func TestKDLEncode_RoundTrip(t *testing.T) {
 	}
 }
 
+func TestKDLEncode_BigIntRoundTrip(t *testing.T) {
+	// Integers beyond int64 range must survive a decode/encode round-trip.
+	// kdldecode preserves the full magnitude via big.Int, so kdlencode must
+	// emit it as a KDL BigInt instead of clamping to MaxInt64.
+	const bigInt = "100000000000000000000000"
+	input := "bignum " + bigInt + "\n"
+
+	decoded, decErr := runKDLDecode(t, input)
+	if decErr != nil {
+		t.Fatalf("decode error: %v", decErr)
+	}
+
+	encoded, encErr := runKDLEncode(t, decoded.UnderlyingValue())
+	if encErr != nil {
+		t.Fatalf("encode error: %v", encErr)
+	}
+
+	if !strings.Contains(encoded, bigInt) {
+		t.Errorf("expected big integer %s preserved in round-trip, got:\n%s", bigInt, encoded)
+	}
+}
+
 func TestKDLEncode_NotAList(t *testing.T) {
 	_, err := runKDLEncode(t, types.StringValue("not a list"))
 	if err == nil {
