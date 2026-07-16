@@ -131,10 +131,10 @@ func writeVDFObject(b *strings.Builder, attrs map[string]attr.Value, depth int) 
 
 		switch v := val.(type) {
 		case basetypes.StringValue:
-			b.WriteString(fmt.Sprintf("%s%q\t\t%q\n", indent, key, v.ValueString()))
+			b.WriteString(fmt.Sprintf("%s%s\t\t%s\n", indent, vdfQuote(key), vdfQuote(v.ValueString())))
 
 		case basetypes.ObjectValue:
-			b.WriteString(fmt.Sprintf("%s%q\n%s{\n", indent, key, indent))
+			b.WriteString(fmt.Sprintf("%s%s\n%s{\n", indent, vdfQuote(key), indent))
 			if err := writeVDFObject(b, v.Attributes(), depth+1); err != nil {
 				return err
 			}
@@ -142,14 +142,14 @@ func writeVDFObject(b *strings.Builder, attrs map[string]attr.Value, depth int) 
 
 		case basetypes.NumberValue:
 			f := v.ValueBigFloat()
-			b.WriteString(fmt.Sprintf("%s%q\t\t%q\n", indent, key, f.Text('f', -1)))
+			b.WriteString(fmt.Sprintf("%s%s\t\t%s\n", indent, vdfQuote(key), vdfQuote(f.Text('f', -1))))
 
 		case basetypes.BoolValue:
 			s := "0"
 			if v.ValueBool() {
 				s = "1"
 			}
-			b.WriteString(fmt.Sprintf("%s%q\t\t%q\n", indent, key, s))
+			b.WriteString(fmt.Sprintf("%s%s\t\t%s\n", indent, vdfQuote(key), vdfQuote(s)))
 
 		default:
 			return fmt.Errorf("key %q: unsupported type %T (VDF only supports strings and nested objects)", key, val)
@@ -157,4 +157,26 @@ func writeVDFObject(b *strings.Builder, attrs map[string]attr.Value, depth int) 
 	}
 
 	return nil
+}
+
+/*
+vdfQuote wraps s in double quotes using VDF-native escaping rather than Go's %q.
+
+The andygrunwald/vdf parser only interprets \" and \\ inside a quoted string; any other backslash sequence has its backslash dropped (so Go's %q output of "\n" and "\t" would decode back as the letters "n" and "t"). Newlines and tabs, on the other hand, round-trip fine when written literally because the parser scans them as ordinary whitespace/line-ending runes inside the quotes. So we escape only the backslash and the quotation mark and emit every other rune, including control characters, verbatim.
+*/
+func vdfQuote(s string) string {
+	var b strings.Builder
+	b.WriteByte('"')
+	for _, r := range s {
+		switch r {
+		case '\\':
+			b.WriteString(`\\`)
+		case '"':
+			b.WriteString(`\"`)
+		default:
+			b.WriteRune(r)
+		}
+	}
+	b.WriteByte('"')
+	return b.String()
 }

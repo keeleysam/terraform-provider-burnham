@@ -218,6 +218,40 @@ func TestVDFEncode_RoundTrip(t *testing.T) {
 	}
 }
 
+func TestVDFEncode_ControlCharsRoundTrip(t *testing.T) {
+	// Values containing newlines and tabs must survive a full encode/decode
+	// cycle. Go's %q escapes them as \n / \t, which the VDF parser reads back
+	// as the literal letters "n" / "t" (it only honors \\ and \").
+	inner := types.ObjectValueMust(
+		map[string]attr.Type{"nl": types.StringType, "tab": types.StringType},
+		map[string]attr.Value{"nl": types.StringValue("line1\nline2"), "tab": types.StringValue("a\tb")},
+	)
+	obj := types.ObjectValueMust(
+		map[string]attr.Type{"Cfg": inner.Type(nil)},
+		map[string]attr.Value{"Cfg": inner},
+	)
+
+	encoded, encErr := runVDFEncode(t, obj)
+	if encErr != nil {
+		t.Fatalf("encode error: %v", encErr)
+	}
+
+	decoded, decErr := runVDFDecode(t, encoded)
+	if decErr != nil {
+		t.Fatalf("decode error: %v\nencoded:\n%s", decErr, encoded)
+	}
+
+	cfg := decoded.UnderlyingValue().(types.Object).Attributes()["Cfg"].(types.Object)
+	nl := cfg.Attributes()["nl"].(types.String).ValueString()
+	if nl != "line1\nline2" {
+		t.Errorf("newline value did not round-trip: got %q", nl)
+	}
+	tab := cfg.Attributes()["tab"].(types.String).ValueString()
+	if tab != "a\tb" {
+		t.Errorf("tab value did not round-trip: got %q", tab)
+	}
+}
+
 func TestVDFEncode_NotAnObject(t *testing.T) {
 	_, err := runVDFEncode(t, types.StringValue("not an object"))
 	if err == nil {
