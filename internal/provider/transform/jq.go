@@ -176,14 +176,14 @@ func runJQ(ctx context.Context, input interface{}, program string, vars map[stri
 		if e, ok := v.(error); ok {
 			return nil, e
 		}
+		if len(results) >= jqMaxOutputs {
+			return nil, fmt.Errorf("program produced more than %d values", jqMaxOutputs)
+		}
 		norm, err := normalizeFromGojq(v)
 		if err != nil {
 			return nil, err
 		}
 		results = append(results, norm)
-		if len(results) > jqMaxOutputs {
-			return nil, fmt.Errorf("program produced more than %d values", jqMaxOutputs)
-		}
 	}
 	return results, nil
 }
