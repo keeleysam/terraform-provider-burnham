@@ -124,13 +124,17 @@ func TestRunJQ_NowIsAllowed(t *testing.T) {
 }
 
 func TestRunJQ_DeeplyNestedResultBounded(t *testing.T) {
-	// A jq program can build a result nested far deeper than any real config.
-	// The output conversion path must bound its recursion (like the input path)
-	// and return an error rather than overflowing the goroutine stack. 2000 is
-	// modest but exceeds transformMaxDepth (1024), so the bound must trip.
+	/*
+		A jq program can build a result nested far deeper than any real config, and the output conversion path must bound its recursion (like the input path) and return an error rather than overflowing the goroutine stack.
+
+		Depth 2000 is deliberate, not arbitrary: it exceeds transformMaxDepth (1024) so the bound must trip, yet it is shallow enough that the UNFIXED code (no output-depth guard) returns a nil error rather than crashing. That is exactly the red/green boundary a regression test needs: fixed code returns the depth error, unfixed code returns nil. Reproducing the real crash depth (~2,000,000) is not usable here, because against the unfixed code that overflow aborts the test process itself, so nothing could be asserted.
+	*/
 	_, err := runJQ(context.Background(), json.Number("0"), "reduce range(2000) as $i (0; [.])", nil)
 	if err == nil {
 		t.Fatal("expected error for result nested beyond the maximum depth, got nil")
+	}
+	if !strings.Contains(err.Error(), "nesting depth") {
+		t.Fatalf("expected the depth-bound error, got a different error: %v", err)
 	}
 }
 
