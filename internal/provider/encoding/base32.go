@@ -33,12 +33,25 @@ func base32Encode(b []byte, hexAlphabet, padding bool) string {
 	return base32Encoding(hexAlphabet, padding).EncodeToString(b)
 }
 
+// asciiToUpper uppercases only ASCII a–z, leaving every other byte untouched.
+// Unicode case folding (strings.ToUpper) would fold letters like U+0131 (ı) and
+// U+017F (ſ) into 'I' and 'S', which are in the base32 alphabet, so a rune-wise
+// uppercase would let non-alphabet Unicode homoglyphs decode instead of erroring.
+func asciiToUpper(s string) string {
+	return strings.Map(func(r rune) rune {
+		if r >= 'a' && r <= 'z' {
+			return r - ('a' - 'A')
+		}
+		return r
+	}, s)
+}
+
 // base32DecodeLenient uppercases the input, drops ASCII whitespace, and tolerates
 // missing padding. The alphabet (standard vs extended-hex) must be specified —
 // the two overlap, so it cannot be auto-detected the way base64's disjoint
 // alphabets can.
 func base32DecodeLenient(s string, hexAlphabet bool) ([]byte, error) {
-	t := strings.ToUpper(stripASCIIWhitespace(s))
+	t := asciiToUpper(stripASCIIWhitespace(s))
 	t = strings.TrimRight(t, "=")
 	enc := base32.StdEncoding
 	if hexAlphabet {

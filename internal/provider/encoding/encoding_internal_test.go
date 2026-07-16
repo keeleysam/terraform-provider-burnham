@@ -216,6 +216,17 @@ func TestBase32Decode_Invalid(t *testing.T) {
 	}
 }
 
+func TestBase32Decode_RejectsUnicodeHomoglyphs(t *testing.T) {
+	// Uppercasing must be ASCII-only. Unicode case folding would fold U+0131
+	// (ı, dotless i) into 'I' and U+017F (ſ, long s) into 'S', both valid
+	// base32 letters, letting non-alphabet input decode instead of erroring.
+	for _, in := range []string{"MZXW6YTBOı", "ıſıſıſıſ"} {
+		if _, err := base32DecodeLenient(in, false); err == nil {
+			t.Errorf("base32DecodeLenient(%q): expected error for non-alphabet Unicode input", in)
+		}
+	}
+}
+
 // ─── url encode / decode ────────────────────────────────────────
 
 func TestURLEncode_Modes(t *testing.T) {
