@@ -262,3 +262,72 @@ func TestINIEncode_NotAnObject(t *testing.T) {
 		t.Fatal("expected error for non-object input")
 	}
 }
+
+// iniRoundTripValue encodes a single global key with the given value, decodes
+// the result, and returns the value that survived the round trip.
+func iniRoundTripValue(t *testing.T, value string) (string, *function.FuncError) {
+	t.Helper()
+	global := types.ObjectValueMust(
+		map[string]attr.Type{"key": types.StringType},
+		map[string]attr.Value{"key": types.StringValue(value)},
+	)
+	obj := types.ObjectValueMust(
+		map[string]attr.Type{"": global.Type(nil)},
+		map[string]attr.Value{"": global},
+	)
+
+	encoded, encErr := runINIEncode(t, obj)
+	if encErr != nil {
+		return "", encErr
+	}
+
+	decoded, decErr := runINIDecode(t, encoded)
+	if decErr != nil {
+		return "", decErr
+	}
+
+	out := decoded.UnderlyingValue().(types.Object)
+	globalOut := out.Attributes()[""].(types.Object)
+	return globalOut.Attributes()["key"].(types.String).ValueString(), nil
+}
+
+func TestINIEncode_RoundTripPreservesValues(t *testing.T) {
+	cases := map[string]string{
+		"trailing whitespace": "value   ",
+		"leading whitespace":  "   value",
+		"inline semicolon":    "a ; b",
+		"inline hash":         "a # b",
+		"embedded quote":      `a "b" c`,
+		"leading quote":       `"quoted`,
+	}
+
+	for name, value := range cases {
+		t.Run(name, func(t *testing.T) {
+			got, err := iniRoundTripValue(t, value)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if got != value {
+				t.Errorf("round trip changed value: got %q, want %q", got, value)
+			}
+		})
+	}
+}
+
+func TestINIEncode_NewlineValueErrors(t *testing.T) {
+	// INI has no standard multiline form; encoding a value with a newline must
+	// fail loudly rather than silently truncate on decode.
+	global := types.ObjectValueMust(
+		map[string]attr.Type{"key": types.StringType},
+		map[string]attr.Value{"key": types.StringValue("line1\nline2")},
+	)
+	obj := types.ObjectValueMust(
+		map[string]attr.Type{"": global.Type(nil)},
+		map[string]attr.Value{"": global},
+	)
+
+	_, err := runINIEncode(t, obj)
+	if err == nil {
+		t.Fatal("expected error for value containing a newline")
+	}
+}

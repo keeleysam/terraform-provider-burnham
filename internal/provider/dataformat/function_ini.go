@@ -53,6 +53,9 @@ func (f *INIDecodeFunction) Run(ctx context.Context, req function.RunRequest, re
 	cfg, err := ini.LoadSources(ini.LoadOptions{
 		AllowBooleanKeys:        true,
 		SkipUnrecognizableLines: false,
+		// Read double-quoted values verbatim so values that renderINI quoted
+		// (surrounding whitespace, inline ; or #) survive the round trip.
+		UnescapeValueDoubleQuotes: true,
 	}, []byte(input))
 	if err != nil {
 		resp.Error = function.NewArgumentFuncError(0, "failed to parse INI: "+err.Error())
@@ -122,8 +125,39 @@ func iniKeyNames(attrs map[string]attr.Value) []string {
 	return names
 }
 
-// renderINI builds an INI string from a Terraform object structure.
-func renderINI(sections map[string]attr.Value) string {
+// iniValueNeedsQuoting reports whether v would be altered by the parser if
+// written bare, and so must be wrapped in double quotes to survive a round trip.
+func iniValueNeedsQuoting(v string) bool {
+	if v == "" {
+		return false
+	}
+	// Leading or trailing whitespace is trimmed by the parser.
+	if strings.TrimSpace(v) != v {
+		return true
+	}
+	// ; and # start inline comments and would truncate the value.
+	if strings.ContainsAny(v, ";#") {
+		return true
+	}
+	// A double quote (in particular a leading one) triggers quoted-value parsing.
+	if strings.Contains(v, "\"") {
+		return true
+	}
+	return false
+}
+
+// iniQuoteValue renders v for the right-hand side of a key/value pair, quoting
+// and escaping it when a bare value would not round-trip through the parser.
+func iniQuoteValue(v string) string {
+	if !iniValueNeedsQuoting(v) {
+		return v
+	}
+	return "\"" + strings.ReplaceAll(v, "\"", "\\\"") + "\""
+}
+
+// renderINI builds an INI string from a Terraform object structure. It returns
+// an error when a value contains a newline, which INI has no standard form for.
+func renderINI(sections map[string]attr.Value) (string, error) {
 	var b strings.Builder
 
 	sectionNames := iniSectionNames(sections)
@@ -171,13 +205,16 @@ func renderINI(sections map[string]attr.Value) string {
 			default:
 				strVal = ""
 			}
-			b.WriteString(keyName + " = " + strVal + "\n")
+			if strings.ContainsAny(strVal, "\n\r") {
+				return "", fmt.Errorf("value for key %q in section %q contains a newline, which INI cannot represent", keyName, sectionName)
+			}
+			b.WriteString(keyName + " = " + iniQuoteValue(strVal) + "\n")
 		}
 
 		first = false
 	}
 
-	return b.String()
+	return b.String(), nil
 }
 
 var _ function.Function = (*INIEncodeFunction)(nil)
@@ -220,7 +257,11 @@ func (f *INIEncodeFunction) Run(ctx context.Context, req function.RunRequest, re
 		return
 	}
 
-	result := renderINI(obj.Attributes())
+	result, err := renderINI(obj.Attributes())
+	if err != nil {
+		resp.Error = function.NewArgumentFuncError(0, err.Error())
+		return
+	}
 
 	resp.Error = function.ConcatFuncErrors(resp.Error, resp.Result.Set(ctx, result))
 }
