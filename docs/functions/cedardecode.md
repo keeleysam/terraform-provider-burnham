@@ -15,7 +15,7 @@ It is the inverse of `cedarencode`, so `cedarencode(cedardecode(x))` round-trips
 
 The return is a dynamic value ready to `jsonencode` into Cedar's JSON policy format.
 
-~> **Note:** It handles exactly one policy statement (the shape of an `aws_verifiedpermissions_policy` static policy). A document with several policies is a policy set and is rejected here; use `cedarformat` or `cedarvalidate` for those.
+~> **Note:** It handles exactly one policy statement (the shape of an `aws_verifiedpermissions_policy` static policy). A document with several policies is a policy set and is rejected here; use `cedarformat`, `cedarvalidate`, or `cedarevaluate` for those.
 
 Backed by [cedar-go](https://github.com/cedar-policy/cedar-go), the official Go implementation of Cedar.
 

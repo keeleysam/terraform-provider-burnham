@@ -26,6 +26,7 @@ The result is a two-level map: registry key paths at the outer level, value name
 - `REG_MULTI_SZ` (`"multi_sz"`)
 - `REG_EXPAND_SZ` (`"expand_sz"`)
 - `REG_NONE` (`"none"`; its `value` is a hex-encoded string)
+- a value removal (`"Name"=-`) becomes `{ __reg_type = "delete", value = "" }`
 
 **Common uses:** importing existing `.reg` exports from a reference machine, normalizing them into a typed Terraform value, or staging registry policy snapshots for diff review before redeployment.
 

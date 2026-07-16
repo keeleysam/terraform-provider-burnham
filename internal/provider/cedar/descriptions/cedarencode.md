@@ -1,6 +1,6 @@
 Builds a single [Cedar](https://www.cedarpolicy.com) policy, in its human-readable text form, from a structured HCL value, so you can assemble a policy from Terraform data with no string templating. The result is a canonical policy statement suitable for `aws_verifiedpermissions_policy`.
 
-The input is Cedar's own JSON policy format, the EST. Cedar defines this format directly, so the HCL mirrors it one-to-one and `cedardecode` produces the same shape.
+The HCL you pass mirrors Cedar's own JSON policy format, the EST, one-to-one, so `cedardecode` produces the same shape. Cedar defines the EST directly, and this function walks that structured value (not a JSON string).
 
 ### Top-level object
 

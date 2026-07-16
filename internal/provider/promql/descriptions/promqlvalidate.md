@@ -8,4 +8,4 @@ The Prometheus parser type-checks while parsing, so this catches type errors too
 - A range vector used in arithmetic.
 - A string where a scalar is required.
 
--> **Note:** Backed by [prometheus/prometheus](https://github.com/prometheus/prometheus)'s own parser, so a query that validates here is valid in Prometheus.
+-> **Note:** Backed by [prometheus/prometheus](https://github.com/prometheus/prometheus)'s own parser, so a query that validates here is valid in Prometheus. A query longer than 64 KiB is reported as `false` without parsing, keeping the function from ever failing the plan.

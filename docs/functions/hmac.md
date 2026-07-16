@@ -17,7 +17,7 @@ Computes the keyed-hash message authentication code ([HMAC](https://www.rfc-edit
 - `"sha224"`, `"sha256"`, `"sha384"`, `"sha512"`: FIPS 180-4 SHA-2 family
 - `"sha512_224"`, `"sha512_256"`: truncated SHA-512 variants
 
-**Byte handling, gotchas:** the inputs reach the function as the literal UTF-8 bytes of whatever string HCL hands it. HCL string literals only support `\uNNNN` Unicode escapes; there is no `\xNN` byte-escape syntax. A value spelled `"\u00ff"` arrives as the two UTF-8 bytes `0xc3 0xbf`, *not* the single byte `0xff`. An OpenSSL-style hex value like `"00ff"` is similarly interpreted as four ASCII characters, *not* two raw bytes. For arbitrary-byte inputs (RFC test vectors, hex-encoded keys, anything outside ASCII), encode upstream as base64 in your variable and pass `base64decode(var.x)` to this function. Burnham does not currently ship a `hex_decode` helper.
+**Byte handling, gotchas:** the inputs reach the function as the literal UTF-8 bytes of whatever string HCL hands it. HCL string literals only support `\uNNNN` Unicode escapes; there is no `\xNN` byte-escape syntax. A value spelled `"\u00ff"` arrives as the two UTF-8 bytes `0xc3 0xbf`, *not* the single byte `0xff`. An OpenSSL-style hex value like `"00ff"` is similarly interpreted as four ASCII characters, *not* two raw bytes. For arbitrary-byte inputs (RFC test vectors, hex-encoded keys, anything outside ASCII), decode upstream and pass the raw bytes in: `hexdecode(var.x)` for a hex value, or `base64decode(var.x)` for base64.
 
 ~> **Note:** This is a derivation, not a MAC verifier. To validate a MAC, compute the expected value and `==`-compare it in HCL.
 

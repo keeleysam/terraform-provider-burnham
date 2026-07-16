@@ -32,7 +32,7 @@ The emitted SignedData has `version: 1` and `SignerInfo.version: 1` per RFC 5652
 
 -> **Note:** This function intentionally emits the no-signed-attributes flavour. If you need the more typical CMS shape *with* signed attributes (and the resulting `signingTime` non-determinism), use a different library.
 
-**Byte handling, gotchas:** the inputs reach the function as the literal UTF-8 bytes of whatever string HCL hands it. HCL string literals only support `\uNNNN` Unicode escapes; there is no `\xNN` byte-escape syntax. A value spelled `"\u00ff"` arrives as the two UTF-8 bytes `0xc3 0xbf`, *not* the single byte `0xff`. An OpenSSL-style hex value like `"00ff"` is similarly interpreted as four ASCII characters, *not* two raw bytes. For arbitrary-byte inputs (RFC test vectors, hex-encoded keys, anything outside ASCII), encode upstream as base64 in your variable and pass `base64decode(var.x)` to this function. Burnham does not currently ship a `hex_decode` helper.
+**Byte handling, gotchas:** the inputs reach the function as the literal UTF-8 bytes of whatever string HCL hands it. HCL string literals only support `\uNNNN` Unicode escapes; there is no `\xNN` byte-escape syntax. A value spelled `"\u00ff"` arrives as the two UTF-8 bytes `0xc3 0xbf`, *not* the single byte `0xff`. An OpenSSL-style hex value like `"00ff"` is similarly interpreted as four ASCII characters, *not* two raw bytes. For arbitrary-byte inputs (RFC test vectors, hex-encoded keys, anything outside ASCII), decode upstream and pass the raw bytes in: `hexdecode(var.x)` for a hex value, or `base64decode(var.x)` for base64.
 
 ## Example Usage
 

@@ -13,4 +13,4 @@ Returns the address in canonical text form: dotted-quad for IPv4, [RFC 5952](htt
 
 -> **Note:** RFC §3.2 says deforming "is intentionally omitted. The machines will know how to do it, and by definition humans SHOULD NOT attempt the process." This is the machines knowing how to do it.
 
-~> **Note:** Fails the plan when the input isn't valid UTF-8, contains a surrogate codepoint, or has a total bit-payload that doesn't match either IPv4 or IPv6.
+~> **Note:** Fails the plan when the input isn't valid UTF-8, or has a total bit-payload that doesn't match either IPv4 or IPv6.

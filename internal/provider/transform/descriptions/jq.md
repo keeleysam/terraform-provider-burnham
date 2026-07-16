@@ -22,7 +22,7 @@ Execution is bounded so a runaway program fails instead of hanging or exhausting
 
 - A program that runs longer than 30 seconds is cancelled and returns an error, guarding against non-terminating programs (jq is Turing-complete).
 - A program that emits more than 1,000,000 values fails rather than accumulating an unbounded result.
-- A result nested deeper than 1024 levels returns `result exceeds maximum supported nesting depth`.
+- A result nested deeper than 1024 levels returns `result exceeds maximum supported nesting depth of 1024`.
 
 ~> **Note:** Most jq programs are pure functions of their input, but `now` and `localtime` read the wall clock (and host timezone). Any program deriving from them may produce different output on each plan or apply and will churn the plan, so use them only when you intend that.
 

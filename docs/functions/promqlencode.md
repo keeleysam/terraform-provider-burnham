@@ -36,7 +36,7 @@ The tree is modeled on the Prometheus AST, using the node types the experimental
 
 ### Operators
 
-- `binaryExpr` takes `op`, `lhs`, and `rhs`. `op` is an arithmetic, comparison, or set operator. Optional `bool` forces a boolean result, and `on`/`ignoring` with `group_left`/`group_right` control vector matching, for example `{ binaryExpr = { op = "/", lhs = ..., rhs = ..., bool = true, on = ["job"], group_left = ["instance"] } }`.
+- `binaryExpr` takes `op`, `lhs`, and `rhs`. `op` is one of the arithmetic operators (`+`, `-`, `*`, `/`, `%`, `^`, `atan2`), the comparison operators (`==`, `!=`, `<`, `<=`, `>`, `>=`), or the set operators (`and`, `or`, `unless`). Optional `bool` forces a boolean result, and `on`/`ignoring` with `group_left`/`group_right` control vector matching, for example `{ binaryExpr = { op = "/", lhs = ..., rhs = ..., bool = true, on = ["job"], group_left = ["instance"] } }`.
 - `paren` wraps a sub-expression in parentheses.
 - `neg` applies unary `-`, and `pos` applies unary `+`.
 

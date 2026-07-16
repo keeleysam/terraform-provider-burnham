@@ -13,6 +13,8 @@ Returns the number of usable host addresses in the CIDR. For IPv4, the network a
 
 **Common uses:** asserting a subnet is large enough for a given number of workloads without manually subtracting 2 everywhere; sizing auto-scaling groups or node pools based on the actual available IP space in the target subnet.
 
+~> **Note:** For very large IPv6 prefixes the result is capped at `MaxInt64`.
+
 ## Example Usage
 
 ```terraform

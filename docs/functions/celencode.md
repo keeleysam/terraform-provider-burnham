@@ -39,7 +39,7 @@ Write an operator as a single-key object mapping a CEL surface token or friendly
 
 ### Explicit literals and structs
 
-- `{ const = ["US", "CA"] }` forces a literal. This is recursive: lists, maps, and typed constants like `{ const = { double_value = 1 } }`.
+- `{ const = { a = 1, b = 2 } }` forces the map literal `{"a": 1, "b": 2}`; a bare object is read as a node, so `const` is what makes it a literal. This is recursive over lists, maps, and typed constants like `{ const = { double_value = 1 } }`.
 - `{ struct = { message_name = "T", fields = { f = 1 } } }` constructs a message.
 
 ~> **Note:** A single-key `const` map whose key is a CEL constant kind, e.g. `{ const = { int64_value = 5 } }`, is read as that typed scalar, not as a one-entry map. Spell such a map via `struct_expr` map entries or `raw`.

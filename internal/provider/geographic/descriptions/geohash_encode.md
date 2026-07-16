@@ -11,7 +11,7 @@ Returns the [geohash](https://en.wikipedia.org/wiki/Geohash) of the given `(lati
 
 `precision` must be in `[1, 12]`. `latitude` must be in `[-90, 90]` and `longitude` in `[-180, 180]`.
 
-~> **Note:** the upper bounds wrap under the standard encoder. A `latitude` at or within one ULP of `90`, and a `longitude` at or within one ULP of `180`, are rejected (they would wrap to the south pole / antimeridian). Pass a value at least two ULPs below, or use the equivalent `-90` / `-180` edge. The lower bounds `-90` and `-180` encode fine.
+~> **Note:** the upper bounds wrap under the standard encoder. A `latitude` at or within one ULP of `90`, and a `longitude` at or within one ULP of `180`, are rejected (they would wrap to the south pole / antimeridian). Pass a value at least two ULPs below the upper bound. For `longitude` you can instead use `-180`, which is the same meridian as `+180`; for `latitude` there is no equivalent edge, since `+90` and `-90` are opposite poles. The lower bounds `-90` and `-180` encode fine.
 
 ```
 geohash_encode(37.7749, -122.4194, 7)

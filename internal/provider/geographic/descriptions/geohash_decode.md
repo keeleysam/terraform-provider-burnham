@@ -5,4 +5,4 @@ Parses `code` and returns:
 
 `code` is case-insensitive but must use the standard geohash alphabet: digits `0-9` plus lowercase `b-z` with `i`, `l`, `o` removed. Errors on any other character.
 
-For the corner cell `zzz…z` the geometric upper edges are exactly `(90, 180)`, but the upstream encoder wraps those values; the decoder shrinks `lat_max` / `lon_max` for that cell to a value a few ULPs below the geometric edge (`90` / `180`) that the encoder still accepts, so round-tripping `lat_max` / `lon_max` back through `geohash_encode` lands on the same cell.
+Cells on the northern edge report a `lat_max` of exactly `90`, and cells on the eastern edge report a `lon_max` of exactly `180` (the corner cell `zzz…z` hits both). The upstream encoder wraps those values, so the decoder shrinks any such edge a few ULPs below the geometric edge (`90` / `180`) to a value the encoder still accepts, keeping `lat_max` / `lon_max` round-trippable back through `geohash_encode`.
