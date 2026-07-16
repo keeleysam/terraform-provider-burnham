@@ -59,7 +59,24 @@ func formatExpr(expr ast.Expr, si *ast.SourceInfo, opts ...FormatOption) (string
 	}
 
 	if !cfg.pretty {
-		return parser.Unparse(expr, si, cfg.unparserOpts()...)
+		/*
+		   Reparse the canonical seed before the final unparse so comprehension macros
+		   (map/exists/filter/optMap/…) are recognized. A directly-built encoder AST carries
+		   its macros as plain member calls, and cel-go's unparser conservatively parenthesizes
+		   any 2+ argument call under a unary operator, so it would emit -(l.map(x, c)) instead
+		   of -l.map(x, c). Reparsing first lets it emit precedence-minimal parentheses, which
+		   matches the pretty path below (that path already reparses) so the two canonical paths
+		   stay equivalent.
+		*/
+		seed, err := parser.Unparse(expr, si)
+		if err != nil {
+			return "", err
+		}
+		reAST, err := reparse(seed)
+		if err != nil {
+			return "", err
+		}
+		return parser.Unparse(reAST.Expr(), reAST.SourceInfo(), cfg.unparserOpts()...)
 	}
 
 	col := cfg.wrapCol
@@ -78,13 +95,9 @@ func formatExpr(expr ast.Expr, si *ast.SourceInfo, opts ...FormatOption) (string
 		return "", err
 	}
 
-	env, err := newParseEnv(true)
+	reAST, err := reparse(seed)
 	if err != nil {
 		return "", err
-	}
-	reAST, iss := env.Parse(seed)
-	if iss != nil && iss.Err() != nil {
-		return "", iss.Err()
 	}
 
 	fo := []celfmt.FormatOption{celfmt.Pretty()}
@@ -95,8 +108,24 @@ func formatExpr(expr ast.Expr, si *ast.SourceInfo, opts ...FormatOption) (string
 		fo = append(fo, celfmt.AlwaysComma())
 	}
 	var b bytes.Buffer
-	if err := celfmt.Format(&b, reAST.NativeRep(), common.NewTextSource(seed), fo...); err != nil {
+	if err := celfmt.Format(&b, reAST, common.NewTextSource(seed), fo...); err != nil {
 		return "", err
 	}
 	return b.String(), nil
+}
+
+// reparse parses a canonical CEL seed string under the lenient environment with macro-call
+// tracking enabled, returning the native AST. Both formatExpr paths use it so comprehension
+// macros are recognized (which is what yields precedence-minimal parentheses) before the
+// final unparse or celfmt pass.
+func reparse(seed string) (*ast.AST, error) {
+	env, err := newParseEnv(true)
+	if err != nil {
+		return nil, err
+	}
+	parsed, iss := env.Parse(seed)
+	if iss != nil && iss.Err() != nil {
+		return nil, iss.Err()
+	}
+	return parsed.NativeRep(), nil
 }
