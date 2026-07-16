@@ -886,13 +886,16 @@ func NPTv6Translate(ipv6Str, fromPrefixStr, toPrefixStr string) (string, error) 
 	oldOCS := ocsSum(fromRaw[:6])
 	newOCS := ocsSum(toRaw[:6])
 	delta := ocsAdd(newOCS, ^oldOCS)
-	iidWord := uint16(result[8])<<8 | uint16(result[9])
-	adjusted := ocsAdd(iidWord, ^delta)
+	// RFC 6296 sections 3.4/3.6: for a /48, the checksum-neutral adjustment is
+	// applied to the 16-bit subnet field at bits 48-63 (bytes 6-7), not to the
+	// interface identifier, which must stay stable across the translation.
+	subnetWord := uint16(result[6])<<8 | uint16(result[7])
+	adjusted := ocsAdd(subnetWord, ^delta)
 	if adjusted == 0xFFFF {
 		adjusted = 0x0000
 	}
-	result[8] = byte(adjusted >> 8)
-	result[9] = byte(adjusted)
+	result[6] = byte(adjusted >> 8)
+	result[7] = byte(adjusted)
 	return netip.AddrFrom16(result).String(), nil
 }
 

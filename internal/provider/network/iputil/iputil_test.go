@@ -474,6 +474,37 @@ func TestNPTv6Translate(t *testing.T) {
 	wantErr(t, err)
 }
 
+// ocsSum16 folds the 16-bit words of a 128-bit address into a ones-complement
+// sum. NPTv6 is checksum-neutral, so this sum is preserved across a translation.
+func ocsSum16(raw [16]byte) uint16 {
+	var acc uint32
+	for i := 0; i < 16; i += 2 {
+		acc += uint32(raw[i])<<8 | uint32(raw[i+1])
+	}
+	for acc > 0xFFFF {
+		acc = (acc >> 16) + (acc & 0xFFFF)
+	}
+	return uint16(acc)
+}
+
+// TestNPTv6TranslateRFCExample pins the exact translated address from RFC 6296
+// and confirms the adjustment lands in the subnet field (bits 48-63), leaving
+// the interface identifier untouched while keeping the address checksum-neutral.
+func TestNPTv6TranslateRFCExample(t *testing.T) {
+	got, err := NPTv6Translate("fd01:0203:0405:0001::1234", "fd01:0203:0405::/48", "2001:0db8:0001::/48")
+	fatalOnErr(t, err)
+	const want = "2001:db8:1:d550::1234"
+	if got != want {
+		t.Fatalf("got %q, want %q", got, want)
+	}
+
+	in, _ := ParseAddr("fd01:0203:0405:0001::1234")
+	out, _ := ParseAddr(got)
+	if s1, s2 := ocsSum16(in.As16()), ocsSum16(out.As16()); s1 != s2 {
+		t.Errorf("translation is not checksum-neutral: in sum %#04x, out sum %#04x", s1, s2)
+	}
+}
+
 // ---- Mixed notation ---------------------------------------------------------
 
 func TestIPToMixedNotation(t *testing.T) {
