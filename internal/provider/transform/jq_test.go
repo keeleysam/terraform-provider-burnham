@@ -1,9 +1,11 @@
 package transform
 
 import (
+	"context"
 	"encoding/json"
 	"reflect"
 	"testing"
+	"time"
 )
 
 // runJQ is the pure core of the jq function: it runs a program against a value
@@ -11,7 +13,7 @@ import (
 // stream as a slice, also in the JSON value space.
 
 func TestRunJQ_Identity(t *testing.T) {
-	got, err := runJQ(map[string]interface{}{"a": json.Number("1")}, ".", nil)
+	got, err := runJQ(context.Background(), map[string]interface{}{"a": json.Number("1")}, ".", nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -23,7 +25,7 @@ func TestRunJQ_Identity(t *testing.T) {
 
 func TestRunJQ_FieldExtract(t *testing.T) {
 	input := map[string]interface{}{"user": map[string]interface{}{"name": "alice"}}
-	got, err := runJQ(input, ".user.name", nil)
+	got, err := runJQ(context.Background(), input, ".user.name", nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -35,7 +37,7 @@ func TestRunJQ_FieldExtract(t *testing.T) {
 
 func TestRunJQ_StreamBecomesList(t *testing.T) {
 	input := []interface{}{json.Number("1"), json.Number("2"), json.Number("3")}
-	got, err := runJQ(input, ".[]", nil)
+	got, err := runJQ(context.Background(), input, ".[]", nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -47,7 +49,7 @@ func TestRunJQ_StreamBecomesList(t *testing.T) {
 
 func TestRunJQ_EmptyStream(t *testing.T) {
 	input := []interface{}{json.Number("1"), json.Number("2")}
-	got, err := runJQ(input, ".[] | select(. > 5)", nil)
+	got, err := runJQ(context.Background(), input, ".[] | select(. > 5)", nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -57,7 +59,7 @@ func TestRunJQ_EmptyStream(t *testing.T) {
 }
 
 func TestRunJQ_Arithmetic(t *testing.T) {
-	got, err := runJQ(json.Number("20"), ". + 22", nil)
+	got, err := runJQ(context.Background(), json.Number("20"), ". + 22", nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -69,7 +71,7 @@ func TestRunJQ_Arithmetic(t *testing.T) {
 
 func TestRunJQ_Vars(t *testing.T) {
 	vars := map[string]interface{}{"limit": json.Number("5")}
-	got, err := runJQ(json.Number("1"), ". + $limit", vars)
+	got, err := runJQ(context.Background(), json.Number("1"), ". + $limit", vars)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -82,7 +84,7 @@ func TestRunJQ_Vars(t *testing.T) {
 func TestRunJQ_BigIntegerPreserved(t *testing.T) {
 	// 2^60 + 1 is beyond float64 integer precision; it must round-trip exactly.
 	big := "1152921504606846977"
-	got, err := runJQ(json.Number(big), ".", nil)
+	got, err := runJQ(context.Background(), json.Number(big), ".", nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -93,7 +95,7 @@ func TestRunJQ_BigIntegerPreserved(t *testing.T) {
 }
 
 func TestRunJQ_InvalidProgram(t *testing.T) {
-	_, err := runJQ(nil, ".[", nil)
+	_, err := runJQ(context.Background(), nil, ".[", nil)
 	if err == nil {
 		t.Fatal("expected error for invalid program, got nil")
 	}
@@ -101,7 +103,7 @@ func TestRunJQ_InvalidProgram(t *testing.T) {
 
 func TestRunJQ_RuntimeError(t *testing.T) {
 	// Adding a string to a number is a runtime type error in jq.
-	_, err := runJQ(map[string]interface{}{"a": "x"}, ".a + 1", nil)
+	_, err := runJQ(context.Background(), map[string]interface{}{"a": "x"}, ".a + 1", nil)
 	if err == nil {
 		t.Fatal("expected runtime error, got nil")
 	}
@@ -110,7 +112,7 @@ func TestRunJQ_RuntimeError(t *testing.T) {
 func TestRunJQ_NowIsAllowed(t *testing.T) {
 	// now is permitted (nondeterministic — documented). Assert on its type so
 	// the test itself stays deterministic.
-	got, err := runJQ(nil, "now | type", nil)
+	got, err := runJQ(context.Background(), nil, "now | type", nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -125,16 +127,36 @@ func TestRunJQ_DeeplyNestedResultBounded(t *testing.T) {
 	// The output conversion path must bound its recursion (like the input path)
 	// and return an error rather than overflowing the goroutine stack. 2000 is
 	// modest but exceeds transformMaxDepth (1024), so the bound must trip.
-	_, err := runJQ(json.Number("0"), "reduce range(2000) as $i (0; [.])", nil)
+	_, err := runJQ(context.Background(), json.Number("0"), "reduce range(2000) as $i (0; [.])", nil)
 	if err == nil {
 		t.Fatal("expected error for result nested beyond the maximum depth, got nil")
+	}
+}
+
+func TestRunJQ_InfiniteProgramTimesOut(t *testing.T) {
+	// jq is Turing-complete, so a non-terminating program must be bounded by the request context rather than hanging the plan forever.
+	// A short deadline must produce an error promptly. The call runs in a goroutine with a watchdog so a regression (an unbounded run) fails the test instead of hanging it.
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+	done := make(chan error, 1)
+	go func() {
+		_, err := runJQ(ctx, nil, "def f: f; f", nil)
+		done <- err
+	}()
+	select {
+	case err := <-done:
+		if err == nil {
+			t.Fatal("expected error for non-terminating program, got nil")
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("runJQ hung on a non-terminating program")
 	}
 }
 
 func TestRunJQ_EnvDoesNotLeakHostEnv(t *testing.T) {
 	// env does not expose the host process environment; it is an empty object.
 	t.Setenv("BURNHAM_JQ_SECRET", "leaked")
-	got, err := runJQ(nil, "env.BURNHAM_JQ_SECRET", nil)
+	got, err := runJQ(context.Background(), nil, "env.BURNHAM_JQ_SECRET", nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

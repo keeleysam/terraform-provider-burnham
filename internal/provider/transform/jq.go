@@ -7,6 +7,7 @@ import (
 	"math/big"
 	"sort"
 	"strconv"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -14,6 +15,12 @@ import (
 	"github.com/itchyny/gojq"
 	"github.com/keeleysam/terraform-burnham/internal/provider/optionsutil"
 )
+
+// jqTimeout bounds a single jq program's execution. jq is Turing-complete (recursion, while, repeat), so a non-terminating program such as `def f: f; f` or `while(true; .)` would otherwise hang the plan indefinitely. 30s is far longer than any realistic query needs while still failing a runaway program in bounded time. gojq only honours context cancellation when the context is not context.Background(), so the deadline must come from a real (cancellable) context.
+const jqTimeout = 30 * time.Second
+
+// jqMaxOutputs caps the number of values a program may emit. A generator like `repeat(1)` produces an unbounded stream, and without a cap the result slice would exhaust memory before the timeout ever fired. 1,000,000 is far above any realistic query result.
+const jqMaxOutputs = 1_000_000
 
 var _ function.Function = (*JQFunction)(nil)
 
@@ -111,7 +118,7 @@ func (f *JQFunction) Run(ctx context.Context, req function.RunRequest, resp *fun
 		return
 	}
 
-	results, err := runJQ(input, program, vars)
+	results, err := runJQ(ctx, input, program, vars)
 	if err != nil {
 		resp.Error = function.NewArgumentFuncError(1, "jq error: "+err.Error())
 		return
@@ -130,11 +137,15 @@ func (f *JQFunction) Run(ctx context.Context, req function.RunRequest, resp *fun
 // input, vars, and the returned values are all in the JSON value space (numbers
 // as json.Number); normalization to and from gojq's native number types
 // (int / float64 / *big.Int) is confined to this function.
-func runJQ(input interface{}, program string, vars map[string]interface{}) ([]interface{}, error) {
+func runJQ(ctx context.Context, input interface{}, program string, vars map[string]interface{}) ([]interface{}, error) {
 	query, err := gojq.Parse(program)
 	if err != nil {
 		return nil, err
 	}
+
+	// Bound execution with the request context plus a hard timeout so a non-terminating program returns an error instead of hanging the plan. WithTimeout preserves any shorter deadline already on ctx, and the resulting context is never context.Background(), which is what makes gojq check for cancellation at all.
+	ctx, cancel := context.WithTimeout(ctx, jqTimeout)
+	defer cancel()
 
 	// Variable names must be sorted so the positional values handed to Run line
 	// up with the names handed to WithVariables.
@@ -156,7 +167,7 @@ func runJQ(input interface{}, program string, vars map[string]interface{}) ([]in
 	}
 
 	results := []interface{}{}
-	iter := code.RunWithContext(context.Background(), normalizeForGojq(input), varValues...)
+	iter := code.RunWithContext(ctx, normalizeForGojq(input), varValues...)
 	for {
 		v, ok := iter.Next()
 		if !ok {
@@ -170,6 +181,9 @@ func runJQ(input interface{}, program string, vars map[string]interface{}) ([]in
 			return nil, err
 		}
 		results = append(results, norm)
+		if len(results) > jqMaxOutputs {
+			return nil, fmt.Errorf("program produced more than %d values", jqMaxOutputs)
+		}
 	}
 	return results, nil
 }
