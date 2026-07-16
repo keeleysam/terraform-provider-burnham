@@ -11,12 +11,16 @@ package text
 import (
 	"context"
 	"fmt"
+	"unicode/utf8"
 
 	"github.com/hashicorp/terraform-plugin-framework/function"
 )
 
-// levenshteinMaxBytes caps the per-string input length. The DP runs in O(n·m) time and O(min(n, m)) space, so two megabyte-scale strings spend hours of CPU at plan time. 256 KiB is far above any realistic identifier or name (typical inputs are < 100 chars) but still bounds adversarial worst-case to a few seconds.
+// levenshteinMaxBytes caps each input's byte length. This bounds the rune conversion and DP allocations; it is a sanity guard on raw input size, not the latency bound. 256 KiB is far above any realistic identifier or name (typical inputs are < 100 chars).
 const levenshteinMaxBytes = 256 * 1024
+
+// levenshteinMaxProduct caps the number of DP cells, i.e. runes(a) * runes(b). The DP does O(n·m) work, so the product of the two rune counts (not either length alone) is what bounds latency. Two 256 KiB inputs would be ~6.9e10 cells and take ~110s; capping the product near 2e9 holds the adversarial worst case to a few seconds while still admitting any realistic pairing (identifiers, names, even paragraphs of prose sit orders of magnitude below it). Pairings past the cap return an argument error instead of blocking plan-time evaluation.
+const levenshteinMaxProduct = 2_000_000_000
 
 var _ function.Function = (*LevenshteinFunction)(nil)
 
@@ -31,7 +35,7 @@ func (f *LevenshteinFunction) Metadata(_ context.Context, _ function.MetadataReq
 func (f *LevenshteinFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Levenshtein edit distance between two strings",
-		MarkdownDescription: "Returns the [Levenshtein distance](https://en.wikipedia.org/wiki/Levenshtein_distance) between `a` and `b` — the minimum number of single-character insertions, deletions, or substitutions needed to turn one string into the other.\n\nDistance is computed over Unicode codepoints, not bytes — so `levenshtein(\"café\", \"cafe\")` is `1` regardless of byte length. If your inputs may be in different normalization forms (NFC vs NFD), run `unicode_normalize(s, \"NFC\")` first.\n\nClassic uses: \"did-you-mean\" suggestions in dynamic config selection (`closest_match` over a list), spotting typos in resource names, deduplicating near-identical entries.\n\nEach input is capped at 256 KiB; the underlying DP is O(n·m) so unbounded inputs would block plan-time evaluation for hours. Realistic inputs (identifiers, resource names, even paragraphs of prose) sit comfortably below the cap.",
+		MarkdownDescription: "Returns the [Levenshtein distance](https://en.wikipedia.org/wiki/Levenshtein_distance) between `a` and `b` — the minimum number of single-character insertions, deletions, or substitutions needed to turn one string into the other.\n\nDistance is computed over Unicode codepoints, not bytes — so `levenshtein(\"café\", \"cafe\")` is `1` regardless of byte length. If your inputs may be in different normalization forms (NFC vs NFD), run `unicode_normalize(s, \"NFC\")` first.\n\nClassic uses: \"did-you-mean\" suggestions in dynamic config selection (`closest_match` over a list), spotting typos in resource names, deduplicating near-identical entries.\n\nThe underlying DP is O(n·m), so latency is bounded by the product of the two rune counts, not either length alone. Each input is capped at 256 KiB, and the number of matrix cells (`runes(a) × runes(b)`) is capped so the worst case stays within a few seconds; a pairing that would exceed the cap returns an error instead of blocking plan-time evaluation. Realistic inputs (identifiers, resource names, even paragraphs of prose) sit comfortably below the cap.",
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "a", Description: "First string."},
 			function.StringParameter{Name: "b", Description: "Second string."},
@@ -52,6 +56,11 @@ func (f *LevenshteinFunction) Run(ctx context.Context, req function.RunRequest, 
 	}
 	if len(b) > levenshteinMaxBytes {
 		resp.Error = function.NewArgumentFuncError(1, fmt.Sprintf("b exceeds maximum supported length of %d bytes", levenshteinMaxBytes))
+		return
+	}
+	// The DP is O(runes(a)·runes(b)), so bound the product, not the individual lengths: a short string paired with a long one is cheap, but two large strings are not. Rejecting here keeps the worst case to a few seconds.
+	if int64(utf8.RuneCountInString(a))*int64(utf8.RuneCountInString(b)) > levenshteinMaxProduct {
+		resp.Error = function.NewFuncError(fmt.Sprintf("inputs too large: the edit-distance matrix would exceed %d cells; reduce the length of one or both arguments", levenshteinMaxProduct))
 		return
 	}
 	d := int64(levenshteinDistance(a, b))

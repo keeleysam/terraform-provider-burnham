@@ -15,7 +15,7 @@ Distance is computed over Unicode codepoints, not bytes — so `levenshtein("caf
 
 Classic uses: "did-you-mean" suggestions in dynamic config selection (`closest_match` over a list), spotting typos in resource names, deduplicating near-identical entries.
 
-Each input is capped at 256 KiB; the underlying DP is O(n·m) so unbounded inputs would block plan-time evaluation for hours. Realistic inputs (identifiers, resource names, even paragraphs of prose) sit comfortably below the cap.
+The underlying DP is O(n·m), so latency is bounded by the product of the two rune counts, not either length alone. Each input is capped at 256 KiB, and the number of matrix cells (`runes(a) × runes(b)`) is capped so the worst case stays within a few seconds; a pairing that would exceed the cap returns an error instead of blocking plan-time evaluation. Realistic inputs (identifiers, resource names, even paragraphs of prose) sit comfortably below the cap.
 
 ## Example Usage
 
