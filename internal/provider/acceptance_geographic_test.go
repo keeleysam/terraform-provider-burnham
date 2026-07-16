@@ -57,14 +57,14 @@ func TestAcc_GeohashEncode_RejectsCornerLatitude90(t *testing.T) {
 	// Upstream wraps lat==90 to lat==-90; we reject so callers don't silently get the opposite quadrant.
 	runErrorTest(t,
 		`output "test" { value = provider::burnham::geohash_encode(90, 0, 5) }`,
-		regexp.MustCompile(`(?is)latitude\s+==\s+90\s+wraps`),
+		regexp.MustCompile(`(?is)latitude.*\b90\b.*wraps`),
 	)
 }
 
 func TestAcc_GeohashEncode_RejectsCornerLongitude180(t *testing.T) {
 	runErrorTest(t,
 		`output "test" { value = provider::burnham::geohash_encode(0, 180, 5) }`,
-		regexp.MustCompile(`(?is)longitude\s+==\s+180\s+wraps`),
+		regexp.MustCompile(`(?is)longitude.*\b180\b.*wraps`),
 	)
 }
 
