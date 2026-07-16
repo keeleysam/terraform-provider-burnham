@@ -18,7 +18,7 @@ Default alphabet is the 64-character URL-safe set `_-0-9A-Za-z` (matching the up
 
 ```
 nanoid("prod/api-gateway")
-→ "3WiSbLYRP4_xQAYVk2DcN"   (deterministic)
+→ "TUgaDb-aFSbMx3UFK6Spd"   (deterministic)
 
 nanoid("prod/api-gateway", { size = 10 })
 nanoid("prod/api-gateway", { alphabet = "0123456789", size = 6 })
