@@ -106,11 +106,12 @@ func (f *X509SelfSignFunction) Run(ctx context.Context, req function.RunRequest,
 //
 // The cert is intended for the on-the-wire signing primitive (mobileconfig signing, CMS signers) rather than a PKI deployment, and the macOS profile installer doesn't require either extension. Callers needing strict PKI deployment should produce the cert outside this function and pass it into `pkcs7_sign` directly.
 func selfSign(signer crypto.Signer, commonName string, serialBytes []byte, notBefore, notAfter time.Time) ([]byte, error) {
-	serial := new(big.Int).SetBytes(serialBytes)
-	// Clear the high bit of the leading byte so the DER-encoded INTEGER stays the same length as the input bytes — without this, `crypto/x509` would prepend a 0x00 padding byte (DER's positivity-preservation rule) and the encoded length grows by one. The cert is still valid either way; this just keeps the serial length predictable.
-	if serial.Sign() > 0 {
-		serial.SetBit(serial, serial.BitLen()-1, 0)
+	// Clear bit 7 of the leading (most-significant) byte so the DER-encoded INTEGER stays the same length as the input bytes: without this, `crypto/x509` would prepend a 0x00 padding byte (DER's positivity-preservation rule) and the encoded length grows by one. We mask the leading byte itself, not the top *set* bit of the whole integer (`BitLen()-1`), because the latter clears a data-carrying bit whose position varies with the input, mangling the lower bytes and colliding distinct serials (e.g. 0x0102… and 0x0202… would both fold to 0x0002…). Masking the fixed leading byte preserves every lower byte and keeps distinct inputs distinct. The cert is still valid either way; this just keeps the serial length predictable.
+	masked := append([]byte(nil), serialBytes...)
+	if len(masked) > 0 {
+		masked[0] &^= 0x80
 	}
+	serial := new(big.Int).SetBytes(masked)
 	if serial.Sign() == 0 {
 		serial.SetInt64(1)
 	}

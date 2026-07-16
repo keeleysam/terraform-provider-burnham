@@ -228,6 +228,43 @@ func TestX509SelfSignRejectsOversizedSerial(t *testing.T) {
 	}
 }
 
+// TestX509SelfSignSerialPreservesLowerBytes guards against clearing the wrong bit when forcing a positive DER serial.
+// The only bit we may touch is bit 7 of the leading (most-significant) byte; every lower bit must survive unchanged, and two serials that differ only in the leading byte must not collide.
+func TestX509SelfSignSerialPreservesLowerBytes(t *testing.T) {
+	key, err := ecdsaP256KeyFromSeed([]byte("serial preservation"))
+	if err != nil {
+		t.Fatalf("derive: %v", err)
+	}
+	notBefore := time.Date(2001, 1, 1, 0, 0, 0, 0, time.UTC)
+	notAfter := time.Date(2099, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	serialOfCert := func(src []byte) *big.Int {
+		der, err := selfSign(&detECDSASigner{priv: key}, "serial.test", src, notBefore, notAfter)
+		if err != nil {
+			t.Fatalf("sign %#x: %v", src, err)
+		}
+		cert, err := x509.ParseCertificate(der)
+		if err != nil {
+			t.Fatalf("parse %#x: %v", src, err)
+		}
+		return cert.SerialNumber
+	}
+
+	// A leading byte already below 0x80 must pass through byte-for-byte: no lower bits may be cleared.
+	src := []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08}
+	want := new(big.Int).SetBytes(src)
+	if got := serialOfCert(src); got.Cmp(want) != 0 {
+		t.Fatalf("serial mangled: want %#x, got %#x", want, got)
+	}
+
+	// Two inputs differing only in the leading byte must yield distinct serials, never collide onto a shared value.
+	a := serialOfCert([]byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08})
+	b := serialOfCert([]byte{0x02, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08})
+	if a.Cmp(b) == 0 {
+		t.Fatalf("distinct serial inputs collided onto %#x", a)
+	}
+}
+
 // TestPKCS7SignEndToEnd is the integration test that matches the original Python script's wire format goal: derive a key from a seed, self-sign a cert, CMS-sign a payload with no signed attributes, then confirm
 //  1. the output parses as CMS,
 //  2. the embedded content equals the input bytes,
