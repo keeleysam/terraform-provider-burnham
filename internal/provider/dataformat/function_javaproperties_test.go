@@ -2,7 +2,11 @@ package dataformat
 
 import (
 	"context"
+	"strconv"
+	"strings"
 	"testing"
+	"unicode/utf16"
+	"unicode/utf8"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/function"
@@ -96,6 +100,52 @@ func TestEscapeJavaPropertiesValue_NonASCII(t *testing.T) {
 	if got != want {
 		t.Errorf("want %q, got %q", want, got)
 	}
+}
+
+func TestJavaProperties_AstralRoundTrip(t *testing.T) {
+	// Astral (non-BMP) runes must be emitted as a UTF-16 surrogate pair of \uXXXX escapes, since each \uXXXX escape is exactly 4 hex digits. The emoji below is U+1F600, which must not be emitted as a single invalid 5-hex-digit escape.
+	const emoji = "\U0001F600"
+	cases := map[string]struct{ in, want string }{
+		"value": {"a" + emoji + "b", "a\\uD83D\\uDE00b"},
+		"key":   {"k" + emoji + "y", "k\\uD83D\\uDE00y"},
+	}
+	escape := map[string]func(string) string{
+		"value": escapeJavaPropertiesValue,
+		"key":   escapeJavaPropertiesKey,
+	}
+	for name, tc := range cases {
+		got := escape[name](tc.in)
+		if got != tc.want {
+			t.Errorf("%s escape: want %q, got %q", name, tc.want, got)
+		}
+		if strings.Contains(got, "1F600") {
+			t.Errorf("%s escape emitted invalid 5-hex \\u1F600 sequence: %q", name, got)
+		}
+		// A conformant reader unescapes each \uXXXX into a UTF-16 code unit, then decodes the pair back to the original rune.
+		if rt := javaUnescapeForTest(got); rt != tc.in {
+			t.Errorf("%s did not round-trip through a conformant reader: want %q, got %q", name, tc.in, rt)
+		}
+	}
+}
+
+// javaUnescapeForTest models a conformant .properties reader: it turns each \uXXXX escape into a UTF-16 code unit and passes literal bytes through, then decodes the resulting UTF-16 sequence (recombining surrogate pairs) into a Go string.
+func javaUnescapeForTest(s string) string {
+	var units []uint16
+	for i := 0; i < len(s); {
+		if i+5 < len(s) && s[i] == '\\' && s[i+1] == 'u' {
+			v, err := strconv.ParseUint(s[i+2:i+6], 16, 16)
+			if err != nil {
+				panic(err)
+			}
+			units = append(units, uint16(v))
+			i += 6
+			continue
+		}
+		r, size := utf8.DecodeRuneInString(s[i:])
+		units = append(units, utf16.Encode([]rune{r})...)
+		i += size
+	}
+	return string(utf16.Decode(units))
 }
 
 func TestEscapeJavaPropertiesValue_LeadingSpace(t *testing.T) {

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"unicode/utf16"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/function"
@@ -178,7 +179,7 @@ func escapeJavaPropertiesKey(s string) string {
 			b.WriteString(`\r`)
 		default:
 			if r > 0x7E || (r < 0x20 && r != '\t') {
-				fmt.Fprintf(&b, "\\u%04X", r)
+				writeJavaUnicodeEscape(&b, r)
 			} else {
 				b.WriteRune(r)
 			}
@@ -186,6 +187,16 @@ func escapeJavaPropertiesKey(s string) string {
 		_ = i
 	}
 	return b.String()
+}
+
+// writeJavaUnicodeEscape writes r as one or more `\uXXXX` escapes. Each escape is exactly 4 hex digits, so an astral (non-BMP) rune above U+FFFF is emitted as a UTF-16 surrogate pair of two escapes, matching how java.util.Properties reads them back.
+func writeJavaUnicodeEscape(b *strings.Builder, r rune) {
+	if r > 0xFFFF {
+		hi, lo := utf16.EncodeRune(r)
+		fmt.Fprintf(b, "\\u%04X\\u%04X", hi, lo)
+		return
+	}
+	fmt.Fprintf(b, "\\u%04X", r)
 }
 
 func escapeJavaPropertiesValue(s string) string {
@@ -211,7 +222,7 @@ func escapeJavaPropertiesValue(s string) string {
 			b.WriteString(`\r`)
 		default:
 			if r > 0x7E || (r < 0x20 && r != '\t') {
-				fmt.Fprintf(&b, "\\u%04X", r)
+				writeJavaUnicodeEscape(&b, r)
 			} else {
 				b.WriteRune(r)
 			}
