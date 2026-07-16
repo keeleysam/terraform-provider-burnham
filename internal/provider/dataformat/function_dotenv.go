@@ -81,7 +81,7 @@ func (f *DotenvEncodeFunction) Metadata(_ context.Context, _ function.MetadataRe
 func (f *DotenvEncodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Encode a string-keyed object as a dotenv (.env) file body",
-		MarkdownDescription: "Encodes a flat string-keyed object as `KEY=value` lines in alphabetical key order. Numeric and boolean values are stringified. Values containing whitespace, quotes, `$`, `\\`, or newline characters are wrapped in double quotes with `\\n`/`\\r`/`\\t`/`\\\"`/`\\\\` escapes — readable round-trip with `dotenvdecode`. Nested objects and lists are not allowed.\n\n**Common uses:** generating `.env` files for `local_file`, container build contexts, or 12-factor service deployments.",
+		MarkdownDescription: "Encodes a flat string-keyed object as `KEY=value` lines in alphabetical key order. Numeric and boolean values are stringified. Values containing whitespace, quotes, `$`, `\\`, or newline characters are wrapped in double quotes: newlines and carriage returns become `\\n`/`\\r`, quotes and backslashes become `\\\"`/`\\\\`, `$` becomes `\\$` (so `dotenvdecode` does not interpolate `${VAR}`/`$VAR`), and tabs are written literally, so the value round-trips through `dotenvdecode`. Nested objects and lists are not allowed.\n\n**Common uses:** generating `.env` files for `local_file`, container build contexts, or 12-factor service deployments.",
 		Parameters: []function.Parameter{
 			function.DynamicParameter{
 				Name:        "value",
@@ -236,12 +236,19 @@ func quoteDotenvValue(s string) string {
 			b.WriteString(`\\`)
 		case '"':
 			b.WriteString(`\"`)
+		case '$':
+			// godotenv interpolates ${VAR}/$VAR in double-quoted values at decode
+			// time; a leading backslash (\$) is stripped back to a literal $, so
+			// escaping here is what keeps values with $ round-tripping.
+			b.WriteString(`\$`)
 		case '\n':
 			b.WriteString(`\n`)
 		case '\r':
 			b.WriteString(`\r`)
 		case '\t':
-			b.WriteString(`\t`)
+			// godotenv only reverses \n and \r on decode; an emitted \t decodes to
+			// a literal "t", so write a real tab byte, which round-trips verbatim.
+			b.WriteByte('\t')
 		default:
 			b.WriteRune(r)
 		}

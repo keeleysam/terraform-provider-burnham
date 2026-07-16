@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/joho/godotenv"
 )
 
 func runDotenvEncode(t *testing.T, value attr.Value) (string, *function.FuncError) {
@@ -57,7 +58,7 @@ func TestQuoteDotenvValue(t *testing.T) {
 		{"a\"b", `"a\"b"`},
 		{"a\\b", `"a\\b"`},
 		{"a\nb", `"a\nb"`},
-		{"with$dollar", `"with$dollar"`},
+		{"with$dollar", `"with\$dollar"`},
 		{"with#hash", `"with#hash"`},
 		{"", ""},
 	}
@@ -65,6 +66,36 @@ func TestQuoteDotenvValue(t *testing.T) {
 		got := quoteDotenvValue(tc.in)
 		if got != tc.want {
 			t.Errorf("input %q: want %q, got %q", tc.in, tc.want, got)
+		}
+	}
+}
+
+// TestDotenvRoundTrip guards against values being corrupted by godotenv's
+// double-quoted decoding: ${VAR}/$VAR interpolation and its escape handling
+// (which only reverses \n and \r, turning an emitted \t into a literal "t").
+func TestDotenvRoundTrip(t *testing.T) {
+	cases := []string{
+		"a${HOME}b",
+		"price=$5",
+		"$word",
+		"plain$",
+		"a\tb",
+		"a\\$b",
+		"a\nb",
+		"a\"b",
+		"a\\b",
+	}
+	for _, in := range cases {
+		rendered, err := renderDotenv(map[string]string{"KEY": in})
+		if err != nil {
+			t.Fatalf("render %q: %v", in, err)
+		}
+		parsed, err := godotenv.Unmarshal(rendered)
+		if err != nil {
+			t.Fatalf("unmarshal %q (rendered %q): %v", in, rendered, err)
+		}
+		if got := parsed["KEY"]; got != in {
+			t.Errorf("round-trip %q: got %q (rendered %q)", in, got, rendered)
 		}
 	}
 }

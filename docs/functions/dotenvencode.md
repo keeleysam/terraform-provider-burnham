@@ -9,7 +9,7 @@ description: |-
 
 # function: dotenvencode
 
-Encodes a flat string-keyed object as `KEY=value` lines in alphabetical key order. Numeric and boolean values are stringified. Values containing whitespace, quotes, `$`, `\`, or newline characters are wrapped in double quotes with `\n`/`\r`/`\t`/`\"`/`\\` escapes — readable round-trip with `dotenvdecode`. Nested objects and lists are not allowed.
+Encodes a flat string-keyed object as `KEY=value` lines in alphabetical key order. Numeric and boolean values are stringified. Values containing whitespace, quotes, `$`, `\`, or newline characters are wrapped in double quotes: newlines and carriage returns become `\n`/`\r`, quotes and backslashes become `\"`/`\\`, `$` becomes `\$` (so `dotenvdecode` does not interpolate `${VAR}`/`$VAR`), and tabs are written literally, so the value round-trips through `dotenvdecode`. Nested objects and lists are not allowed.
 
 **Common uses:** generating `.env` files for `local_file`, container build contexts, or 12-factor service deployments.
 
