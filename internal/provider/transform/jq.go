@@ -165,7 +165,11 @@ func runJQ(input interface{}, program string, vars map[string]interface{}) ([]in
 		if e, ok := v.(error); ok {
 			return nil, e
 		}
-		results = append(results, normalizeFromGojq(v))
+		norm, err := normalizeFromGojq(v)
+		if err != nil {
+			return nil, err
+		}
+		results = append(results, norm)
 	}
 	return results, nil
 }
@@ -204,30 +208,47 @@ func normalizeForGojq(v interface{}) interface{} {
 // normalizeFromGojq converts gojq output back into the JSON value space, mapping
 // every number flavour gojq emits (int / float64 / *big.Int) to json.Number so
 // the whole transform package stays consistently in the json.Number space that
-// jsonToTerraform consumes.
-func normalizeFromGojq(v interface{}) interface{} {
+// jsonToTerraform consumes. A jq program can build a result nested arbitrarily
+// deep (e.g. reduce over a huge range), so recursion is bounded by
+// transformMaxDepth to return an error rather than overflow the goroutine stack.
+func normalizeFromGojq(v interface{}) (interface{}, error) {
+	return normalizeFromGojqImpl(v, 0)
+}
+
+func normalizeFromGojqImpl(v interface{}, depth int) (interface{}, error) {
+	if depth >= transformMaxDepth {
+		return nil, fmt.Errorf("result exceeds maximum supported nesting depth of %d", transformMaxDepth)
+	}
 	switch val := v.(type) {
 	case int:
-		return json.Number(strconv.Itoa(val))
+		return json.Number(strconv.Itoa(val)), nil
 	case int64:
-		return json.Number(strconv.FormatInt(val, 10))
+		return json.Number(strconv.FormatInt(val, 10)), nil
 	case *big.Int:
-		return json.Number(val.String())
+		return json.Number(val.String()), nil
 	case float64:
-		return json.Number(strconv.FormatFloat(val, 'f', -1, 64))
+		return json.Number(strconv.FormatFloat(val, 'f', -1, 64)), nil
 	case []interface{}:
 		out := make([]interface{}, len(val))
 		for i, e := range val {
-			out[i] = normalizeFromGojq(e)
+			conv, err := normalizeFromGojqImpl(e, depth+1)
+			if err != nil {
+				return nil, err
+			}
+			out[i] = conv
 		}
-		return out
+		return out, nil
 	case map[string]interface{}:
 		out := make(map[string]interface{}, len(val))
 		for k, e := range val {
-			out[k] = normalizeFromGojq(e)
+			conv, err := normalizeFromGojqImpl(e, depth+1)
+			if err != nil {
+				return nil, err
+			}
+			out[k] = conv
 		}
-		return out
+		return out, nil
 	default:
-		return v
+		return v, nil
 	}
 }

@@ -120,6 +120,17 @@ func TestRunJQ_NowIsAllowed(t *testing.T) {
 	}
 }
 
+func TestRunJQ_DeeplyNestedResultBounded(t *testing.T) {
+	// A jq program can build a result nested far deeper than any real config.
+	// The output conversion path must bound its recursion (like the input path)
+	// and return an error rather than overflowing the goroutine stack. 2000 is
+	// modest but exceeds transformMaxDepth (1024), so the bound must trip.
+	_, err := runJQ(json.Number("0"), "reduce range(2000) as $i (0; [.])", nil)
+	if err == nil {
+		t.Fatal("expected error for result nested beyond the maximum depth, got nil")
+	}
+}
+
 func TestRunJQ_EnvDoesNotLeakHostEnv(t *testing.T) {
 	// env does not expose the host process environment; it is an empty object.
 	t.Setenv("BURNHAM_JQ_SECRET", "leaked")

@@ -178,8 +178,15 @@ func terraformToJSONImpl(v attr.Value, depth int, nodes *int) (interface{}, erro
 	}
 }
 
-// jsonToTerraform converts a Go value drawn from the JSON value space back to a Terraform attr.Value. It accepts the canonical encoding/json output (json.Number, []interface{}, map[string]interface{}) plus the standard numeric Go types so callers don't have to pre-normalize.
+// jsonToTerraform converts a Go value drawn from the JSON value space back to a Terraform attr.Value. It accepts the canonical encoding/json output (json.Number, []interface{}, map[string]interface{}) plus the standard numeric Go types so callers don't have to pre-normalize. Recursion is bounded by transformMaxDepth (mirroring terraformToJSON) because query/patch/jq engines can synthesize a result nested far deeper than any input, which would otherwise overflow the goroutine stack.
 func jsonToTerraform(v interface{}) (attr.Value, error) {
+	return jsonToTerraformImpl(v, 0)
+}
+
+func jsonToTerraformImpl(v interface{}, depth int) (attr.Value, error) {
+	if depth >= transformMaxDepth {
+		return nil, fmt.Errorf("result exceeds maximum supported nesting depth of %d", transformMaxDepth)
+	}
 	switch val := v.(type) {
 	case nil:
 		return types.DynamicNull(), nil
@@ -228,24 +235,24 @@ func jsonToTerraform(v interface{}) (attr.Value, error) {
 		return types.NumberValue(new(big.Float).SetUint64(val)), nil
 
 	case []interface{}:
-		return jsonSliceToTuple(val)
+		return jsonSliceToTuple(val, depth)
 
 	case map[string]interface{}:
-		return jsonMapToObject(val)
+		return jsonMapToObject(val, depth)
 
 	default:
 		return nil, fmt.Errorf("unsupported Go type %T", v)
 	}
 }
 
-func jsonSliceToTuple(slice []interface{}) (attr.Value, error) {
+func jsonSliceToTuple(slice []interface{}, depth int) (attr.Value, error) {
 	if len(slice) == 0 {
 		return types.TupleValueMust([]attr.Type{}, []attr.Value{}), nil
 	}
 	elemTypes := make([]attr.Type, len(slice))
 	elemValues := make([]attr.Value, len(slice))
 	for i, item := range slice {
-		v, err := jsonToTerraform(item)
+		v, err := jsonToTerraformImpl(item, depth+1)
 		if err != nil {
 			return nil, fmt.Errorf("index %d: %w", i, err)
 		}
@@ -255,7 +262,7 @@ func jsonSliceToTuple(slice []interface{}) (attr.Value, error) {
 	return types.TupleValueMust(elemTypes, elemValues), nil
 }
 
-func jsonMapToObject(m map[string]interface{}) (attr.Value, error) {
+func jsonMapToObject(m map[string]interface{}, depth int) (attr.Value, error) {
 	if len(m) == 0 {
 		return types.ObjectValueMust(map[string]attr.Type{}, map[string]attr.Value{}), nil
 	}
@@ -267,7 +274,7 @@ func jsonMapToObject(m map[string]interface{}) (attr.Value, error) {
 	}
 	sort.Strings(keys)
 	for _, k := range keys {
-		v, err := jsonToTerraform(m[k])
+		v, err := jsonToTerraformImpl(m[k], depth+1)
 		if err != nil {
 			return nil, fmt.Errorf("key %q: %w", k, err)
 		}
