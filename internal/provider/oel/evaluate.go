@@ -25,6 +25,9 @@ type EvalContext struct {
 // projection, indexing, Elvis, and matches) parse but are not evaluated and
 // return an error.
 func Evaluate(expr string, ctx EvalContext) (any, error) {
+	if err := checkNestingDepth(expr); err != nil {
+		return nil, err
+	}
 	p := okta.New(
 		okta.WithUserProfile(ctx.UserProfile),
 		okta.WithGroupIDs(ctx.GroupIDs),

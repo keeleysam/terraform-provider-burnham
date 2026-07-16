@@ -11,6 +11,9 @@ import (
 // that oelencode consumes, so oelencode(oeldecode(x)) round-trips to the
 // canonical form of x.
 func Decode(s string) (any, error) {
+	if err := checkNestingDepth(s); err != nil {
+		return nil, err
+	}
 	n, err := okta.New().Parse(s)
 	if err != nil {
 		return nil, err

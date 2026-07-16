@@ -16,7 +16,38 @@ const (
 	oelMaxNodes = 1_000_000
 	// oelMaxInputBytes caps the length of an OEL string argument to the string-input functions.
 	oelMaxInputBytes = 16 << 20 // 16 MiB
+	// oelMaxParseDepth bounds how deeply grouping tokens may nest in a raw OEL string before it reaches the recursive-descent parser, which recurses once per nesting level and overflows the goroutine stack (crashing the process) on pathological input well under the byte cap. Real expressions nest a few dozen levels; past this cap the string functions return a normal parse error so oelvalidate returns false rather than aborting the plan.
+	oelMaxParseDepth = 2000
 )
+
+// checkNestingDepth returns an error when the grouping tokens in s nest deeper than oelMaxParseDepth. It runs before the parser so adversarial nesting yields an ordinary error instead of a stack-overflow crash. Brackets inside string literals (single- or double-quoted, with backslash escapes) do not count, matching the lexer.
+func checkNestingDepth(s string) error {
+	depth := 0
+	for i := 0; i < len(s); i++ {
+		switch c := s[i]; c {
+		case '"', '\'':
+			// Skip the string literal, honoring backslash escapes, so its contents never count toward nesting depth.
+			quote := c
+			i++
+			for i < len(s) && s[i] != quote {
+				if s[i] == '\\' {
+					i++
+				}
+				i++
+			}
+		case '(', '[', '{':
+			depth++
+			if depth > oelMaxParseDepth {
+				return fmt.Errorf("expression nesting exceeds maximum supported depth of %d", oelMaxParseDepth)
+			}
+		case ')', ']', '}':
+			if depth > 0 {
+				depth--
+			}
+		}
+	}
+	return nil
+}
 
 // errUnknownValue signals that a value in the input tree is unknown at plan time. A plan-time function returns an unknown result in that case rather than failing, so the value can resolve at apply.
 var errUnknownValue = errors.New("value is unknown")

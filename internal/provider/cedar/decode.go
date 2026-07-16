@@ -17,6 +17,9 @@ import (
 // and is rejected here (use Format/IsValid/Evaluate for those). Templates
 // (?principal/?resource) are not static policies and fail to parse.
 func Decode(policy string) (any, error) {
+	if err := checkNestingDepth(policy); err != nil {
+		return nil, err
+	}
 	ps, err := cedar.NewPolicySetFromBytes("policy.cedar", []byte(policy))
 	if err != nil {
 		return nil, err

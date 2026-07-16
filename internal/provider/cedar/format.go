@@ -10,6 +10,9 @@ import (
 
 // IsValid reports whether policies is a syntactically valid Cedar policy document. An empty document (no statements) is valid.
 func IsValid(policies string) bool {
+	if err := checkNestingDepth(policies); err != nil {
+		return false
+	}
 	_, err := cedar.NewPolicySetFromBytes("policy.cedar", []byte(policies))
 	return err == nil
 }
@@ -18,6 +21,9 @@ func IsValid(policies string) bool {
 //
 // Comments are dropped and formatting is normalized (each policy is re-rendered from the parsed AST). Annotations (@id(...)) are preserved. Each policy is marshaled individually so the output is order-preserving and idempotent (unlike marshaling the whole set, which sorts by policy ID).
 func Format(policies string) (string, error) {
+	if err := checkNestingDepth(policies); err != nil {
+		return "", err
+	}
 	ps, err := cedar.NewPolicySetFromBytes("policy.cedar", []byte(policies))
 	if err != nil {
 		return "", err

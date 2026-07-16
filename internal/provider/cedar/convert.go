@@ -16,7 +16,44 @@ const (
 	cedarMaxNodes = 1_000_000
 	// cedarMaxInputBytes caps the length of a Cedar policy string argument to the string-input functions.
 	cedarMaxInputBytes = 16 << 20 // 16 MiB
+	// cedarMaxParseDepth bounds how deeply grouping tokens may nest in a raw Cedar policy before it reaches the recursive-descent parser, which recurses once per nesting level and overflows the goroutine stack (crashing the process) on pathological input well under the byte cap. Real policies nest a few dozen levels; past this cap the string functions return a normal parse error so cedarvalidate returns false rather than aborting the plan.
+	cedarMaxParseDepth = 2000
 )
+
+// checkNestingDepth returns an error when the grouping tokens in s nest deeper than cedarMaxParseDepth. It runs before the parser so adversarial nesting yields an ordinary error instead of a stack-overflow crash. Brackets inside double-quoted string literals (with backslash escapes) and // line comments do not count, matching the lexer.
+func checkNestingDepth(s string) error {
+	depth := 0
+	for i := 0; i < len(s); i++ {
+		switch c := s[i]; c {
+		case '"':
+			// Skip the string literal, honoring backslash escapes, so its contents never count toward nesting depth.
+			i++
+			for i < len(s) && s[i] != '"' {
+				if s[i] == '\\' {
+					i++
+				}
+				i++
+			}
+		case '/':
+			// Skip a // line comment to end of line so bracket-like characters in comments never count.
+			if i+1 < len(s) && s[i+1] == '/' {
+				for i < len(s) && s[i] != '\n' {
+					i++
+				}
+			}
+		case '(', '[', '{':
+			depth++
+			if depth > cedarMaxParseDepth {
+				return fmt.Errorf("policy nesting exceeds maximum supported depth of %d", cedarMaxParseDepth)
+			}
+		case ')', ']', '}':
+			if depth > 0 {
+				depth--
+			}
+		}
+	}
+	return nil
+}
 
 // errUnknownValue signals that a value in the input tree is unknown at plan time. A plan-time function returns an unknown result in that case rather than failing, so the value can resolve at apply.
 var errUnknownValue = errors.New("value is unknown")

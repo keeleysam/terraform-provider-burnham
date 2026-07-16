@@ -32,6 +32,9 @@ type Decision struct {
 
 // Evaluate authorizes req against the given Cedar policy document and returns the decision. Because it uses cedar-go, the official implementation, the decision matches the engine Amazon Verified Permissions runs.
 func Evaluate(policies string, req Request) (Decision, error) {
+	if err := checkNestingDepth(policies); err != nil {
+		return Decision{}, err
+	}
 	ps, err := cedar.NewPolicySetFromBytes("policy.cedar", []byte(policies))
 	if err != nil {
 		return Decision{}, err
