@@ -13,10 +13,11 @@ Decodes a PEM-encoded X.509 certificate into a structured object you can assert 
 
 Parses the first `CERTIFICATE` block in `pem` and returns a fixed-shape object:
 
-- `subject`, `issuer`: RFC 4514 distinguished-name strings
+- `subject`, `issuer`: RFC 2253/4514-style distinguished-name strings
 - `serial_number`: decimal
 - `not_before`, `not_after`: RFC 3339 timestamps
-- `signature_algorithm`, `public_key_algorithm`: `SHA256-RSA`, `Ed25519`, etc.
+- `signature_algorithm`: e.g. `SHA256-RSA`, `ECDSA-SHA256`, `Ed25519`
+- `public_key_algorithm`: e.g. `RSA`, `ECDSA`, `Ed25519`
 - `is_ca`: bool, true when BasicConstraints CA flag is set
 - `key_usage`: list of name strings drawn from RFC 5280 KeyUsage
 - `ext_key_usage`: list of name strings drawn from RFC 5280 ExtendedKeyUsage

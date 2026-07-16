@@ -11,4 +11,4 @@ Two normalizations to expect in the output:
 
 Because the parser normalizes as it reads (label matchers sort alphabetically, redundant braces drop, spacing is regularized), the tree reflects the canonical query rather than the original byte layout, and re-encoding it yields `promqlformat`'s output.
 
-~> **Note:** Fails the plan on invalid input, the same as `promqlformat`. Backed by [prometheus/prometheus](https://github.com/prometheus/prometheus)'s own parser.
+~> **Note:** Fails the plan on invalid input, or on a query longer than 64 KiB, the same as `promqlformat`. Backed by [prometheus/prometheus](https://github.com/prometheus/prometheus)'s own parser.

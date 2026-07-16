@@ -7,4 +7,4 @@ The output is stable and idempotent, so two queries that differ only in whitespa
 - Label matchers within a selector are sorted alphabetically.
 - PromQL `#` comments are dropped.
 
-~> **Note:** Fails the plan on invalid input. Use `promqlvalidate` for a non-failing boolean check. Backed by [prometheus/prometheus](https://github.com/prometheus/prometheus)'s own parser.
+~> **Note:** Fails the plan on invalid input, or on a query longer than 64 KiB. Use `promqlvalidate` for a non-failing boolean check. Backed by [prometheus/prometheus](https://github.com/prometheus/prometheus)'s own parser.

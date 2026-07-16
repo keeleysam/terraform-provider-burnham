@@ -26,7 +26,7 @@ Every node in the tree has the same shape:
 
 The primitive `value` string is encoded according to the node's tag:
 
-- `INTEGER` → decimal string
+- `INTEGER` / `ENUMERATED` → decimal string
 - `BOOLEAN` → `"true"` / `"false"`
 - `OBJECT IDENTIFIER` → dotted form (`"1.3.6.1.5.5.7.3.1"`)
 - `UTF8String` / `PrintableString` / `IA5String` / `NumericString` / `GeneralString` → the string value

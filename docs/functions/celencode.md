@@ -15,7 +15,7 @@ The input follows the CEL canonical AST (`cel/expr/syntax.proto`), using its nod
 
 Bare integral numbers become a CEL `int` and bare non-integral numbers become a CEL `double`. Use `{ const = { double_value = ... } }` to force an integral value (like `1.0`) to a `double`, and `{ const = { uint64_value = ... } }` for an unsigned or large (> 2^63-1) value.
 
-In the surface (readable) notation you mark only references; everything else is a bare literal.
+In the surface (readable) notation, references are the only marked leaf; every other leaf is a bare literal. Operators, calls, macros, and structs are not leaves: they are written as single-key objects, described below.
 
 ### Leaves
 

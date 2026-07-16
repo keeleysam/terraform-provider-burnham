@@ -21,7 +21,7 @@ Plain strings become `REG_SZ` values. Tagged objects from the constructor functi
 - `regmulti()` becomes `REG_MULTI_SZ`
 - `regexpandsz()` becomes `REG_EXPAND_SZ`
 
-Pass an optional `comments` key in `options`, mirroring the data structure, to inject `;` comments above specific keys.
+Pass an optional `comments` key in `options`, mirroring the data structure, to inject `;` comments above a registry key path (a top-level string) or above a specific value line (nest a `value name = comment` object under the key path).
 
 **Common uses:** generating `.reg` files for endpoint management (Group Policy alternatives, app preferences, security baselines, or developer-tooling defaults) and committing them to a managed config repo.
 

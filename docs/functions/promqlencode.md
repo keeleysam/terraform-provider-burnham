@@ -13,7 +13,7 @@ Builds a canonical [PromQL](https://prometheus.io/docs/prometheus/latest/queryin
 
 The pain it removes is selectors. A label value or regex built with `${...}` breaks on quotes or special characters, whereas here the matcher values are quoted correctly for you.
 
-The tree is modeled on the Prometheus AST, using the node types the experimental `/api/v1/parse_query` endpoint exposes. Each construct is a single-key object naming a node type (not `parse_query`'s literal wire format).
+The tree is modeled on the Prometheus AST, close to the node types the experimental `/api/v1/parse_query` endpoint exposes. Each construct is a single-key object naming a node type, but some keys are simplified, so they differ from `parse_query`'s own names: parentheses and unary operators become `paren`, `neg`, and `pos` (not `parenExpr` and `unaryExpr`), and literals are bare numbers and strings (not `numberLiteral` and `stringLiteral`).
 
 ### Leaves
 

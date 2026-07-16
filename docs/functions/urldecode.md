@@ -14,7 +14,7 @@ Decodes a percent-encoded string, the function Terraform core is missing entirel
 - `"query"` (default): form semantics; `+` → space (and `%2B` → `+`). The inverse of `urlencode`'s default.
 - `"path"` / `"component"`: `+` is left literal; only `%XX` is decoded.
 
-The result is a byte string; for input that decodes to non-UTF-8 bytes you will usually feed it into another function rather than printing it.
+-> **Note:** The result is a byte string; for input that decodes to non-UTF-8 bytes you will usually feed it into another function rather than printing it.
 
 ```
 urldecode("a+b%2Fc")                      → "a b/c"

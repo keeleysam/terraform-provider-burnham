@@ -9,7 +9,7 @@ description: |-
 
 # function: hcldecode
 
-Parses an arbitrary [HCL2](https://github.com/hashicorp/hcl) document (a sequence of `key = value` attribute statements) and returns it as a Terraform object.
+Parses an attribute-only [HCL2](https://github.com/hashicorp/hcl) document (a sequence of `key = value` attribute statements) and returns it as a Terraform object.
 
 Values are evaluated as static literals only, because there is no eval context:
 

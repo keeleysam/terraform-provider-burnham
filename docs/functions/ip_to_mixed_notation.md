@@ -14,7 +14,6 @@ Returns the IPv6 address formatted with the last 32 bits expressed as a dotted-d
 Common uses:
 
 - Making NAT64 addresses human-readable in outputs and documentation.
-- Formatting IPv4-mapped addresses for display.
 - Expressing IPv4-compatible addresses in a form that makes the embedded IPv4 immediately visible.
 
 ## Example Usage

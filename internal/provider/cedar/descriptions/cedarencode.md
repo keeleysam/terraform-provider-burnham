@@ -13,8 +13,8 @@ The HCL you pass mirrors Cedar's own JSON policy format, the EST, one-to-one, so
 Each scope is an object with an `op` field. The shape of the rest of the object depends on `op`:
 
 - `"=="`: `{ op = "==", entity = { type = ..., id = ... } }`.
-- `"in"`: `{ op = "in", entity = { type = ..., id = ... } }`, or a set with `entities = [ { type = ..., id = ... }, ... ]`.
-- `"is"`: `{ op = "is", entity_type = "Namespace::Type" }`, with an optional `in = { entity = { type = ..., id = ... } }`. Note this uses `entity_type` (a string), not `entity`.
+- `"in"`: `{ op = "in", entity = { type = ..., id = ... } }`. The set form with `entities = [ { type = ..., id = ... }, ... ]` is valid only for `action` (Cedar's `action in [Action::"a", Action::"b"]`); `principal` and `resource` accept a single `entity` only.
+- `"is"`: `{ op = "is", entity_type = "Namespace::Type" }`, with an optional `in = { entity = { type = ..., id = ... } }`. Note this uses `entity_type` (a string), not `entity`. Valid only for `principal` and `resource`, not `action`.
 - `"All"`: an unconstrained scope, for example a bare `resource`. It carries no entity.
 
 -> **Note:** The simplest way to get the EST shape for a non-trivial policy or condition is to write it as Cedar text and run it through `cedardecode`.

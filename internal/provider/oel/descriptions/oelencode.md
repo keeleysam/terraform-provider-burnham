@@ -12,8 +12,8 @@ The result is a canonical string suitable for `okta_group_rule.expression_value`
 
 Operators are OEL tokens or friendly aliases, applied to an operand list:
 
-- Comparison: `{ "==" = [a, b] }` or the alias `{ eq = [a, b] }`, plus `ne`, `lt`, `gt`, `le`, and `ge`.
-- Boolean: `and` and `or` are n-ary (`&&` and `||` are accepted and normalized to `AND`/`OR`), and `not` takes a single operand (`{ not = a }`).
+- Comparison: symbolic tokens `==`, `!=`, `<`, `>`, `<=`, `>=`, or the aliases `eq`, `ne`, `lt`, `gt`, `le`, `ge`; each takes a two-element operand list (`{ "==" = [a, b] }` or `{ eq = [a, b] }`).
+- Boolean: `and` and `or` are n-ary (the uppercase `AND`/`OR` that `oeldecode` emits, and the symbolic `&&`/`||`, are also accepted, all normalized to `AND`/`OR`), and `not` takes a single operand (`{ not = a }`).
 - Concatenation: `+` is n-ary.
 - Ternary: `{ cond = [test, ifTrue, ifFalse] }` (alias `{ "?:" = [...] }`).
 - Elvis: `{ elvis = [value, default] }`.
