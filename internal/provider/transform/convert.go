@@ -7,6 +7,7 @@ import (
 	"math"
 	"math/big"
 	"sort"
+	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/function"
@@ -200,7 +201,15 @@ func jsonToTerraformImpl(v interface{}, depth int) (attr.Value, error) {
 	case json.Number:
 		f, _, err := big.NewFloat(0).Parse(string(val), 10)
 		if err != nil {
+			// big.Float has no NaN representation, so a NaN token (e.g. "NaN") fails to parse. Report it as non-finite rather than as a malformed number, matching the float64 branch below.
+			if ff, ferr := strconv.ParseFloat(string(val), 64); ferr == nil && math.IsNaN(ff) {
+				return nil, fmt.Errorf("non-finite number %v cannot be represented", val)
+			}
 			return nil, fmt.Errorf("invalid json.Number %q: %w", val, err)
+		}
+		// big.Float.Parse accepts "Inf"/"+Inf"/"-Inf"; reject those the same way the float64 branch rejects math.Inf.
+		if f.IsInf() {
+			return nil, fmt.Errorf("non-finite number %v cannot be represented", val)
 		}
 		return types.NumberValue(f), nil
 

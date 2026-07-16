@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 )
@@ -150,6 +151,24 @@ func TestRunJQ_InfiniteProgramTimesOut(t *testing.T) {
 		}
 	case <-time.After(5 * time.Second):
 		t.Fatal("runJQ hung on a non-terminating program")
+	}
+}
+
+func TestRunJQ_NonFiniteRejected(t *testing.T) {
+	// jq's infinite/nan builtins emit non-finite numbers that a Terraform number cannot represent.
+	// Both must surface a clear "non-finite" error at conversion, not a silent +Inf value or a misleading "number has no digits" parse error.
+	for _, prog := range []string{"infinite", "-infinite", "nan"} {
+		results, err := runJQ(context.Background(), nil, prog, nil)
+		if err != nil {
+			t.Fatalf("jq %q: unexpected runJQ error: %v", prog, err)
+		}
+		_, err = jsonToTerraform(results)
+		if err == nil {
+			t.Fatalf("jq %q: expected a non-finite number to be rejected, got nil error", prog)
+		}
+		if !strings.Contains(err.Error(), "non-finite") {
+			t.Errorf("jq %q: expected a clear non-finite error, got %v", prog, err)
+		}
 	}
 }
 
