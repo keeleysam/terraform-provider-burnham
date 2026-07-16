@@ -2,6 +2,7 @@ package transform
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -54,7 +55,7 @@ func (f *JMESPathQueryFunction) Run(ctx context.Context, req function.RunRequest
 		return
 	}
 
-	result, err := jmespath.Search(expression, data)
+	result, err := runJMESPath(data, expression)
 	if err != nil {
 		resp.Error = function.NewArgumentFuncError(1, "JMESPath error: "+err.Error())
 		return
@@ -67,4 +68,42 @@ func (f *JMESPathQueryFunction) Run(ctx context.Context, req function.RunRequest
 	}
 
 	resp.Error = function.ConcatFuncErrors(resp.Error, resp.Result.Set(ctx, types.DynamicValue(tfVal)))
+}
+
+// runJMESPath is the pure core of the jmespath_query function: it evaluates an
+// expression against a value in the JSON value space and returns the result.
+func runJMESPath(data interface{}, expression string) (interface{}, error) {
+	return jmespath.Search(expression, normalizeForJMESPath(data))
+}
+
+/*
+normalizeForJMESPath recursively converts json.Number values (how terraformToJSON
+emits every number, to preserve precision) into float64, the only numeric type the
+go-jmespath interpreter understands. The interpreter does unchecked left.(float64)
+assertions for the ordering operators (<, <=, >, >=) and arithmetic, and
+reflect.DeepEqual for == / !=, so a json.Number silently compares as falsy, makes
+arithmetic yield null, and trips the "array[number]" type check in max / sum / avg.
+Converting up front makes numeric filters, arithmetic, and the numeric functions
+behave as callers expect.
+*/
+func normalizeForJMESPath(v interface{}) interface{} {
+	switch val := v.(type) {
+	case json.Number:
+		f, _ := val.Float64()
+		return f
+	case []interface{}:
+		out := make([]interface{}, len(val))
+		for i, e := range val {
+			out[i] = normalizeForJMESPath(e)
+		}
+		return out
+	case map[string]interface{}:
+		out := make(map[string]interface{}, len(val))
+		for k, e := range val {
+			out[k] = normalizeForJMESPath(e)
+		}
+		return out
+	default:
+		return v
+	}
 }
