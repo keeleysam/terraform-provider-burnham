@@ -138,7 +138,8 @@ func (f *GeohashDecodeFunction) Run(ctx context.Context, req function.RunRequest
 		}
 	}
 
-	lat, lon := geohash.Decode(lower)
+	// Use DecodeCenter (box.Center()), not Decode (box.Round()): the latter returns a shortened representative point inside the cell, but the documentation and the returned bbox promise the cell centre.
+	lat, lon := geohash.DecodeCenter(lower)
 	box := geohash.BoundingBox(lower)
 	// The corner cell ("zzz…z") reports its upper edges at exactly 90 / 180. Those values wrap if fed back into `geohash_encode`, so shrink them to the nearest representable float that the encoder still accepts. The shift is below any meaningful geographic resolution (~10 nm at 90°N) and keeps the bbox round-trippable.
 	latMax := box.MaxLat
