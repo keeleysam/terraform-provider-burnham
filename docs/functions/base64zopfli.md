@@ -13,16 +13,11 @@ Compresses `input` with [Zopfli](https://github.com/google/zopfli)'s iterative D
 
 Zopfli spends much more CPU than zlib searching for a smaller encoding of the same data (typically ~2–5% smaller than `gzip -9` on text). The win is free at the wire: it just makes the plan-time compression slower.
 
-The gzip header is fixed for deterministic, portable output: `MTIME=0` (never "current time", which would churn every plan), `XFL=2`, `OS=255` (unknown), no optional flags. Same `input` and options always produce byte-identical output.
+The optional `options` object accepts a single key:
 
-The optional `options` object accepts:
+- `iterations` (number): Zopfli optimization passes. Default `15`, range `[1, 100000]`. Higher is smaller, with diminishing returns past ~100. Any value produces valid DEFLATE.
 
-- `iterations` (number): Zopfli optimization passes; default `15`, range `[1, 100000]`. Higher is smaller with diminishing returns past ~100. Always valid DEFLATE regardless of value.
-
-```
-boot_scripts_blob = provider::burnham::base64zopfli(jsonencode(scripts))
-boot_scripts_blob = provider::burnham::base64zopfli(jsonencode(scripts), { iterations = 100 })
-```
+-> **Note:** The gzip header is fixed for deterministic, portable output: `MTIME=0` (never "current time", which would churn every plan), `XFL=2`, `OS=255` (unknown), and no optional flags. The same `input` and options always produce byte-identical output, keeping plans stable.
 
 ## Example Usage
 

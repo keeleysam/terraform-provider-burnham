@@ -2,11 +2,15 @@ package cedar
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
+
+//go:embed descriptions/cedarevaluate.md
+var cedarevaluateDescription string
 
 var _ function.Function = (*CedarEvaluateFunction)(nil)
 
@@ -21,7 +25,7 @@ func (f *CedarEvaluateFunction) Metadata(_ context.Context, _ function.MetadataR
 func (f *CedarEvaluateFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Evaluate a Cedar authorization request against a policy document",
-		MarkdownDescription: "Authorizes a request against a [Cedar](https://www.cedarpolicy.com) policy document and returns the decision, for previewing or unit-testing authorization policies at plan time. Because it uses [cedar-go](https://github.com/cedar-policy/cedar-go), the official Go implementation of Cedar, the decision comes from Cedar's own evaluation engine rather than an approximation (Amazon Verified Permissions is built on the same engine).\n\nThe second argument is the request object: `principal`, `action`, and `resource` (each an object with `type` and `id`, e.g. `{ type = \"User\", id = \"alice\" }`), an optional `context` (a plain attribute record such as `{ mfa = true }`, referenced in policies as `context.<key>`), and an optional `entities` list. Each entity is `{ uid = { type = ..., id = ... }, attrs = {...}, parents = [ { type = ..., id = ... }, ... ] }`, the Cedar entities shape, providing the attributes and hierarchy the decision resolves against.\n\nReturns an object `{ decision = \"allow\" or \"deny\", reasons = [ids of the policies that determined the decision], errors = [evaluation errors] }`. A policy with no `@id` annotation is numbered `policy0`, `policy1`, and so on in document order, so add `@id(\"...\")` to get stable names in `reasons`.",
+		MarkdownDescription: cedarevaluateDescription,
 		Parameters: []function.Parameter{
 			function.StringParameter{
 				Name:        "policies",

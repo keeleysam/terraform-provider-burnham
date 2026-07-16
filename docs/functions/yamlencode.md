@@ -9,16 +9,18 @@ description: |-
 
 # function: yamlencode
 
-Encodes a Terraform value as a YAML string. Unlike Terraform's built-in `yamlencode`, this defaults to block style, uses literal block scalars (`|`) for multi-line strings, and supports inline comments through an `options.comments` map.
+Encodes a Terraform value as a YAML string. Unlike Terraform's built-in `yamlencode`, this defaults to block style, renders multi-line strings as literal block scalars (`|`), and supports inline comments through `options.comments`.
 
-Pass an optional `options` object with these keys:
+Pass an optional `options` object. Every key is optional:
 
 - `indent` (number): indent width in spaces (default `2`).
-- `style` (string): `"block"` (default) or `"flow"`.
-- `quote_style` (string): `"double"`, `"single"`, or `"plain"`.
-- `null` (string): how to render nulls (default empty).
+- `flow_level` (number): where to switch from block to flow style (default `0`, all block). Use `-1` for all flow, or a positive depth `N` to render nodes at depth `N` or deeper in flow style.
+- `multiline` (string): how multi-line strings render, one of `"literal"` (default, block scalar `|`), `"folded"` (`>`), or `"quoted"` (double-quoted).
+- `quote_style` (string): scalar quoting, one of `"auto"` (default, quote only when needed), `"double"`, or `"single"`.
+- `null_value` (string): how nulls render, one of `"null"` (default), `"~"`, or `""` (empty).
 - `sort_keys` (bool): sort object keys (default `true`).
-- `comments` (object): mirrored structure with string values that become `# ` comments before the matching key.
+- `dedupe` (bool): replace repeated non-scalar subtrees with YAML anchors and aliases (default `false`).
+- `comments` (object): a structure mirroring the value whose string members become `# ` comments placed before the matching key. Array elements are addressed by stringified index (`"0"`, `"1"`, ...).
 
 **Common uses:** generating Kubernetes manifests, GitHub Actions workflows, Helm values files, or any other YAML configuration that gets reviewed and edited by humans.
 

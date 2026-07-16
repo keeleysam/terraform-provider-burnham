@@ -2,6 +2,7 @@ package cel
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/function"
@@ -9,6 +10,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/keeleysam/terraform-burnham/internal/provider/optionsutil"
 )
+
+//go:embed descriptions/celdecode.md
+var celdecodeDescription string
 
 var _ function.Function = (*CELDecodeFunction)(nil)
 
@@ -23,7 +27,7 @@ func (f *CELDecodeFunction) Metadata(_ context.Context, _ function.MetadataReque
 func (f *CELDecodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Decode a CEL expression string into a celencode data tree",
-		MarkdownDescription: "Parses a [CEL](https://cel.dev) expression string and returns it as the HCL data tree that `celencode` consumes, so `provider::burnham::celencode(provider::burnham::celdecode(expr))` round-trips to the canonical form of `expr`. Primarily a tool for testing and for migrating hand-written CEL into the data model.\n\nThe optional second argument selects the notation returned:\n\n- `canonical`: the verbose `cel/expr/syntax.proto` field-name form (`call_expr`, `ident_expr`, `select_expr`, `const_expr`, `list_expr`, `struct_expr`); operators are calls with the canonical function names.\n- `standard` (default): the readable form: type-name keys (`ident`, `call`, ...), folded `ident` reference paths, bare literals, and CEL operator tokens (`\"==\"`, `\"&&\"`, `\"in\"`). Nested `&&`/`||` are flattened into a single variadic list.\n- `aliased`: like `standard` but with the friendly word aliases (`and`, `or`, `not`, `eq`, `ne`, `lt`, ...).\n\nAll three re-encode through `celencode` to the same CEL string. Validation is syntax-only (via cel-go with optional types and two-variable comprehensions enabled), so any syntactically valid CEL decodes. The return is a dynamic value; CEL list literals decode to Terraform tuples (heterogeneous), which `celencode` accepts on the way back.",
+		MarkdownDescription: celdecodeDescription,
 		Parameters: []function.Parameter{
 			function.StringParameter{
 				Name:        "expr",

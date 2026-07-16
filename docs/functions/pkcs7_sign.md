@@ -9,35 +9,28 @@ description: |-
 
 # function: pkcs7_sign
 
-Produces a CMS SignedData ContentInfo (RFC 5652) carrying `data` as its encapsulated content. The signer cert is embedded; no signed attributes are included (RFC 5652 §5.3 permits omitting `signedAttrs` when the encapsulated content type is `id-data`).
+CMS / PKCS#7 signs `data` with an ECDSA P-256 or Ed25519 identity and returns base64-encoded DER. Use it as the on-the-wire signing primitive for signed configuration profiles, CMS payloads, and similar artefacts that must be byte-stable across Terraform runs.
 
-Deterministic by construction: identical `(data, private_key_pem, cert_pem)` always yields the same DER bytes.
+It produces an RFC 5652 SignedData ContentInfo that carries `data` as its encapsulated `id-data` content, with the signer cert embedded and no signed attributes (RFC 5652 §5.3 permits omitting `signedAttrs` when the encapsulated content type is `id-data`). Decode the result with `base64decode(...)` or feed it straight into `local_file.content_base64`.
 
-- **ECDSA P-256 keys** sign via RFC 6979 deterministic ECDSA-with-SHA256.
-- **Ed25519 keys** sign via PureEdDSA ([RFC 8419](https://www.rfc-editor.org/rfc/rfc8419) §3.1, message signed directly, no pre-hash). The SignerInfo's `digestAlgorithm` is set to `id-sha512` per RFC 8419 §3 (vestigial under no-signed-attrs but required to be present in the SignedData `digestAlgorithms` SET).
+~> **Note:** Output is deterministic by construction: identical `(data, private_key_pem, cert_pem)` always yields the same DER bytes.
 
-Output is base64-encoded DER. Decode with `base64decode(...)` or feed straight into `local_file.content_base64`.
+Signing dispatches on the key type:
 
-```
-resource "local_file" "signed_profile" {
-  filename       = "signed/profile.mobileconfig"
-  content_base64 = provider::burnham::pkcs7_sign(
-    file("profile.mobileconfig"),
-    local.signer_key_pem,
-    local.signer_cert_pem,
-  )
-}
-```
+- **ECDSA P-256**: RFC 6979 deterministic ECDSA-with-SHA256.
+- **Ed25519**: PureEdDSA ([RFC 8419](https://www.rfc-editor.org/rfc/rfc8419) §3.1, message signed directly, no pre-hash). The SignerInfo's `digestAlgorithm` is set to `id-sha512` per RFC 8419 §3 (vestigial under no-signed-attrs, but required to be present in the SignedData `digestAlgorithms` SET).
 
-Key/cert constraints:
+Input requirements:
 
-- `private_key_pem`: ECDSA P-256 (PKCS#8 or SEC1) or Ed25519 (PKCS#8).
-- `cert_pem`: X.509 cert whose public key matches the private key (checked at call time, so a mismatch is rejected rather than producing an unverifiable signature). No chain validation is performed; this is the on-the-wire signing primitive, not a PKI workflow.
+- `cert_pem`'s public key must match `private_key_pem`. The match is checked at call time, so a mismatch is rejected rather than producing an unverifiable signature.
+- No chain validation is performed. This is the on-the-wire signing primitive, not a PKI workflow.
 - `data` must be 1 byte to 16777216 bytes (16 MiB).
 
-Compliance posture: the emitted SignedData has `version: 1` and `SignerInfo.version: 1` per RFC 5652 §5.1 / §5.3 (encapsulated content is `id-data`, signer identified by `issuerAndSerialNumber`, no version-3-certificate or OtherCertificateFormat children).
+The emitted SignedData has `version: 1` and `SignerInfo.version: 1` per RFC 5652 §5.1 / §5.3 (encapsulated content is `id-data`, signer identified by `issuerAndSerialNumber`, no version-3-certificate or OtherCertificateFormat children).
 
-Apple configuration-profile signing uses the ECDSA P-256 variant of this shape; Jamf passes signed profiles through unchanged. Apple's macOS profile installer rejects Ed25519-signed mobileconfigs at the keychain-import layer as of macOS 26.5, so Ed25519 here is for non-Apple consumers (OpenSSL `cms`, container signing, internal tooling). For other use cases that need the more typical CMS shape *with* signed attributes (and the resulting `signingTime` non-determinism), use a different library; this function is intentionally the no-signed-attrs flavour.
+~> **Note:** Apple configuration-profile signing uses the ECDSA P-256 variant of this shape, and Jamf passes signed profiles through unchanged. Apple's macOS profile installer rejects Ed25519-signed mobileconfigs at the keychain-import layer as of macOS 26.5, so use Ed25519 here only for non-Apple consumers (OpenSSL `cms`, container signing, internal tooling).
+
+-> **Note:** This function intentionally emits the no-signed-attributes flavour. If you need the more typical CMS shape *with* signed attributes (and the resulting `signingTime` non-determinism), use a different library.
 
 **Byte handling, gotchas:** the inputs reach the function as the literal UTF-8 bytes of whatever string HCL hands it. HCL string literals only support `\uNNNN` Unicode escapes; there is no `\xNN` byte-escape syntax. A value spelled `"\u00ff"` arrives as the two UTF-8 bytes `0xc3 0xbf`, *not* the single byte `0xff`. An OpenSSL-style hex value like `"00ff"` is similarly interpreted as four ASCII characters, *not* two raw bytes. For arbitrary-byte inputs (RFC test vectors, hex-encoded keys, anything outside ASCII), encode upstream as base64 in your variable and pass `base64decode(var.x)` to this function. Burnham does not currently ship a `hex_decode` helper.
 

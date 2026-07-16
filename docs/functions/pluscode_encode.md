@@ -13,12 +13,13 @@ Returns the [Plus code](https://maps.google.com/pluscodes/) (Open Location Code)
 
 | length | cell size |
 | ---: | --- |
-| 2 | 1° × 1° (~110 km) |
-| 4 | 0.05° × 0.05° (~5.5 km) |
-| 6 | ~275 m |
-| 8 | ~14 m |
-| 10 | ~3.5 m (default) |
-| 11 | ~70 cm |
+| 2 | 20° × 20° (~2,200 km) |
+| 4 | 1° × 1° (~110 km) |
+| 6 | 0.05° × 0.05° (~5.5 km) |
+| 8 | 0.0025° × 0.0025° (~275 m) |
+| 10 | 0.000125° × 0.000125° (~14 m, default) |
+| 11 | ~3.5 m |
+| 12 | ~90 cm |
 
 `length` must be even between 2 and 10, or any value 11–15. `latitude` must be in `[-90, 90]`, `longitude` in `[-180, 180]`.
 

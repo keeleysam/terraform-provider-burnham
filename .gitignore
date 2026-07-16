@@ -52,6 +52,7 @@
 !/internal/**/*.go
 !/internal/**/*.bin
 !/internal/**/*.txt
+!/internal/**/*.md
 
 /cmd/**
 !/cmd/**/

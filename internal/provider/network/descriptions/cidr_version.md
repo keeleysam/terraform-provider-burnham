@@ -1,0 +1,1 @@
+Returns `4` for IPv4 prefixes and `6` for IPv6 prefixes.

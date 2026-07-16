@@ -1,6 +1,8 @@
 package dataformat
 
 import (
+	_ "embed"
+
 	"context"
 	"fmt"
 	"strings"
@@ -13,6 +15,9 @@ import (
 )
 
 var _ function.Function = (*KDLDecodeFunction)(nil)
+
+//go:embed descriptions/kdldecode.md
+var kdldecodeDescription string
 
 type KDLDecodeFunction struct{}
 
@@ -27,7 +32,7 @@ func (f *KDLDecodeFunction) Metadata(_ context.Context, _ function.MetadataReque
 func (f *KDLDecodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Parse a KDL document into a Terraform value",
-		MarkdownDescription: "Parses a [KDL document](https://kdl.dev/) string into a Terraform list of node objects. Each node has these keys: `name` (string), `args` (list of values), `props` (map of values), and `children` (list of child nodes).\n\nBoth KDL v1 and v2 input are accepted; the parser auto-detects the version.\n\n**Common uses:** reading KDL-based configuration files such as the [`kdl-org/kdl`](https://github.com/kdl-org/kdl) specification documents, Cargo-style nested configuration, or any tool that's adopted KDL as its config format.",
+		MarkdownDescription: kdldecodeDescription,
 		Parameters: []function.Parameter{
 			function.StringParameter{
 				Name:        "input",
@@ -166,6 +171,9 @@ func kdlValueToTerraform(v kdl.Value) (attr.Value, error) {
 
 var _ function.Function = (*KDLEncodeFunction)(nil)
 
+//go:embed descriptions/kdlencode.md
+var kdlencodeDescription string
+
 type KDLEncodeFunction struct{}
 
 func NewKDLEncodeFunction() function.Function {
@@ -179,7 +187,7 @@ func (f *KDLEncodeFunction) Metadata(_ context.Context, _ function.MetadataReque
 func (f *KDLEncodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Encode a value as a KDL document",
-		MarkdownDescription: "Encodes a Terraform list of node objects as a [KDL document](https://kdl.dev/) string. Each node object should have these keys: `name` (string), `args` (list), `props` (map), and `children` (list of child nodes).\n\nDefault output is KDL v2. Pass `options = { version = \"v1\" }` for the legacy KDL v1 grammar.\n\n**Common uses:** generating KDL configuration for tools that have adopted the format, or producing structured-document artifacts where KDL's terse syntax is more readable than YAML or JSON.",
+		MarkdownDescription: kdlencodeDescription,
 		Parameters: []function.Parameter{
 			function.DynamicParameter{
 				Name:        "value",

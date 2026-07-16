@@ -9,9 +9,17 @@ description: |-
 
 # function: ip_add
 
-Returns the IP address shifted by `n` (positive to advance, negative to go back). Supports both IPv4 and IPv6. Returns an error if the result would overflow the address space.
+Offsets an IP address by an integer, so you can derive nearby addresses like a gateway or DNS server without a full CIDR context.
 
-**Common uses:** computing gateway addresses (`ip_add(cidr_first_ip(var.subnet), 1)`), deriving DNS server IPs, enumerating specific host addresses without needing a full CIDR context.
+Returns the IP address shifted by `n`: positive to advance, negative to go back. Supports both IPv4 and IPv6.
+
+Common uses:
+
+- Computing gateway addresses, for example `ip_add(cidr_first_ip(var.subnet), 1)`.
+- Deriving DNS server IPs.
+- Enumerating specific host addresses without needing a full CIDR context.
+
+~> **Note:** Fails if the result would fall outside the address space, either past the end or, for a negative `n`, before the start.
 
 ## Example Usage
 

@@ -9,31 +9,23 @@ description: |-
 
 # function: x509_self_sign
 
-Constructs a self-signed X.509 v3 certificate signed deterministically: ECDSA P-256 via RFC 6979 deterministic `k`, Ed25519 via PureEdDSA (naturally deterministic per RFC 8032). Given the same `private_key_pem` and the same parameters, the output is byte-identical across runs.
+Builds a self-signed X.509 v3 certificate from a PEM-encoded private key and returns it as PEM. Use it, together with a deterministic key, to mint a stable signing identity that does not churn in Terraform state.
 
-Paired with [`ecdsa_p256_key_from_seed`](#function-ecdsa_p256_key_from_seed) or [`ed25519_key_from_seed`](#function-ed25519_key_from_seed), the full chain from input seed → key → cert is deterministic, with no random state involved at any step.
+Signing is deterministic on both supported key types: ECDSA P-256 uses RFC 6979 deterministic `k`, Ed25519 uses PureEdDSA (naturally deterministic per RFC 8032). Given the same `private_key_pem` and the same parameters, the output is byte-identical across runs. Paired with [`ecdsa_p256_key_from_seed`](#function-ecdsa_p256_key_from_seed) or [`ed25519_key_from_seed`](#function-ed25519_key_from_seed), the full chain from seed to key to cert is deterministic, with no random state at any step.
 
-Fields produced:
+Certificate fields:
 
 - **Version**: 3.
-- **Serial Number**: derived from `serial` (raw bytes; interpreted big-endian, leading-byte high bit cleared so the DER-encoded length stays predictable). 8–20 bytes; RFC 5280 §4.1.2.2 caps the encoded length at 20 octets.
+- **Serial Number**: derived from `serial` (raw bytes; interpreted big-endian, leading-byte high bit cleared so the DER-encoded length stays predictable). must be non-empty and at most 20 bytes (RFC 5280 §4.1.2.2 caps the encoded length at 20 octets); at least 8 bytes is recommended for uniqueness.
 - **Issuer = Subject**: a single Common Name attribute (self-signed).
 - **Validity**: as supplied, RFC 3339.
 - **Basic Constraints**: critical, `CA:FALSE`.
 - **Signature Algorithm**: `ecdsa-with-SHA256` for ECDSA P-256 keys, `Ed25519` ([RFC 8410](https://www.rfc-editor.org/rfc/rfc8410)) for Ed25519 keys.
 
-Only ECDSA P-256 and Ed25519 keys are accepted; other key types return an error. PEM input must contain one of `PRIVATE KEY` (PKCS#8) or `EC PRIVATE KEY` (SEC1) blocks.
+Key input:
 
-```
-provider::burnham::x509_self_sign(
-  provider::burnham::ecdsa_p256_key_from_seed(sha512(file("input.bin"))),
-  "signer.example",
-  provider::burnham::hkdf("sha256", sha512(file("input.bin")), "", "serial", 10),
-  "2001-01-01T00:00:00Z",
-  "2099-01-01T00:00:00Z",
-)
-→ "-----BEGIN CERTIFICATE-----\nMIIB…\n-----END CERTIFICATE-----\n"
-```
+- Only ECDSA P-256 and Ed25519 keys are accepted; other key types return an error.
+- PEM must contain a `PRIVATE KEY` (PKCS#8) or `EC PRIVATE KEY` (SEC1) block.
 
 **Byte handling, gotchas:** the inputs reach the function as the literal UTF-8 bytes of whatever string HCL hands it. HCL string literals only support `\uNNNN` Unicode escapes; there is no `\xNN` byte-escape syntax. A value spelled `"\u00ff"` arrives as the two UTF-8 bytes `0xc3 0xbf`, *not* the single byte `0xff`. An OpenSSL-style hex value like `"00ff"` is similarly interpreted as four ASCII characters, *not* two raw bytes. For arbitrary-byte inputs (RFC test vectors, hex-encoded keys, anything outside ASCII), encode upstream as base64 in your variable and pass `base64decode(var.x)` to this function. Burnham does not currently ship a `hex_decode` helper.
 

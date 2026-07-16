@@ -1,0 +1,1 @@
+Returns `4` for IPv4 addresses and `6` for IPv6 addresses. IPv4-mapped IPv6 addresses (e.g. `::ffff:10.0.0.1`) are treated as IPv4.

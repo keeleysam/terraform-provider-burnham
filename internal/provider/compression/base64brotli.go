@@ -13,6 +13,7 @@ package compression
 import (
 	"bytes"
 	"context"
+	_ "embed"
 	"encoding/base64"
 	"fmt"
 
@@ -52,6 +53,9 @@ func brotliCompress(input []byte, quality, lgwin int) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+//go:embed descriptions/base64brotli.md
+var base64brotliDescription string
+
 var _ function.Function = (*Base64BrotliFunction)(nil)
 
 type Base64BrotliFunction struct{}
@@ -65,7 +69,7 @@ func (f *Base64BrotliFunction) Metadata(_ context.Context, _ function.MetadataRe
 func (f *Base64BrotliFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Brotli-compress (RFC 7932) and base64-encode",
-		MarkdownDescription: "Compresses `input` with [Brotli](https://www.rfc-editor.org/rfc/rfc7932) and returns the result as a base64-encoded brotli stream. On text-heavy payloads this is ~8–10% smaller than `base64gzip` (and a few percent smaller than `base64zopfli`), at the cost of requiring a brotli decompressor on the consuming side (`brotli -d`, shipped by every current Linux distro). Decompress with `base64 -d | brotli -d`, or any RFC 7932 decoder (browsers' `Content-Encoding: br`, Python `brotli`, etc.).\n\nThe encoder is deterministic for a given input and options (there is no MTIME-equivalent in the brotli format), so same `input` and options always produce byte-identical output, keeping plans stable.\n\nThe optional `options` object accepts:\n\n- `quality` (number): compression effort; default `11` (maximum ratio), range `[0, 11]`. Lower is faster with a worse ratio. Default is `11` because `user_data` is compressed once at plan time and decompressed many times.\n- `lgwin` (number): log₂ of the sliding-window size in bytes (RFC 7932 §9.1); default `22` (a 4 MiB window), range `[10, 24]`. Increase only for genuinely huge inputs with long-range repetition; decrease only if compress-time memory is constrained.\n\nThe RFC 7932 §10 encoder `mode` hint (text/generic/font) is intentionally **not** exposed: the pure-Go encoder this provider uses does not apply it (`text` and `generic` are byte-identical, `font` is unreachable through its public API), so a `mode` option would be a no-op rather than an honest knob.\n\n```\nboot_scripts_blob = provider::burnham::base64brotli(jsonencode(scripts))\nboot_scripts_blob = provider::burnham::base64brotli(jsonencode(scripts), { quality = 6 })\n```",
+		MarkdownDescription: base64brotliDescription,
 		Parameters: []function.Parameter{
 			function.StringParameter{
 				Name:        "input",

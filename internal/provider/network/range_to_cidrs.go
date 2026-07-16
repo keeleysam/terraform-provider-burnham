@@ -2,6 +2,7 @@ package network
 
 import (
 	"context"
+	_ "embed"
 
 	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -16,10 +17,13 @@ func (f *RangeToCIDRsFunction) Metadata(_ context.Context, _ function.MetadataRe
 	resp.Name = "range_to_cidrs"
 }
 
+//go:embed descriptions/range_to_cidrs.md
+var rangeToCidrsDescription string
+
 func (f *RangeToCIDRsFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Convert an IP range to a minimal list of CIDRs",
-		MarkdownDescription: "Converts an inclusive IP range `[first_ip, last_ip]` into the minimal list of CIDRs that exactly covers the range. Both IPs must be the same address family (IPv4 or IPv6).",
+		MarkdownDescription: rangeToCidrsDescription,
 		Parameters: []function.Parameter{
 			function.StringParameter{
 				Name:        "first_ip",

@@ -2,6 +2,7 @@ package network
 
 import (
 	"context"
+	_ "embed"
 
 	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/keeleysam/terraform-burnham/internal/provider/network/iputil"
@@ -15,10 +16,13 @@ func (f *IPToMixedNotationFunction) Metadata(_ context.Context, _ function.Metad
 	resp.Name = "ip_to_mixed_notation"
 }
 
+//go:embed descriptions/ip_to_mixed_notation.md
+var ipToMixedNotationDescription string
+
 func (f *IPToMixedNotationFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Format an IPv6 address using mixed (dual) x:x:x:x:x:x:d.d.d.d notation",
-		MarkdownDescription: "Returns the IPv6 address formatted with the last 32 bits expressed as a dotted-decimal IPv4 address, e.g. `64:ff9b::192.0.2.1` instead of `64:ff9b::c000:201`. Zero-compression (::) is applied to the hex portion. IPv4 addresses are returned unchanged.\n\n**Common uses:** making NAT64 addresses human-readable in outputs and documentation; formatting IPv4-mapped addresses for display; expressing IPv4-compatible addresses in a form that makes the embedded IPv4 immediately visible.",
+		MarkdownDescription: ipToMixedNotationDescription,
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "ip", Description: "An IPv6 (or IPv4) address string."},
 		},
@@ -50,10 +54,13 @@ func (f *IPv4ToIPv4MappedFunction) Metadata(_ context.Context, _ function.Metada
 	resp.Name = "ipv4_to_ipv4_mapped"
 }
 
+//go:embed descriptions/ipv4_to_ipv4_mapped.md
+var ipv4ToIpv4MappedDescription string
+
 func (f *IPv4ToIPv4MappedFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Convert an IPv4 address to its IPv4-mapped IPv6 form (::ffff:d.d.d.d)",
-		MarkdownDescription: "Returns the RFC 4291 IPv4-mapped IPv6 representation of an IPv4 address in mixed notation, e.g. `192.0.2.1` → `::ffff:192.0.2.1`.\n\n**Common uses:** configuring dual-stack listeners and sockets that accept both IPv4 and IPv6 connections; expressing IPv4 addresses in systems that require IPv6 format (e.g. some BGP implementations, certain firewall APIs); building allowlists that cover IPv4-mapped IPv6 representations of IPv4 addresses.",
+		MarkdownDescription: ipv4ToIpv4MappedDescription,
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "ipv4", Description: "The IPv4 address to convert."},
 		},

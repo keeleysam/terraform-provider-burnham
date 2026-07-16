@@ -14,6 +14,7 @@ import (
 	"context"
 	"crypto/hmac"
 	"crypto/sha256"
+	_ "embed"
 	"encoding/binary"
 	"fmt"
 	"strings"
@@ -44,10 +45,13 @@ func (f *NanoidFunction) Metadata(_ context.Context, _ function.MetadataRequest,
 	resp.Name = "nanoid"
 }
 
+//go:embed descriptions/nanoid.md
+var nanoidDescription string
+
 func (f *NanoidFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Deterministic Nano ID derived from a seed string",
-		MarkdownDescription: "Returns a Nano ID string derived deterministically from `seed` via HMAC-SHA-256 in counter mode. Same `seed` always returns the same ID, perfect for stable, plan-time identifiers that don't churn on re-apply.\n\nDefault alphabet is the 64-character URL-safe set `_-0-9A-Za-z` (matching the upstream [nanoid](https://github.com/ai/nanoid) reference); default `size` is 21 characters. Both can be overridden via the optional `options` object:\n\n- `alphabet` (string): the alphabet to draw from. Must be non-empty and contain no duplicate runes. Any unicode is accepted; bytes are interpreted as a UTF-8 string and you get one alphabet *codepoint* per output position, so a 64-codepoint alphabet still yields a 21-character (=21-codepoint) ID even if some characters are multi-byte.\n- `size` (number): output length in codepoints; must be in `[1, 1024]`.\n\n```\nnanoid(\"prod/api-gateway\")\n→ \"TUgaDb-aFSbMx3UFK6Spd\"   (deterministic)\n\nnanoid(\"prod/api-gateway\", { size = 10 })\nnanoid(\"prod/api-gateway\", { alphabet = \"0123456789\", size = 6 })\n```\n\nThis function is a derivation, not a CSPRNG: outputs leak nothing about the seed, but two callers seeded with the same secret will produce the same ID. Use it for naming, not for credentials.",
+		MarkdownDescription: nanoidDescription,
 		Parameters: []function.Parameter{
 			function.StringParameter{
 				Name:        "seed",

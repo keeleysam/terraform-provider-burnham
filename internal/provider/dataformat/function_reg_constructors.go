@@ -1,6 +1,8 @@
 package dataformat
 
 import (
+	_ "embed"
+
 	"context"
 	"encoding/hex"
 	"fmt"
@@ -45,6 +47,9 @@ func regUintFromNumber(v *big.Float, paramName string, max uint64) (uint64, erro
 
 var _ function.Function = (*RegDwordFunction)(nil)
 
+//go:embed descriptions/regdword.md
+var regdwordDescription string
+
 type RegDwordFunction struct{}
 
 func NewRegDwordFunction() function.Function { return &RegDwordFunction{} }
@@ -54,7 +59,7 @@ func (f *RegDwordFunction) Metadata(_ context.Context, _ function.MetadataReques
 func (f *RegDwordFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Create a REG_DWORD registry value",
-		MarkdownDescription: "Returns a tagged object representing a `REG_DWORD` (32-bit unsigned integer) registry value, for use inside a `regencode` payload.\n\nPass the value as a decimal integer between `0` and `4294967295`. HCL doesn't accept `0x...` literals; convert to decimal manually or use `parseint(\"01020304\", 16)`.\n\n**Common uses:** typed registry values in Group Policy / endpoint config, such as feature flags, integer thresholds, and status fields that must be `REG_DWORD` rather than `REG_SZ`.",
+		MarkdownDescription: regdwordDescription,
 		Parameters:          []function.Parameter{function.NumberParameter{Name: "value", Description: "A 32-bit unsigned integer (0–4294967295)."}},
 		Return:              function.DynamicReturn{},
 	}
@@ -82,6 +87,9 @@ func (f *RegDwordFunction) Run(ctx context.Context, req function.RunRequest, res
 
 var _ function.Function = (*RegQwordFunction)(nil)
 
+//go:embed descriptions/regqword.md
+var regqwordDescription string
+
 type RegQwordFunction struct{}
 
 func NewRegQwordFunction() function.Function { return &RegQwordFunction{} }
@@ -91,7 +99,7 @@ func (f *RegQwordFunction) Metadata(_ context.Context, _ function.MetadataReques
 func (f *RegQwordFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Create a REG_QWORD registry value",
-		MarkdownDescription: "Returns a tagged object representing a `REG_QWORD` (64-bit unsigned integer) registry value, for use inside a `regencode` payload.\n\nPass the value as a decimal integer between `0` and `18446744073709551615`. HCL's number type (a 512-bit big.Float) carries the full range exactly. HCL doesn't accept `0x...` literals; convert to decimal manually or use `parseint(\"...\", 16)`.\n\n**Common uses:** large numeric values in registry-driven config, such as file size limits, byte offsets, or any integer that exceeds `REG_DWORD`'s 32-bit range.",
+		MarkdownDescription: regqwordDescription,
 		Parameters:          []function.Parameter{function.NumberParameter{Name: "value", Description: "A 64-bit unsigned integer (0–18446744073709551615)."}},
 		Return:              function.DynamicReturn{},
 	}
@@ -119,6 +127,9 @@ func (f *RegQwordFunction) Run(ctx context.Context, req function.RunRequest, res
 
 var _ function.Function = (*RegBinaryFunction)(nil)
 
+//go:embed descriptions/regbinary.md
+var regbinaryDescription string
+
 type RegBinaryFunction struct{}
 
 func NewRegBinaryFunction() function.Function { return &RegBinaryFunction{} }
@@ -128,7 +139,7 @@ func (f *RegBinaryFunction) Metadata(_ context.Context, _ function.MetadataReque
 func (f *RegBinaryFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Create a REG_BINARY registry value",
-		MarkdownDescription: "Returns a tagged object representing a `REG_BINARY` registry value, for use inside a `regencode` payload. The input is a hex-encoded string (no separators, no `0x` prefix).\n\n**Common uses:** binary blobs in Group Policy and app preferences, such as certificate hashes, packed structures, or pre-computed configuration payloads consumed by Windows components.",
+		MarkdownDescription: regbinaryDescription,
 		Parameters:          []function.Parameter{function.StringParameter{Name: "hex", Description: "Hex-encoded binary data (e.g. \"48656c6c6f\")."}},
 		Return:              function.DynamicReturn{},
 	}
@@ -160,6 +171,9 @@ func (f *RegBinaryFunction) Run(ctx context.Context, req function.RunRequest, re
 
 var _ function.Function = (*RegMultiFunction)(nil)
 
+//go:embed descriptions/regmulti.md
+var regmultiDescription string
+
 type RegMultiFunction struct{}
 
 func NewRegMultiFunction() function.Function { return &RegMultiFunction{} }
@@ -169,7 +183,7 @@ func (f *RegMultiFunction) Metadata(_ context.Context, _ function.MetadataReques
 func (f *RegMultiFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Create a REG_MULTI_SZ registry value",
-		MarkdownDescription: "Returns a tagged object representing a `REG_MULTI_SZ` (null-separated list of strings) registry value, for use inside a `regencode` payload.\n\n**Common uses:** registry values that are inherently lists, such as search paths, allowlist/denylist entries, or any field where the consuming Windows component expects multi-string semantics rather than a single delimited string.",
+		MarkdownDescription: regmultiDescription,
 		Parameters: []function.Parameter{
 			function.DynamicParameter{Name: "strings", Description: "A list of strings."},
 		},
@@ -226,6 +240,9 @@ func (f *RegMultiFunction) Run(ctx context.Context, req function.RunRequest, res
 
 var _ function.Function = (*RegExpandSzFunction)(nil)
 
+//go:embed descriptions/regexpandsz.md
+var regexpandszDescription string
+
 type RegExpandSzFunction struct{}
 
 func NewRegExpandSzFunction() function.Function { return &RegExpandSzFunction{} }
@@ -235,7 +252,7 @@ func (f *RegExpandSzFunction) Metadata(_ context.Context, _ function.MetadataReq
 func (f *RegExpandSzFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Create a REG_EXPAND_SZ registry value",
-		MarkdownDescription: "Returns a tagged object representing a `REG_EXPAND_SZ` registry value, for use inside a `regencode` payload. `REG_EXPAND_SZ` differs from `REG_SZ` in that the consuming Windows component expands `%VARIABLE%` references at lookup time.\n\n**Common uses:** path values that must adapt per-user or per-machine (`%APPDATA%`, `%SystemRoot%`, `%USERPROFILE%`), or any registry-driven config that needs to substitute environment variables when read.",
+		MarkdownDescription: regexpandszDescription,
 		Parameters:          []function.Parameter{function.StringParameter{Name: "value", Description: "A string with %VARIABLE% references (e.g. \"%SystemRoot%\\\\system32\")."}},
 		Return:              function.DynamicReturn{},
 	}

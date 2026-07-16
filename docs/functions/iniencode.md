@@ -13,6 +13,8 @@ Encodes a Terraform object as an INI string. The input must be a two-level map: 
 
 All values are converted to strings; sections and keys are written in alphabetical order for deterministic output.
 
+~> **Note:** A value containing a newline fails the plan, since INI has no standard way to represent one.
+
 **Common uses:** generating legacy application config files via `local_file`, or rendering INI snippets to be assembled into a larger config through `templatefile`.
 
 ## Example Usage

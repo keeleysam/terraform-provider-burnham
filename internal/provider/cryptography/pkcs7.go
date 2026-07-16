@@ -19,6 +19,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/ed25519"
 	"crypto/x509"
+	_ "embed"
 	"encoding/asn1"
 	"encoding/base64"
 	"fmt"
@@ -32,6 +33,9 @@ const pkcs7DataMaxBytes = 16 * 1024 * 1024
 
 var _ function.Function = (*PKCS7SignFunction)(nil)
 
+//go:embed descriptions/pkcs7_sign.md
+var pkcs7SignDescription string
+
 type PKCS7SignFunction struct{}
 
 func NewPKCS7SignFunction() function.Function { return &PKCS7SignFunction{} }
@@ -43,7 +47,7 @@ func (f *PKCS7SignFunction) Metadata(_ context.Context, _ function.MetadataReque
 func (f *PKCS7SignFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "CMS / PKCS#7 sign bytes with an ECDSA P-256 or Ed25519 identity (deterministic; RFC 5652 §5.3 no-signed-attrs shape)",
-		MarkdownDescription: fmt.Sprintf("Produces a CMS SignedData ContentInfo (RFC 5652) carrying `data` as its encapsulated content. The signer cert is embedded; no signed attributes are included (RFC 5652 §5.3 permits omitting `signedAttrs` when the encapsulated content type is `id-data`).\n\nDeterministic by construction: identical `(data, private_key_pem, cert_pem)` always yields the same DER bytes.\n\n- **ECDSA P-256 keys** sign via RFC 6979 deterministic ECDSA-with-SHA256.\n- **Ed25519 keys** sign via PureEdDSA ([RFC 8419](https://www.rfc-editor.org/rfc/rfc8419) §3.1, message signed directly, no pre-hash). The SignerInfo's `digestAlgorithm` is set to `id-sha512` per RFC 8419 §3 (vestigial under no-signed-attrs but required to be present in the SignedData `digestAlgorithms` SET).\n\nOutput is base64-encoded DER. Decode with `base64decode(...)` or feed straight into `local_file.content_base64`.\n\n```\nresource \"local_file\" \"signed_profile\" {\n  filename       = \"signed/profile.mobileconfig\"\n  content_base64 = provider::burnham::pkcs7_sign(\n    file(\"profile.mobileconfig\"),\n    local.signer_key_pem,\n    local.signer_cert_pem,\n  )\n}\n```\n\nKey/cert constraints:\n\n- `private_key_pem`: ECDSA P-256 (PKCS#8 or SEC1) or Ed25519 (PKCS#8).\n- `cert_pem`: X.509 cert whose public key matches the private key (checked at call time, so a mismatch is rejected rather than producing an unverifiable signature). No chain validation is performed; this is the on-the-wire signing primitive, not a PKI workflow.\n- `data` must be 1 byte to %d bytes (%d MiB).\n\nCompliance posture: the emitted SignedData has `version: 1` and `SignerInfo.version: 1` per RFC 5652 §5.1 / §5.3 (encapsulated content is `id-data`, signer identified by `issuerAndSerialNumber`, no version-3-certificate or OtherCertificateFormat children).\n\nApple configuration-profile signing uses the ECDSA P-256 variant of this shape; Jamf passes signed profiles through unchanged. Apple's macOS profile installer rejects Ed25519-signed mobileconfigs at the keychain-import layer as of macOS 26.5, so Ed25519 here is for non-Apple consumers (OpenSSL `cms`, container signing, internal tooling). For other use cases that need the more typical CMS shape *with* signed attributes (and the resulting `signingTime` non-determinism), use a different library; this function is intentionally the no-signed-attrs flavour.\n\n%s", pkcs7DataMaxBytes, pkcs7DataMaxBytes/(1024*1024), hclByteHandlingGotcha),
+		MarkdownDescription: fmt.Sprintf(pkcs7SignDescription, pkcs7DataMaxBytes, pkcs7DataMaxBytes/(1024*1024), hclByteHandlingGotcha),
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "data", Description: fmt.Sprintf("Content to sign (raw bytes). Must not be empty and must not exceed %d bytes (%d MiB).", pkcs7DataMaxBytes, pkcs7DataMaxBytes/(1024*1024))},
 			function.StringParameter{Name: "private_key_pem", Description: "PEM-encoded ECDSA P-256 or Ed25519 private key (`PRIVATE KEY` PKCS#8 for either; `EC PRIVATE KEY` SEC1 is also accepted for ECDSA)."},

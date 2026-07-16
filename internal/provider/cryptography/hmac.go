@@ -14,6 +14,7 @@ import (
 	"crypto/sha1"
 	"crypto/sha256"
 	"crypto/sha512"
+	_ "embed"
 	"encoding/hex"
 	"fmt"
 	"hash"
@@ -22,6 +23,9 @@ import (
 )
 
 var _ function.Function = (*HMACFunction)(nil)
+
+//go:embed descriptions/hmac.md
+var hmacDescription string
 
 type HMACFunction struct{}
 
@@ -34,7 +38,7 @@ func (f *HMACFunction) Metadata(_ context.Context, _ function.MetadataRequest, r
 func (f *HMACFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Compute an HMAC (RFC 2104) over a message, returning hex",
-		MarkdownDescription: fmt.Sprintf("Returns the [HMAC-`algorithm`](https://www.rfc-editor.org/rfc/rfc2104) of `message` keyed by `key`, hex-encoded.\n\n`algorithm` is one of:\n\n- `\"sha1\"`: RFC 2104 / FIPS 180-4 (legacy; do not pick for new designs)\n- `\"sha224\"`, `\"sha256\"`, `\"sha384\"`, `\"sha512\"`: FIPS 180-4 SHA-2 family\n- `\"sha512_224\"`, `\"sha512_256\"`: truncated SHA-512 variants\n\n```\nhmac(\"sha256\", \"super-secret\", \"payload\")\n→ \"3da88…\" (hex)\n```\n\n%s\n\nThis function is a derivation, not an MAC verifier: produce the expected MAC and `==`-compare in HCL.", hclByteHandlingGotcha),
+		MarkdownDescription: fmt.Sprintf(hmacDescription, hclByteHandlingGotcha),
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "algorithm", Description: "Hash algorithm: \"sha1\", \"sha224\", \"sha256\", \"sha384\", \"sha512\", \"sha512_224\", or \"sha512_256\"."},
 			function.StringParameter{Name: "key", Description: "The HMAC key, as raw bytes."},

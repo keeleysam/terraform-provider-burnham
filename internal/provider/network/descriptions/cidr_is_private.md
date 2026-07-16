@@ -1,0 +1,1 @@
+Returns `true` if the entire CIDR is contained within a private, loopback, link-local, or CGNAT range (RFC1918, RFC6598, RFC4193, loopback, link-local).

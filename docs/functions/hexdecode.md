@@ -9,9 +9,14 @@ description: |-
 
 # function: hexdecode
 
-Decodes a hexadecimal string to its bytes, returned as a string of those raw bytes. Lenient: upper- and lower-case digits are both accepted, and ASCII whitespace is ignored, so a spaced or line-wrapped dump decodes cleanly.
+Decodes a hexadecimal string to its bytes, returned as a string of those raw bytes.
 
-The result is a byte string; for binary that isn't valid UTF-8 you will usually feed it straight into another function (for example `hmac("sha256", hexdecode(var.key_hex), var.msg)`) rather than printing it.
+Decoding is lenient:
+
+- Upper- and lower-case digits are both accepted.
+- ASCII whitespace is ignored, so a spaced or line-wrapped dump decodes cleanly.
+
+-> **Note:** The result is a byte string. For binary that isn't valid UTF-8 you will usually feed it straight into another function (for example `hmac("sha256", hexdecode(var.key_hex), var.msg)`) rather than printing it.
 
 ```
 hexdecode("4869")

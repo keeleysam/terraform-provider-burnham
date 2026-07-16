@@ -1,0 +1,1 @@
+Returns `true` if CIDR `a` and CIDR `b` overlap (share at least one address).

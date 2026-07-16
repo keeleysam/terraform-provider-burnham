@@ -1,0 +1,1 @@
+Returns the set of CIDRs that represent the address space shared between list `a` and list `b`. The result is merged into the smallest equivalent set.

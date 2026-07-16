@@ -8,6 +8,7 @@ package encoding
 
 import (
 	"context"
+	_ "embed"
 	"encoding/hex"
 
 	"github.com/hashicorp/terraform-plugin-framework/function"
@@ -20,6 +21,9 @@ func hexDecodeLenient(s string) ([]byte, error) {
 }
 
 // ─── hexencode ──────────────────────────────────────────────────
+
+//go:embed descriptions/hexencode.md
+var hexencodeDescription string
 
 var _ function.Function = (*HexEncodeFunction)(nil)
 
@@ -34,7 +38,7 @@ func (f *HexEncodeFunction) Metadata(_ context.Context, _ function.MetadataReque
 func (f *HexEncodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Encode bytes as a lowercase hex string",
-		MarkdownDescription: "Encodes the input's bytes as a lowercase hexadecimal string (two hex digits per byte).\n\nThe input is taken as raw bytes, the literal UTF-8 bytes of the string HCL hands the function. To hex-encode bytes you already hold as base64, pass `base64decode(var.x)`.\n\n```\nhexencode(\"Hi\")\n→ \"4869\"\n```",
+		MarkdownDescription: hexencodeDescription,
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "input", Description: "The bytes to encode, taken as the raw UTF-8 bytes of the string."},
 		},
@@ -54,6 +58,9 @@ func (f *HexEncodeFunction) Run(ctx context.Context, req function.RunRequest, re
 
 // ─── hexdecode ──────────────────────────────────────────────────
 
+//go:embed descriptions/hexdecode.md
+var hexdecodeDescription string
+
 var _ function.Function = (*HexDecodeFunction)(nil)
 
 type HexDecodeFunction struct{}
@@ -67,7 +74,7 @@ func (f *HexDecodeFunction) Metadata(_ context.Context, _ function.MetadataReque
 func (f *HexDecodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Decode a hex string to its bytes",
-		MarkdownDescription: "Decodes a hexadecimal string to its bytes, returned as a string of those raw bytes. Lenient: upper- and lower-case digits are both accepted, and ASCII whitespace is ignored, so a spaced or line-wrapped dump decodes cleanly.\n\nThe result is a byte string; for binary that isn't valid UTF-8 you will usually feed it straight into another function (for example `hmac(\"sha256\", hexdecode(var.key_hex), var.msg)`) rather than printing it.\n\n```\nhexdecode(\"4869\")\n→ \"Hi\"\n```",
+		MarkdownDescription: hexdecodeDescription,
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "input", Description: "A hex string (case-insensitive; ASCII whitespace ignored)."},
 		},

@@ -12,6 +12,7 @@ package geographic
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 	"math"
 	"math/big"
@@ -39,6 +40,9 @@ const geohashAlphabet = "0123456789bcdefghjkmnpqrstuvwxyz"
 // geohash_encode
 // ──────────────────────────────────────────────────────────────────────
 
+//go:embed descriptions/geohash_encode.md
+var geohashEncodeDescription string
+
 var _ function.Function = (*GeohashEncodeFunction)(nil)
 
 type GeohashEncodeFunction struct{}
@@ -52,7 +56,7 @@ func (f *GeohashEncodeFunction) Metadata(_ context.Context, _ function.MetadataR
 func (f *GeohashEncodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Encode (latitude, longitude) into a geohash string",
-		MarkdownDescription: "Returns the [geohash](https://en.wikipedia.org/wiki/Geohash) of the given `(latitude, longitude)` at the requested `precision` (number of base-32 characters). Higher precision = smaller cell. Approximate cell side at the equator (worst case):\n\n| precision | cell side |\n| ---: | --- |\n| 1 | ~5,000 km |\n| 3 | ~156 km |\n| 5 | ~4.9 km |\n| 7 | ~152 m |\n| 9 | ~4.8 m |\n| 12 | ~3.7 cm |\n\n`precision` must be in `[1, 12]`. `latitude` must be in `[-90, 90]` and `longitude` in `[-180, 180]`.\n\n```\ngeohash_encode(37.7749, -122.4194, 7)\n→ \"9q8yyk8\"   (≈ Civic Center, San Francisco)\n```",
+		MarkdownDescription: geohashEncodeDescription,
 		Parameters: []function.Parameter{
 			function.NumberParameter{Name: "latitude", Description: "Latitude in degrees, [-90, 90]."},
 			function.NumberParameter{Name: "longitude", Description: "Longitude in degrees, [-180, 180]."},
@@ -94,6 +98,9 @@ func (f *GeohashEncodeFunction) Run(ctx context.Context, req function.RunRequest
 // geohash_decode
 // ──────────────────────────────────────────────────────────────────────
 
+//go:embed descriptions/geohash_decode.md
+var geohashDecodeDescription string
+
 var _ function.Function = (*GeohashDecodeFunction)(nil)
 
 type GeohashDecodeFunction struct{}
@@ -117,7 +124,7 @@ func (f *GeohashDecodeFunction) Metadata(_ context.Context, _ function.MetadataR
 func (f *GeohashDecodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Decode a geohash into the centre point and bounding box of its cell",
-		MarkdownDescription: "Parses `code` and returns:\n\n- `latitude` / `longitude`: the centre of the cell, in degrees.\n- `lat_min` / `lat_max` / `lon_min` / `lon_max`: the cell's bounding box (the points the code *might* have been encoded from).\n\n`code` is case-insensitive but must use the standard geohash alphabet `0-9 b-z` minus `a i l o`. Errors on any other character.\n\nFor the corner cell `zzz…z` the geometric upper edges are exactly `(90, 180)`, but the upstream encoder wraps those values; the decoder shrinks `lat_max` / `lon_max` for that cell to the nearest representable float strictly below the wrap threshold (~one ULP off the geometric edge) so round-tripping `lat_max` / `lon_max` back through `geohash_encode` lands on the same cell.",
+		MarkdownDescription: geohashDecodeDescription,
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "code", Description: "Geohash string to decode."},
 		},

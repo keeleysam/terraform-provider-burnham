@@ -1,0 +1,1 @@
+Returns the network address of the CIDR (first IP, all host bits zero).

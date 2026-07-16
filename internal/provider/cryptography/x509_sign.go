@@ -16,6 +16,7 @@ import (
 	"crypto/elliptic"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	_ "embed"
 	"encoding/pem"
 	"fmt"
 	"math/big"
@@ -26,6 +27,9 @@ import (
 )
 
 var _ function.Function = (*X509SelfSignFunction)(nil)
+
+//go:embed descriptions/x509_self_sign.md
+var x509SelfSignDescription string
 
 type X509SelfSignFunction struct{}
 
@@ -38,7 +42,7 @@ func (f *X509SelfSignFunction) Metadata(_ context.Context, _ function.MetadataRe
 func (f *X509SelfSignFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Build a deterministic self-signed X.509 cert from a PEM private key (ECDSA P-256 or Ed25519)",
-		MarkdownDescription: fmt.Sprintf("Constructs a self-signed X.509 v3 certificate signed deterministically: ECDSA P-256 via RFC 6979 deterministic `k`, Ed25519 via PureEdDSA (naturally deterministic per RFC 8032). Given the same `private_key_pem` and the same parameters, the output is byte-identical across runs.\n\nPaired with [`ecdsa_p256_key_from_seed`](#function-ecdsa_p256_key_from_seed) or [`ed25519_key_from_seed`](#function-ed25519_key_from_seed), the full chain from input seed → key → cert is deterministic, with no random state involved at any step.\n\nFields produced:\n\n- **Version**: 3.\n- **Serial Number**: derived from `serial` (raw bytes; interpreted big-endian, leading-byte high bit cleared so the DER-encoded length stays predictable). 8–20 bytes; RFC 5280 §4.1.2.2 caps the encoded length at 20 octets.\n- **Issuer = Subject**: a single Common Name attribute (self-signed).\n- **Validity**: as supplied, RFC 3339.\n- **Basic Constraints**: critical, `CA:FALSE`.\n- **Signature Algorithm**: `ecdsa-with-SHA256` for ECDSA P-256 keys, `Ed25519` ([RFC 8410](https://www.rfc-editor.org/rfc/rfc8410)) for Ed25519 keys.\n\nOnly ECDSA P-256 and Ed25519 keys are accepted; other key types return an error. PEM input must contain one of `PRIVATE KEY` (PKCS#8) or `EC PRIVATE KEY` (SEC1) blocks.\n\n```\nprovider::burnham::x509_self_sign(\n  provider::burnham::ecdsa_p256_key_from_seed(sha512(file(\"input.bin\"))),\n  \"signer.example\",\n  provider::burnham::hkdf(\"sha256\", sha512(file(\"input.bin\")), \"\", \"serial\", 10),\n  \"2001-01-01T00:00:00Z\",\n  \"2099-01-01T00:00:00Z\",\n)\n→ \"-----BEGIN CERTIFICATE-----\\nMIIB…\\n-----END CERTIFICATE-----\\n\"\n```\n\n%s", hclByteHandlingGotcha),
+		MarkdownDescription: fmt.Sprintf(x509SelfSignDescription, hclByteHandlingGotcha),
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "private_key_pem", Description: "PEM-encoded ECDSA P-256 or Ed25519 private key (`PRIVATE KEY` PKCS#8 for either; `EC PRIVATE KEY` SEC1 is also accepted for ECDSA)."},
 			function.StringParameter{Name: "common_name", Description: "Subject / Issuer Common Name (also used as the DN). 1–64 characters (counted as Unicode code points per RFC 5280 §A.1 `ub-common-name-length`, not bytes, so a 30-CJK-character CN passes even though it's 90 UTF-8 bytes)."},

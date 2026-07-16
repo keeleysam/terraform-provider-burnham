@@ -1,6 +1,8 @@
 package dataformat
 
 import (
+	_ "embed"
+
 	"context"
 	"encoding/base64"
 	"fmt"
@@ -16,6 +18,9 @@ var cborMapStringInterfaceType = reflect.TypeOf(map[string]interface{}{})
 
 var _ function.Function = (*CBORDecodeFunction)(nil)
 
+//go:embed descriptions/cbordecode.md
+var cbordecodeDescription string
+
 type CBORDecodeFunction struct{}
 
 func NewCBORDecodeFunction() function.Function { return &CBORDecodeFunction{} }
@@ -27,7 +32,7 @@ func (f *CBORDecodeFunction) Metadata(_ context.Context, _ function.MetadataRequ
 func (f *CBORDecodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Decode a base64-encoded CBOR blob into a value",
-		MarkdownDescription: "Decodes [CBOR](https://www.rfc-editor.org/rfc/rfc8949) ([RFC 8949](https://www.rfc-editor.org/rfc/rfc8949)) bytes (provided as a standard base64 string, since HCL strings are UTF-8 only) into a Terraform value.\n\nType mapping: CBOR maps with string keys become objects (maps with non-string keys are an error); arrays become tuples; integers and floats become numbers; byte strings become standard base64 strings; tag-0/tag-1 datetimes become [RFC 3339](https://www.rfc-editor.org/rfc/rfc3339) strings; bignum tags (2/3) become full-precision numbers (Terraform's number type uses arbitrary-precision big floats).\n\nBacked by [fxamacker/cbor](https://github.com/fxamacker/cbor), an RFC 8949 conforming implementation.\n\n**Common uses:** consuming CBOR-encoded payloads from IoT/CoAP gateways, COSE signed objects, or any binary structured-data feed where compactness matters more than human readability.",
+		MarkdownDescription: cbordecodeDescription,
 		Parameters: []function.Parameter{
 			function.StringParameter{
 				Name:        "input",
@@ -87,6 +92,9 @@ func (f *CBORDecodeFunction) Run(ctx context.Context, req function.RunRequest, r
 
 var _ function.Function = (*CBOREncodeFunction)(nil)
 
+//go:embed descriptions/cborencode.md
+var cborencodeDescription string
+
 type CBOREncodeFunction struct{}
 
 func NewCBOREncodeFunction() function.Function { return &CBOREncodeFunction{} }
@@ -98,7 +106,7 @@ func (f *CBOREncodeFunction) Metadata(_ context.Context, _ function.MetadataRequ
 func (f *CBOREncodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Encode a value as base64 CBOR",
-		MarkdownDescription: "Encodes a Terraform value as [CBOR](https://www.rfc-editor.org/rfc/rfc8949) ([RFC 8949](https://www.rfc-editor.org/rfc/rfc8949)) and returns the result as a standard base64 string. Output uses CBOR's [Core Deterministic Encoding](https://www.rfc-editor.org/rfc/rfc8949#section-4.2.1): definite-length items, sorted map keys, and shortest-form integers, so the same input produces byte-identical output.\n\nWhole-number floats are emitted as integers (matching the conventions of `jsonencode` here). Strings are encoded as CBOR text strings; the function does not synthesize byte strings or tagged values from HCL inputs.\n\nBacked by [fxamacker/cbor](https://github.com/fxamacker/cbor).\n\n**Common uses:** generating CBOR fixtures for IoT services, COSE-style payloads, or any binary feed that benefits from a deterministic encoding.",
+		MarkdownDescription: cborencodeDescription,
 		Parameters: []function.Parameter{
 			function.DynamicParameter{
 				Name:        "value",

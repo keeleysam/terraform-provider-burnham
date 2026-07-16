@@ -2,6 +2,7 @@ package network
 
 import (
 	"context"
+	_ "embed"
 
 	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -16,10 +17,13 @@ func (f *CIDRFilterVersionFunction) Metadata(_ context.Context, _ function.Metad
 	resp.Name = "cidr_filter_version"
 }
 
+//go:embed descriptions/cidr_filter_version.md
+var cidrFilterVersionDescription string
+
 func (f *CIDRFilterVersionFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Filter a list of CIDRs by IP version",
-		MarkdownDescription: "Returns only the CIDRs from `cidrs` that belong to the given IP `version` (4 or 6).",
+		MarkdownDescription: cidrFilterVersionDescription,
 		Parameters: []function.Parameter{
 			function.ListParameter{
 				Name:        "cidrs",

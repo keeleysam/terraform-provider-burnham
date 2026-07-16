@@ -1,6 +1,8 @@
 package dataformat
 
 import (
+	_ "embed"
+
 	"bytes"
 	"context"
 	"encoding/json"
@@ -17,6 +19,9 @@ import (
 
 var _ function.Function = (*HuJSONDecodeFunction)(nil)
 
+//go:embed descriptions/hujsondecode.md
+var hujsondecodeDescription string
+
 type HuJSONDecodeFunction struct{}
 
 func NewHuJSONDecodeFunction() function.Function {
@@ -30,7 +35,7 @@ func (f *HuJSONDecodeFunction) Metadata(_ context.Context, _ function.MetadataRe
 func (f *HuJSONDecodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Parse a HuJSON (JWCC) string into a Terraform value",
-		MarkdownDescription: "Parses a HuJSON ([JSON With Commas and Comments / JWCC](https://nigeltao.github.io/blog/2021/json-with-commas-comments.html)) string into a Terraform value. Standard JSON is also accepted, since HuJSON is a strict superset.\n\nComments (`//` line and `/* */` block) are stripped during parsing; trailing commas are tolerated. Object keys become object members, arrays become tuples, and numbers preserve precision via `json.Number`.\n\n**Common uses:** parsing [Tailscale ACL policies](https://tailscale.com/kb/1018/acls), VS Code-style configuration files (`tsconfig.json`, `.vscode/settings.json`), or any human-edited JSON variant that allows comments.",
+		MarkdownDescription: hujsondecodeDescription,
 		Parameters: []function.Parameter{
 			function.StringParameter{
 				Name:        "input",
@@ -80,6 +85,9 @@ func (f *HuJSONDecodeFunction) Run(ctx context.Context, req function.RunRequest,
 
 var _ function.Function = (*HuJSONEncodeFunction)(nil)
 
+//go:embed descriptions/hujsonencode.md
+var hujsonencodeDescription string
+
 type HuJSONEncodeFunction struct{}
 
 func NewHuJSONEncodeFunction() function.Function {
@@ -93,7 +101,7 @@ func (f *HuJSONEncodeFunction) Metadata(_ context.Context, _ function.MetadataRe
 func (f *HuJSONEncodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Encode a value as a HuJSON (JWCC) string",
-		MarkdownDescription: "Encodes a Terraform value as a HuJSON string with trailing commas and pretty-printed formatting. By default every object member and array element gets its own line, producing diff-friendly output.\n\nPass an optional `options` object with these keys:\n\n- `indent` (string): override the default tab indentation.\n- `compact` (bool): opt in to hujson.Format's \"fit on one line if it can\" packing instead of the default always-expanded layout.\n- `escape_html` (bool, default `false`): when `false`, `<`, `>` and `&` are written literally, matching `jsonencode`. Set to `true` to escape them to `\\u003c` / `\\u003e` / `\\u0026` (the form Go's encoder produces), e.g. when embedding output in an HTML `<script>` context.\n- `comments` (object): mirror the data structure with string values that become comments placed before the matching key. Single-line strings render as `//` comments; strings containing `\\n` render as `/* */` block comments. Array elements are addressed by stringified index (`\"0\"`, `\"1\"`, …).\n\n**Common uses:** generating Tailscale ACL files, writing human-editable config snapshots, or producing JSON-like documents where reviewers benefit from inline annotations.",
+		MarkdownDescription: hujsonencodeDescription,
 		Parameters: []function.Parameter{
 			function.DynamicParameter{
 				Name:        "value",

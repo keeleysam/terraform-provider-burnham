@@ -1,0 +1,1 @@
+Returns the last address in the CIDR (all host bits set). For IPv4 this is the broadcast address.

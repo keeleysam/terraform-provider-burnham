@@ -2,6 +2,7 @@ package cel
 
 import (
 	"context"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"math/big"
@@ -15,6 +16,9 @@ import (
 
 var _ function.Function = (*CELEvaluateFunction)(nil)
 
+//go:embed descriptions/celevaluate.md
+var celevaluateDescription string
+
 type CELEvaluateFunction struct{}
 
 func NewCELEvaluateFunction() function.Function { return &CELEvaluateFunction{} }
@@ -26,7 +30,7 @@ func (f *CELEvaluateFunction) Metadata(_ context.Context, _ function.MetadataReq
 func (f *CELEvaluateFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Evaluate a standard CEL expression at plan time",
-		MarkdownDescription: "Compiles and evaluates a [CEL](https://cel.dev) expression against variable bindings and returns the result as a Terraform value. Useful for testing the logic of an expression you built with `celencode`, and for computing or validating values inside a plan.\n\nThis evaluates **standard CEL only**: cel-go's standard library plus its extension libraries (strings, math, lists, sets, encoders, bindings, two-variable comprehensions, regex, network) and optional types. Dialect-specific functions provided by a downstream host (GCP's `inIpRange`, Kubernetes' `quantity`/`authorizer`, and the like) are **not** available and will fail to compile, since this provider does not implement them. Every variable referenced by the expression must be supplied in `vars`; an undeclared variable or function is a compile error.\n\nEvaluation is deterministic (CEL has no wall-clock or randomness), so results are stable across plan and apply. Variables are declared dynamically, so no type annotations are needed. Result values map to Terraform as follows (each overridable in options): a timestamp becomes an RFC 3339 string, a duration a seconds string like `\"5400s\"`, bytes a base64 string, and a map with non-string keys is an error (Terraform objects require string keys). An absent optional (`optional.none()`) becomes null, indistinguishable from a CEL null result.",
+		MarkdownDescription: celevaluateDescription,
 		Parameters: []function.Parameter{
 			function.StringParameter{
 				Name:        "expr",

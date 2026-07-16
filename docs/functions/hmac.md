@@ -9,22 +9,17 @@ description: |-
 
 # function: hmac
 
-Returns the [HMAC-`algorithm`](https://www.rfc-editor.org/rfc/rfc2104) of `message` keyed by `key`, hex-encoded.
+Computes the keyed-hash message authentication code ([HMAC](https://www.rfc-editor.org/rfc/rfc2104), RFC 2104) of `message` under `key`, and returns it hex-encoded. Reach for it at boundaries that expect a signed payload: webhook signatures, stable per-tenant tokens, or CSRF cookie validation.
 
-`algorithm` is one of:
+`algorithm` selects the underlying hash:
 
 - `"sha1"`: RFC 2104 / FIPS 180-4 (legacy; do not pick for new designs)
 - `"sha224"`, `"sha256"`, `"sha384"`, `"sha512"`: FIPS 180-4 SHA-2 family
 - `"sha512_224"`, `"sha512_256"`: truncated SHA-512 variants
 
-```
-hmac("sha256", "super-secret", "payload")
-→ "3da88…" (hex)
-```
-
 **Byte handling, gotchas:** the inputs reach the function as the literal UTF-8 bytes of whatever string HCL hands it. HCL string literals only support `\uNNNN` Unicode escapes; there is no `\xNN` byte-escape syntax. A value spelled `"\u00ff"` arrives as the two UTF-8 bytes `0xc3 0xbf`, *not* the single byte `0xff`. An OpenSSL-style hex value like `"00ff"` is similarly interpreted as four ASCII characters, *not* two raw bytes. For arbitrary-byte inputs (RFC test vectors, hex-encoded keys, anything outside ASCII), encode upstream as base64 in your variable and pass `base64decode(var.x)` to this function. Burnham does not currently ship a `hex_decode` helper.
 
-This function is a derivation, not an MAC verifier: produce the expected MAC and `==`-compare in HCL.
+~> **Note:** This is a derivation, not a MAC verifier. To validate a MAC, compute the expected value and `==`-compare it in HCL.
 
 ## Example Usage
 

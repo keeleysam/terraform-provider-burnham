@@ -14,10 +14,12 @@ Returns a multi-line string containing a QR code that encodes `payload`, rendere
 Options object:
 
 - `error_correction` (string): error-correction level, one of `"L"` (default, ~7%), `"M"` (~15%), `"Q"` (~25%), `"H"` (~30%). Higher levels survive more occlusion at the cost of a bigger code.
-- `quiet_zone` (number): number of empty modules around the code. Default `4` (the [QR spec](https://en.wikipedia.org/wiki/QR_code) minimum). Set to `0` for very tight layouts.
+- `quiet_zone` (number): number of empty modules around the code, from `0` to `64`. Default `4` (the [QR spec](https://en.wikipedia.org/wiki/QR_code) minimum). Set to `0` for very tight layouts.
 - `style` (string): `"dark_on_light"` (default; dark modules render as `▀ █ ▄`, light as space, for white terminals) or `"light_on_dark"` (inverted, for black terminals).
 
-Layout is half-block: each terminal line covers two QR module rows. For payloads above ~150 characters you'll start hitting QR version limits at error_correction=`L`; bump to `H` only for short payloads where the size cost is acceptable.
+Layout is half-block: each terminal line covers two QR module rows.
+
+-> **Note:** Payloads have a hard ceiling set by the largest QR version (40). At `error_correction = "L"` the encoder tops out near ~2,950 bytes; higher levels leave less room for data, so `"H"` tops out near ~1,270 bytes. A payload past the level's ceiling returns a "text too long to encode as QR" error, so pick `"H"` for its stronger recovery only when the payload is well within that smaller budget.
 
 ## Example Usage
 

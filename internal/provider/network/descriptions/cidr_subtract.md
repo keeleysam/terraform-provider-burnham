@@ -1,0 +1,1 @@
+Returns the set of CIDRs that remain after removing all addresses covered by the `exclude` list from the `input` list. The result is merged into the smallest equivalent set.

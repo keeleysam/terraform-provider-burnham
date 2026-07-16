@@ -12,7 +12,7 @@ description: |-
 Returns a URL-safe slug derived from `s`. Lowercases the result, transliterates non-ASCII characters into their nearest ASCII equivalent (`café` → `cafe`, `Москва` → `moskva`, `北京` → `bei-jing`), strips remaining punctuation, and joins runs of word characters with hyphens.
 
 ```
-slugify("Café au Lait №3")  → "cafe-au-lait-no3"
+slugify("Café au Lait №3")  → "cafe-au-lait-3"
 slugify("Hello, World!")     → "hello-world"
 ```
 

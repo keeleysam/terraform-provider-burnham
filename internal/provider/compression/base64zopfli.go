@@ -11,6 +11,7 @@ package compression
 import (
 	"bytes"
 	"context"
+	_ "embed"
 	"encoding/base64"
 	"encoding/binary"
 	"fmt"
@@ -61,6 +62,9 @@ func zopfliGzip(input []byte, iterations int) ([]byte, error) {
 	return out, nil
 }
 
+//go:embed descriptions/base64zopfli.md
+var base64zopfliDescription string
+
 var _ function.Function = (*Base64ZopfliFunction)(nil)
 
 type Base64ZopfliFunction struct{}
@@ -74,7 +78,7 @@ func (f *Base64ZopfliFunction) Metadata(_ context.Context, _ function.MetadataRe
 func (f *Base64ZopfliFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "gzip-compress with Zopfli and base64-encode (a tighter, drop-in base64gzip)",
-		MarkdownDescription: "Compresses `input` with [Zopfli](https://github.com/google/zopfli)'s iterative DEFLATE encoder and returns the result as a base64-encoded gzip member. A drop-in replacement for Terraform's built-in `base64gzip`: the output is an ordinary [RFC 1952](https://www.rfc-editor.org/rfc/rfc1952) gzip stream that decompresses with any `gunzip` / `zcat` / `compress/gzip` decoder; consumers cannot tell it came from Zopfli rather than `gzip -9`, and nothing on the decompression side has to change.\n\nZopfli spends much more CPU than zlib searching for a smaller encoding of the same data (typically ~2–5% smaller than `gzip -9` on text). The win is free at the wire: it just makes the plan-time compression slower.\n\nThe gzip header is fixed for deterministic, portable output: `MTIME=0` (never \"current time\", which would churn every plan), `XFL=2`, `OS=255` (unknown), no optional flags. Same `input` and options always produce byte-identical output.\n\nThe optional `options` object accepts:\n\n- `iterations` (number): Zopfli optimization passes; default `15`, range `[1, 100000]`. Higher is smaller with diminishing returns past ~100. Always valid DEFLATE regardless of value.\n\n```\nboot_scripts_blob = provider::burnham::base64zopfli(jsonencode(scripts))\nboot_scripts_blob = provider::burnham::base64zopfli(jsonencode(scripts), { iterations = 100 })\n```",
+		MarkdownDescription: base64zopfliDescription,
 		Parameters: []function.Parameter{
 			function.StringParameter{
 				Name:        "input",

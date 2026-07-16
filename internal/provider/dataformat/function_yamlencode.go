@@ -1,6 +1,8 @@
 package dataformat
 
 import (
+	_ "embed"
+
 	"bytes"
 	"context"
 	"crypto/sha256"
@@ -20,6 +22,9 @@ import (
 
 var _ function.Function = (*YAMLEncodeFunction)(nil)
 
+//go:embed descriptions/yamlencode.md
+var yamlencodeDescription string
+
 type YAMLEncodeFunction struct{}
 
 func NewYAMLEncodeFunction() function.Function {
@@ -33,7 +38,7 @@ func (f *YAMLEncodeFunction) Metadata(_ context.Context, _ function.MetadataRequ
 func (f *YAMLEncodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Encode a value as YAML with full formatting control",
-		MarkdownDescription: "Encodes a Terraform value as a YAML string. Unlike Terraform's built-in `yamlencode`, this defaults to block style, uses literal block scalars (`|`) for multi-line strings, and supports inline comments through an `options.comments` map.\n\nPass an optional `options` object with these keys:\n\n- `indent` (number): indent width in spaces (default `2`).\n- `style` (string): `\"block\"` (default) or `\"flow\"`.\n- `quote_style` (string): `\"double\"`, `\"single\"`, or `\"plain\"`.\n- `null` (string): how to render nulls (default empty).\n- `sort_keys` (bool): sort object keys (default `true`).\n- `comments` (object): mirrored structure with string values that become `# ` comments before the matching key.\n\n**Common uses:** generating Kubernetes manifests, GitHub Actions workflows, Helm values files, or any other YAML configuration that gets reviewed and edited by humans.",
+		MarkdownDescription: yamlencodeDescription,
 		Parameters: []function.Parameter{
 			function.DynamicParameter{
 				Name:        "value",

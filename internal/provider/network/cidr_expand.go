@@ -2,6 +2,7 @@ package network
 
 import (
 	"context"
+	_ "embed"
 
 	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -16,10 +17,13 @@ func (f *CIDRExpandFunction) Metadata(_ context.Context, _ function.MetadataRequ
 	resp.Name = "cidr_expand"
 }
 
+//go:embed descriptions/cidr_expand.md
+var cidrExpandDescription string
+
 func (f *CIDRExpandFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Expand a CIDR into a list of individual IP addresses",
-		MarkdownDescription: "Returns every individual IP address within the given CIDR as a list of strings. Returns an error if the CIDR contains more than 65536 addresses to prevent accidental large expansions.",
+		MarkdownDescription: cidrExpandDescription,
 		Parameters: []function.Parameter{
 			function.StringParameter{
 				Name:        "cidr",

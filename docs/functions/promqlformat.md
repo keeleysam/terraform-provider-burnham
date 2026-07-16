@@ -9,9 +9,16 @@ description: |-
 
 # function: promqlformat
 
-Parses `query` and returns its canonical [PromQL](https://prometheus.io/docs/prometheus/latest/querying/basics/) serialization: normalized spacing and operator layout, on a single line. Pass `{ pretty = true }` for the parser's multi-line, indented form, which wraps only long sub-expressions (nice for a long alerting expression). It fails the plan on invalid input (use `promqlvalidate` for a non-failing boolean check).
+Parses `query` and returns its canonical [PromQL](https://prometheus.io/docs/prometheus/latest/querying/basics/) serialization: normalized spacing and operator layout, on a single line.
 
-The output is stable and idempotent, so two queries that differ only in whitespace canonicalize to the same string, and it is byte-identical to what `promqlencode` produces. Label matchers within a selector are sorted alphabetically, and PromQL `#` comments are dropped. Backed by [prometheus/prometheus](https://github.com/prometheus/prometheus)'s own parser.
+Pass `{ pretty = true }` for the parser's multi-line, indented form, which wraps only long sub-expressions (nice for a long alerting expression).
+
+The output is stable and idempotent, so two queries that differ only in whitespace canonicalize to the same string, and it is byte-identical to what `promqlencode` produces. Two normalizations to expect:
+
+- Label matchers within a selector are sorted alphabetically.
+- PromQL `#` comments are dropped.
+
+~> **Note:** Fails the plan on invalid input. Use `promqlvalidate` for a non-failing boolean check. Backed by [prometheus/prometheus](https://github.com/prometheus/prometheus)'s own parser.
 
 ## Example Usage
 

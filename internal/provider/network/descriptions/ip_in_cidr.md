@@ -1,0 +1,1 @@
+Returns `true` if `ip` is contained within `cidr`.

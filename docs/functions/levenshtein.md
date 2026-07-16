@@ -13,9 +13,15 @@ Returns the [Levenshtein distance](https://en.wikipedia.org/wiki/Levenshtein_dis
 
 Distance is computed over Unicode codepoints, not bytes, so `levenshtein("café", "cafe")` is `1` regardless of byte length. If your inputs may be in different normalization forms (NFC vs NFD), run `unicode_normalize(s, "NFC")` first.
 
-Classic uses: "did-you-mean" suggestions in dynamic config selection (`closest_match` over a list), spotting typos in resource names, deduplicating near-identical entries.
+Classic uses:
 
-The underlying DP is O(n·m), so latency is bounded by the product of the two rune counts, not either length alone. Each input is capped at 256 KiB, and the number of matrix cells (`runes(a) × runes(b)`) is capped so the worst case stays within a few seconds; a pairing that would exceed the cap returns an error instead of blocking plan-time evaluation. Realistic inputs (identifiers, resource names, even paragraphs of prose) sit comfortably below the cap.
+- "Did-you-mean" suggestions in dynamic config selection (`closest_match` over a list).
+- Spotting typos in resource names.
+- Deduplicating near-identical entries.
+
+The underlying dynamic-programming algorithm is O(n·m), so latency is bounded by the product of the two rune counts, not either length alone. Realistic inputs (identifiers, resource names, even paragraphs of prose) sit comfortably below the limits.
+
+~> **Note:** Each input is capped at 256 KiB, and the number of matrix cells (`runes(a) × runes(b)`) is capped so the worst case stays within a few seconds. A pairing that would exceed the cap returns an error instead of blocking plan-time evaluation.
 
 ## Example Usage
 

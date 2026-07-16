@@ -2,12 +2,16 @@ package oel
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/function"
 )
 
 var _ function.Function = (*OELFormatFunction)(nil)
+
+//go:embed descriptions/oelformat.md
+var oelformatDescription string
 
 type OELFormatFunction struct{}
 
@@ -20,7 +24,7 @@ func (f *OELFormatFunction) Metadata(_ context.Context, _ function.MetadataReque
 func (f *OELFormatFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Canonicalize an Okta EL expression string",
-		MarkdownDescription: "Parses `expr` and returns its canonical [Okta Expression Language](https://developer.okta.com/docs/reference/okta-expression-language/) serialization: normalized spacing and quoting (single-quoted string literals become double-quoted) and precedence-derived parenthesization. It fails the plan on syntactically invalid input (use `oelvalidate` for a non-failing boolean check).\n\nThe output is stable, so two expressions that differ only in spacing or quoting canonicalize to the same string, and it is byte-identical to what `oelencode` produces for the same expression. Covers the full documented grammar. Backed by [okta-expression-parser](https://github.com/keeleysam/okta-expression-parser).",
+		MarkdownDescription: oelformatDescription,
 		Parameters: []function.Parameter{
 			function.StringParameter{
 				Name:        "expr",

@@ -2,6 +2,7 @@ package network
 
 import (
 	"context"
+	_ "embed"
 
 	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/keeleysam/terraform-burnham/internal/provider/network/iputil"
@@ -15,10 +16,13 @@ func (f *IPVersionFunction) Metadata(_ context.Context, _ function.MetadataReque
 	resp.Name = "ip_version"
 }
 
+//go:embed descriptions/ip_version.md
+var ipVersionDescription string
+
 func (f *IPVersionFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Return the IP version of an address",
-		MarkdownDescription: "Returns `4` for IPv4 addresses and `6` for IPv6 addresses. IPv4-mapped IPv6 addresses (e.g. `::ffff:10.0.0.1`) are treated as IPv4.",
+		MarkdownDescription: ipVersionDescription,
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "ip", Description: "The IP address to inspect."},
 		},
@@ -50,10 +54,13 @@ func (f *CIDRVersionFunction) Metadata(_ context.Context, _ function.MetadataReq
 	resp.Name = "cidr_version"
 }
 
+//go:embed descriptions/cidr_version.md
+var cidrVersionDescription string
+
 func (f *CIDRVersionFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Return the IP version of a CIDR",
-		MarkdownDescription: "Returns `4` for IPv4 prefixes and `6` for IPv6 prefixes.",
+		MarkdownDescription: cidrVersionDescription,
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "cidr", Description: "The CIDR to inspect."},
 		},

@@ -10,6 +10,7 @@ package text
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 	"unicode/utf8"
 
@@ -24,6 +25,9 @@ const levenshteinMaxProduct = 2_000_000_000
 
 var _ function.Function = (*LevenshteinFunction)(nil)
 
+//go:embed descriptions/levenshtein.md
+var levenshteinDescription string
+
 type LevenshteinFunction struct{}
 
 func NewLevenshteinFunction() function.Function { return &LevenshteinFunction{} }
@@ -35,7 +39,7 @@ func (f *LevenshteinFunction) Metadata(_ context.Context, _ function.MetadataReq
 func (f *LevenshteinFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Levenshtein edit distance between two strings",
-		MarkdownDescription: "Returns the [Levenshtein distance](https://en.wikipedia.org/wiki/Levenshtein_distance) between `a` and `b`: the minimum number of single-character insertions, deletions, or substitutions needed to turn one string into the other.\n\nDistance is computed over Unicode codepoints, not bytes, so `levenshtein(\"café\", \"cafe\")` is `1` regardless of byte length. If your inputs may be in different normalization forms (NFC vs NFD), run `unicode_normalize(s, \"NFC\")` first.\n\nClassic uses: \"did-you-mean\" suggestions in dynamic config selection (`closest_match` over a list), spotting typos in resource names, deduplicating near-identical entries.\n\nThe underlying DP is O(n·m), so latency is bounded by the product of the two rune counts, not either length alone. Each input is capped at 256 KiB, and the number of matrix cells (`runes(a) × runes(b)`) is capped so the worst case stays within a few seconds; a pairing that would exceed the cap returns an error instead of blocking plan-time evaluation. Realistic inputs (identifiers, resource names, even paragraphs of prose) sit comfortably below the cap.",
+		MarkdownDescription: levenshteinDescription,
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "a", Description: "First string."},
 			function.StringParameter{Name: "b", Description: "Second string."},

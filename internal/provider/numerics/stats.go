@@ -14,6 +14,7 @@ package numerics
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 	"math/big"
 	"sort"
@@ -112,6 +113,9 @@ func sortedCopy(xs []*big.Float) []*big.Float {
 // mean
 // ──────────────────────────────────────────────────────────────────────
 
+//go:embed descriptions/mean.md
+var meanDescription string
+
 var _ function.Function = (*MeanFunction)(nil)
 
 type MeanFunction struct{}
@@ -125,7 +129,7 @@ func (f *MeanFunction) Metadata(_ context.Context, _ function.MetadataRequest, r
 func (f *MeanFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Arithmetic mean (average) of a list of numbers",
-		MarkdownDescription: "Returns Σ x / N, the arithmetic mean of `numbers`. Errors when `numbers` is empty.\n\nUse this when you want a plain average. For weighted means, geometric means, or trimmed means, do the weighting explicitly in HCL. The goal of this function is the unambiguous canonical definition.",
+		MarkdownDescription: meanDescription,
 		Parameters: []function.Parameter{
 			function.ListParameter{
 				Name:        "numbers",
@@ -151,6 +155,9 @@ func (f *MeanFunction) Run(ctx context.Context, req function.RunRequest, resp *f
 // median
 // ──────────────────────────────────────────────────────────────────────
 
+//go:embed descriptions/median.md
+var medianDescription string
+
 var _ function.Function = (*MedianFunction)(nil)
 
 type MedianFunction struct{}
@@ -164,7 +171,7 @@ func (f *MedianFunction) Metadata(_ context.Context, _ function.MetadataRequest,
 func (f *MedianFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Median (50th percentile) of a list of numbers",
-		MarkdownDescription: "Returns the median of `numbers`. For odd N this is the middle value of the sorted list; for even N it is the arithmetic mean of the two central values. Equivalent to `percentile(numbers, 50)`. Errors when `numbers` is empty.",
+		MarkdownDescription: medianDescription,
 		Parameters: []function.Parameter{
 			function.ListParameter{
 				Name:        "numbers",
@@ -198,6 +205,9 @@ func (f *MedianFunction) Run(ctx context.Context, req function.RunRequest, resp 
 // percentile
 // ──────────────────────────────────────────────────────────────────────
 
+//go:embed descriptions/percentile.md
+var percentileDescription string
+
 var _ function.Function = (*PercentileFunction)(nil)
 
 type PercentileFunction struct{}
@@ -211,7 +221,7 @@ func (f *PercentileFunction) Metadata(_ context.Context, _ function.MetadataRequ
 func (f *PercentileFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Percentile of a list of numbers, by linear interpolation",
-		MarkdownDescription: "Returns the `p`-th percentile of `numbers` using linear interpolation between adjacent ordered values. This is **Hyndman & Fan Type 7**, the default method in [NumPy](https://numpy.org/doc/stable/reference/generated/numpy.percentile.html), R, and Excel's `PERCENTILE.INC`.\n\nDefinition: let the sorted observations be `x[0] ≤ x[1] ≤ … ≤ x[N-1]`. Compute `h = (p / 100) × (N - 1)`. If `h` is an integer, return `x[h]`. Otherwise return `x[⌊h⌋] + (h - ⌊h⌋) × (x[⌈h⌉] - x[⌊h⌋])`.\n\nValid `p` is in `[0, 100]`. `p = 0` returns the minimum; `p = 100` returns the maximum; `p = 50` matches `median(numbers)`.",
+		MarkdownDescription: percentileDescription,
 		Parameters: []function.Parameter{
 			function.ListParameter{
 				Name:        "numbers",
@@ -297,6 +307,9 @@ func (f *PercentileFunction) Run(ctx context.Context, req function.RunRequest, r
 // variance (population)
 // ──────────────────────────────────────────────────────────────────────
 
+//go:embed descriptions/variance.md
+var varianceDescription string
+
 var _ function.Function = (*VarianceFunction)(nil)
 
 type VarianceFunction struct{}
@@ -310,7 +323,7 @@ func (f *VarianceFunction) Metadata(_ context.Context, _ function.MetadataReques
 func (f *VarianceFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Population variance of a list of numbers",
-		MarkdownDescription: "Returns the **population variance** σ² = Σ (x − μ)² / N, where μ = `mean(numbers)`.\n\nThis is the population formula (divide by N), matching numpy's default. For sample variance (Bessel's correction, divide by N-1), multiply by `length(numbers) / (length(numbers) - 1)`. Errors when `numbers` is empty.",
+		MarkdownDescription: varianceDescription,
 		Parameters: []function.Parameter{
 			function.ListParameter{
 				Name:        "numbers",
@@ -336,6 +349,9 @@ func (f *VarianceFunction) Run(ctx context.Context, req function.RunRequest, res
 // stddev (population)
 // ──────────────────────────────────────────────────────────────────────
 
+//go:embed descriptions/stddev.md
+var stddevDescription string
+
 var _ function.Function = (*StddevFunction)(nil)
 
 type StddevFunction struct{}
@@ -349,7 +365,7 @@ func (f *StddevFunction) Metadata(_ context.Context, _ function.MetadataRequest,
 func (f *StddevFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Population standard deviation of a list of numbers",
-		MarkdownDescription: "Returns σ = √(Σ (x − μ)² / N), the **population standard deviation**, where μ = `mean(numbers)`.\n\nPopulation formula (divide by N), matching numpy's default. For sample standard deviation, take `sqrt(variance(numbers) × length(numbers) / (length(numbers) - 1))`. Errors when `numbers` is empty.",
+		MarkdownDescription: stddevDescription,
 		Parameters: []function.Parameter{
 			function.ListParameter{
 				Name:        "numbers",
@@ -376,6 +392,9 @@ func (f *StddevFunction) Run(ctx context.Context, req function.RunRequest, resp 
 // mode
 // ──────────────────────────────────────────────────────────────────────
 
+//go:embed descriptions/mode.md
+var modeDescription string
+
 var _ function.Function = (*ModeFunction)(nil)
 
 type ModeFunction struct{}
@@ -389,7 +408,7 @@ func (f *ModeFunction) Metadata(_ context.Context, _ function.MetadataRequest, r
 func (f *ModeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Most-frequent value(s) in a list of numbers",
-		MarkdownDescription: "Returns the value(s) appearing most frequently in `numbers`, as a sorted ascending list. The result is always a list because the data may be **multimodal**: e.g. `mode([1, 1, 2, 2, 3])` is `[1, 2]`, not just one of them. For unimodal data the list has length 1.\n\n**No mode for all-unique data.** When every value occurs exactly once and the list has more than one element (`mode([1, 2, 3])`), the function returns an empty list rather than echoing the input, since having a \"mode\" requires at least one value to repeat. Single-element input `mode([5])` returns `[5]` (degenerate but unambiguous).\n\nTwo numeric values are considered equal here when they compare equal as `*big.Float` (`Cmp == 0`), so `mode([1, 1.0])` collapses to `[1]`. Errors when `numbers` is empty.",
+		MarkdownDescription: modeDescription,
 		Parameters: []function.Parameter{
 			function.ListParameter{
 				Name:        "numbers",

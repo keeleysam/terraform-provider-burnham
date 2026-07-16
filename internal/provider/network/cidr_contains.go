@@ -2,6 +2,7 @@ package network
 
 import (
 	"context"
+	_ "embed"
 
 	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/keeleysam/terraform-burnham/internal/provider/network/iputil"
@@ -15,10 +16,13 @@ func (f *CIDRContainsFunction) Metadata(_ context.Context, _ function.MetadataRe
 	resp.Name = "cidr_contains"
 }
 
+//go:embed descriptions/cidr_contains.md
+var cidrContainsDescription string
+
 func (f *CIDRContainsFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Check whether a CIDR fully contains another IP or CIDR",
-		MarkdownDescription: "Returns `true` if `cidr` fully contains `other`. `other` may be a bare IP address or a CIDR string.",
+		MarkdownDescription: cidrContainsDescription,
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "cidr", Description: "The outer CIDR."},
 			function.StringParameter{Name: "other", Description: "The IP or CIDR to test for containment."},

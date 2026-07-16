@@ -2,6 +2,7 @@ package promql
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/function"
@@ -9,6 +10,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/keeleysam/terraform-burnham/internal/provider/optionsutil"
 )
+
+//go:embed descriptions/promqlformat.md
+var promqlformatDescription string
 
 var _ function.Function = (*PromQLFormatFunction)(nil)
 
@@ -23,7 +27,7 @@ func (f *PromQLFormatFunction) Metadata(_ context.Context, _ function.MetadataRe
 func (f *PromQLFormatFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Canonicalize a PromQL expression",
-		MarkdownDescription: "Parses `query` and returns its canonical [PromQL](https://prometheus.io/docs/prometheus/latest/querying/basics/) serialization: normalized spacing and operator layout, on a single line. Pass `{ pretty = true }` for the parser's multi-line, indented form, which wraps only long sub-expressions (nice for a long alerting expression). It fails the plan on invalid input (use `promqlvalidate` for a non-failing boolean check).\n\nThe output is stable and idempotent, so two queries that differ only in whitespace canonicalize to the same string, and it is byte-identical to what `promqlencode` produces. Label matchers within a selector are sorted alphabetically, and PromQL `#` comments are dropped. Backed by [prometheus/prometheus](https://github.com/prometheus/prometheus)'s own parser.",
+		MarkdownDescription: promqlformatDescription,
 		Parameters: []function.Parameter{
 			function.StringParameter{
 				Name:        "query",

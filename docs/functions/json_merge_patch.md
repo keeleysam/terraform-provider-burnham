@@ -9,9 +9,15 @@ description: |-
 
 # function: json_merge_patch
 
-Applies an [RFC 7396](https://www.rfc-editor.org/rfc/rfc7396) JSON Merge Patch to a Terraform value and returns the merged result. Unlike RFC 6902 (JSON Patch), the merge patch *is* a partial document with the same shape as the target: keys present in the patch override keys in the target, and a `null` value in the patch *deletes* the corresponding key from the target. Arrays are replaced wholesale; they aren't merged element-wise.
+Applies an [RFC 7396](https://www.rfc-editor.org/rfc/rfc7396) JSON Merge Patch to a Terraform value and returns the merged result. Unlike RFC 6902 (JSON Patch), a merge patch *is* a partial document with the same shape as the target, which makes it the right tool for environment overlays and Kubernetes-style strategic-merge-adjacent layering where most of your patch is just "set these fields, remove that one."
 
-This is the right tool for environment overlays and Kubernetes-style strategic-merge-adjacent layering where most of your patch is just "set these fields, remove that one." For element-level array edits or `test`-gated operations, use `json_patch` (RFC 6902) instead.
+The patch is applied by these rules:
+
+- Keys present in the patch override the matching keys in the target.
+- A `null` value in the patch deletes the corresponding key from the target.
+- Arrays are replaced wholesale; they are not merged element-wise.
+
+-> **Note:** For element-level array edits or `test`-gated operations, use `json_patch` (RFC 6902) instead.
 
 Backed by [evanphx/json-patch](https://github.com/evanphx/json-patch).
 

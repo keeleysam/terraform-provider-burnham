@@ -2,6 +2,7 @@ package network
 
 import (
 	"context"
+	_ "embed"
 
 	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/keeleysam/terraform-burnham/internal/provider/network/iputil"
@@ -15,10 +16,13 @@ func (f *CIDRFirstIPFunction) Metadata(_ context.Context, _ function.MetadataReq
 	resp.Name = "cidr_first_ip"
 }
 
+//go:embed descriptions/cidr_first_ip.md
+var cidrFirstIpDescription string
+
 func (f *CIDRFirstIPFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Return the first (network) IP address of a CIDR",
-		MarkdownDescription: "Returns the network address of the CIDR (first IP, all host bits zero).",
+		MarkdownDescription: cidrFirstIpDescription,
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "cidr", Description: "The CIDR to inspect."},
 		},
@@ -50,10 +54,13 @@ func (f *CIDRLastIPFunction) Metadata(_ context.Context, _ function.MetadataRequ
 	resp.Name = "cidr_last_ip"
 }
 
+//go:embed descriptions/cidr_last_ip.md
+var cidrLastIpDescription string
+
 func (f *CIDRLastIPFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Return the last IP address of a CIDR",
-		MarkdownDescription: "Returns the last address in the CIDR (all host bits set). For IPv4 this is the broadcast address.",
+		MarkdownDescription: cidrLastIpDescription,
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "cidr", Description: "The CIDR to inspect."},
 		},

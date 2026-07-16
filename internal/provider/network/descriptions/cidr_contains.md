@@ -1,0 +1,1 @@
+Returns `true` if `cidr` fully contains `other`. `other` may be a bare IP address or a CIDR string.

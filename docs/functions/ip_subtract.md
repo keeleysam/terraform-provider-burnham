@@ -9,9 +9,22 @@ description: |-
 
 # function: ip_subtract
 
-Returns `a - b` as an integer: how many address positions separate the two IPs. A positive result means `a` is higher; negative means `b` is higher; zero means they are equal. Both addresses must be the same family. For IPv4 the result always fits; for IPv6 an error is returned if the difference exceeds int64 range.
+Returns the signed integer distance between two IP addresses: how many address positions separate them.
 
-**Common uses:** asserting that two IPs are within N addresses of each other; computing the length of an arbitrary IP range; confirming an IP falls exactly at the expected offset from a base address; generating loop indices over a sparse range.
+The result is `a - b`:
+
+- Positive means `a` is higher than `b`.
+- Negative means `b` is higher than `a`.
+- Zero means they are equal.
+
+Both addresses must be in the same family. For IPv4 the result always fits; for IPv6 an error is returned if the difference exceeds the int64 range.
+
+Common uses:
+
+- Asserting that two IPs are within N addresses of each other.
+- Computing the length of an arbitrary IP range.
+- Confirming an IP falls exactly at the expected offset from a base address.
+- Generating loop indices over a sparse range.
 
 ## Example Usage
 

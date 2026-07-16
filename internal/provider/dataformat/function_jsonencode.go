@@ -1,6 +1,8 @@
 package dataformat
 
 import (
+	_ "embed"
+
 	"bytes"
 	"context"
 	"encoding/json"
@@ -12,6 +14,9 @@ import (
 )
 
 var _ function.Function = (*JSONEncodeFunction)(nil)
+
+//go:embed descriptions/jsonencode.md
+var jsonencodeDescription string
 
 type JSONEncodeFunction struct{}
 
@@ -26,7 +31,7 @@ func (f *JSONEncodeFunction) Metadata(_ context.Context, _ function.MetadataRequ
 func (f *JSONEncodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Encode a value as pretty-printed JSON",
-		MarkdownDescription: "Encodes a Terraform value as a pretty-printed JSON string with newlines and indentation. Unlike Terraform's built-in `jsonencode`, which produces a single compact line, this function returns output that's reviewable in pull requests and diff-friendly when written to a file.\n\nThe optional `options` object supports:\n\n- `indent` (string): override the default tab indentation, e.g. `{ indent = \"  \" }` for two-space indent.\n- `escape_html` (bool, default `false`): when `false`, `<`, `>` and `&` are written literally, which is what you want for human-reviewed output. Terraform's built-in `jsonencode` (and Go's encoder) escape them to `\\u003c` / `\\u003e` / `\\u0026`; set this to `true` to match that legacy behavior, e.g. when embedding JSON in an HTML `<script>` context.\n\nObject keys are sorted alphabetically; whole numbers render without a decimal point.\n\n**Common uses:** rendering IAM policies, OpenAPI specs, or any structured JSON document that gets reviewed in PRs or written to disk via `local_file`.",
+		MarkdownDescription: jsonencodeDescription,
 		Parameters: []function.Parameter{
 			function.DynamicParameter{
 				Name:        "value",

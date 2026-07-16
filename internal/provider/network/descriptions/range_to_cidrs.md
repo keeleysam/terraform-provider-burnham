@@ -1,0 +1,1 @@
+Converts an inclusive IP range `[first_ip, last_ip]` into the minimal list of CIDRs that exactly covers the range. Both IPs must be the same address family (IPv4 or IPv6).

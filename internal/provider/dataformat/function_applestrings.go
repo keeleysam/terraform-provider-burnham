@@ -1,6 +1,8 @@
 package dataformat
 
 import (
+	_ "embed"
+
 	"bytes"
 	"context"
 	"fmt"
@@ -17,6 +19,9 @@ import (
 
 var _ function.Function = (*AppleStringsDecodeFunction)(nil)
 
+//go:embed descriptions/applestringsdecode.md
+var applestringsdecodeDescription string
+
 type AppleStringsDecodeFunction struct{}
 
 func NewAppleStringsDecodeFunction() function.Function { return &AppleStringsDecodeFunction{} }
@@ -28,7 +33,7 @@ func (f *AppleStringsDecodeFunction) Metadata(_ context.Context, _ function.Meta
 func (f *AppleStringsDecodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Parse an Apple .strings localization file",
-		MarkdownDescription: "Parses an Apple [`.strings`](https://developer.apple.com/library/archive/documentation/MacOSX/Conceptual/BPInternational/MaintaingYourOwnStringsFiles/MaintaingYourOwnStringsFiles.html) localization file body into a flat string-to-string object. Both UTF-8 and UTF-16 (with BOM) inputs are auto-detected. `//` and `/* */` comments are tolerated and skipped.\n\nEach entry follows `\"key\" = \"value\";` with C-style escapes inside the quoted strings: `\\\\`, `\\\"`, `\\n`, `\\r`, `\\t`, and `\\uXXXX`.\n\n**Common uses:** ingesting `Localizable.strings` files for iOS/macOS workflows, building configuration profiles, or running diff/merge logic across translation files at plan time.",
+		MarkdownDescription: applestringsdecodeDescription,
 		Parameters: []function.Parameter{
 			function.StringParameter{
 				Name:        "input",
@@ -72,6 +77,9 @@ func (f *AppleStringsDecodeFunction) Run(ctx context.Context, req function.RunRe
 
 var _ function.Function = (*AppleStringsEncodeFunction)(nil)
 
+//go:embed descriptions/applestringsencode.md
+var applestringsencodeDescription string
+
 type AppleStringsEncodeFunction struct{}
 
 func NewAppleStringsEncodeFunction() function.Function { return &AppleStringsEncodeFunction{} }
@@ -83,7 +91,7 @@ func (f *AppleStringsEncodeFunction) Metadata(_ context.Context, _ function.Meta
 func (f *AppleStringsEncodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Encode an object as an Apple .strings localization file",
-		MarkdownDescription: "Encodes a flat string-keyed object as an Apple `.strings` localization file body. Output is UTF-8 with `\"key\" = \"value\";` lines in alphabetical key order. Backslashes (`\\\\`), double quotes (`\\\"`), newline (`\\n`), carriage return (`\\r`), and tab (`\\t`) are escaped; other control characters pass through unchanged. Nested objects and lists are not allowed.\n\nOutput is UTF-8. Modern Xcode toolchains (Xcode 13+) accept UTF-8 `.strings` files; older tooling may require UTF-16 conversion, which can be done with `iconv` after writing the file via `local_file`.",
+		MarkdownDescription: applestringsencodeDescription,
 		Parameters: []function.Parameter{
 			function.DynamicParameter{
 				Name:        "value",

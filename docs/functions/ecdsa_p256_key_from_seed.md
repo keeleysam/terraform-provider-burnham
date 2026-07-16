@@ -9,14 +9,13 @@ description: |-
 
 # function: ecdsa_p256_key_from_seed
 
-Stretches `seed` to 48 bytes with HKDF-SHA256 (info string `"burnham/ecdsa_p256_key_from_seed"`), reduces modulo (n-1) and adds 1 to land in [1, n-1] uniformly, and assembles the resulting scalar into a `secp256r1` private key. Output is PEM PKCS#8.
+Derives a `secp256r1` (P-256) private key deterministically from `seed` and returns it as PEM PKCS#8. The same `seed` always produces the same key, so you get a stable signing identity from a checked-in secret or input artefact rather than a randomly generated key stored in state.
 
-Deterministic by construction: same `seed` → same key, every time. Useful when you want a stable signing identity that's derived from a checked-in secret or input artefact rather than randomly generated and stored.
+How the scalar is derived:
 
-```
-provider::burnham::ecdsa_p256_key_from_seed(sha512(file("input.bin")))
-→ "-----BEGIN PRIVATE KEY-----\nMIGHAgEAM…\n-----END PRIVATE KEY-----\n"
-```
+- Stretch `seed` to 48 bytes with HKDF-SHA256 (info string `"burnham/ecdsa_p256_key_from_seed"`).
+- Reduce that value modulo (n-1) and add 1, landing uniformly in [1, n-1].
+- Assemble the resulting scalar into the P-256 private key.
 
 Pair with [`x509_self_sign`](#function-x509_self_sign) and [`pkcs7_sign`](#function-pkcs7_sign) to build deterministic signing pipelines that are byte-stable across Terraform plans.
 

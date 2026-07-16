@@ -2,6 +2,7 @@ package network
 
 import (
 	"context"
+	_ "embed"
 
 	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/keeleysam/terraform-burnham/internal/provider/network/iputil"
@@ -15,10 +16,13 @@ func (f *IPInCIDRFunction) Metadata(_ context.Context, _ function.MetadataReques
 	resp.Name = "ip_in_cidr"
 }
 
+//go:embed descriptions/ip_in_cidr.md
+var ipInCidrDescription string
+
 func (f *IPInCIDRFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Check whether an IP address is within a CIDR",
-		MarkdownDescription: "Returns `true` if `ip` is contained within `cidr`.",
+		MarkdownDescription: ipInCidrDescription,
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "ip", Description: "The IP address to check."},
 			function.StringParameter{Name: "cidr", Description: "The CIDR to check against."},

@@ -9,18 +9,15 @@ description: |-
 
 # function: ed25519_key_from_seed
 
-Stretches `seed` to 32 bytes with HKDF-SHA256 (info string `"burnham/ed25519_key_from_seed"`), uses the result as the Ed25519 private-key seed per [RFC 8032 §5.1.5](https://www.rfc-editor.org/rfc/rfc8032#section-5.1.5), and returns the resulting key as PEM PKCS#8.
+Derives an Ed25519 private key deterministically from `seed` and returns it as PEM PKCS#8. The same `seed` always produces the same key, so you get a stable signing identity from a checked-in secret or input artefact rather than a randomly generated key stored in state.
 
-Deterministic by construction: same `seed` → same key, every time. Pair with [`x509_self_sign`](#function-x509_self_sign) and [`pkcs7_sign`](#function-pkcs7_sign): both accept either ECDSA P-256 or Ed25519 keys and dispatch the right signing algorithm on the key type.
+`seed` is stretched to 32 bytes with HKDF-SHA256 (info string `"burnham/ed25519_key_from_seed"`) and used as the Ed25519 private-key seed per [RFC 8032 §5.1.5](https://www.rfc-editor.org/rfc/rfc8032#section-5.1.5).
 
-```
-provider::burnham::ed25519_key_from_seed(sha512(file("input.bin")))
-→ "-----BEGIN PRIVATE KEY-----\nMC4CAQAwBQYDK2VwBCIEI…\n-----END PRIVATE KEY-----\n"
-```
+Pair with [`x509_self_sign`](#function-x509_self_sign) and [`pkcs7_sign`](#function-pkcs7_sign): both accept either ECDSA P-256 or Ed25519 keys and dispatch the right signing algorithm on the key type.
 
-Ed25519 is naturally deterministic by spec (the per-signature nonce is HMAC-derived from the private key and the message itself), so unlike the [`ecdsa_p256_key_from_seed`](#function-ecdsa_p256_key_from_seed) path there is no RFC 6979 wrapper involved; the stdlib `crypto/ed25519` signer is already byte-stable.
+Ed25519 is deterministic by spec (the per-signature nonce is derived by SHA-512 over a private-key prefix and the message, per RFC 8032), so unlike the [`ecdsa_p256_key_from_seed`](#function-ecdsa_p256_key_from_seed) path there is no RFC 6979 wrapper involved; the stdlib `crypto/ed25519` signer is already byte-stable.
 
-**Compatibility note.** Ed25519 in CMS / X.509 is supported by OpenSSL and the rest of the modern PKI ecosystem ([RFC 8032](https://www.rfc-editor.org/rfc/rfc8032), [RFC 8410](https://www.rfc-editor.org/rfc/rfc8410), [RFC 8419](https://www.rfc-editor.org/rfc/rfc8419)) but is **not accepted** by Apple's macOS configuration-profile installer at the keychain-import layer as of macOS 26.5; signed `.mobileconfig` files using Ed25519 install-time-fail. For Apple configuration profiles use [`ecdsa_p256_key_from_seed`](#function-ecdsa_p256_key_from_seed) instead. Ed25519 is the better choice when the signature consumer is anything else (OpenSSL `cms`, GPG-replacement workflows, container signing, internal tooling).
+~> **Note:** Ed25519 in CMS / X.509 is supported by OpenSSL and the rest of the modern PKI ecosystem ([RFC 8032](https://www.rfc-editor.org/rfc/rfc8032), [RFC 8410](https://www.rfc-editor.org/rfc/rfc8410), [RFC 8419](https://www.rfc-editor.org/rfc/rfc8419)), but is **not accepted** by Apple's macOS configuration-profile installer at the keychain-import layer as of macOS 26.5: signed `.mobileconfig` files using Ed25519 fail at install time. For Apple configuration profiles use [`ecdsa_p256_key_from_seed`](#function-ecdsa_p256_key_from_seed) instead. Ed25519 is the better choice when the signature consumer is anything else (OpenSSL `cms`, GPG-replacement workflows, container signing, internal tooling).
 
 **Byte handling, gotchas:** the inputs reach the function as the literal UTF-8 bytes of whatever string HCL hands it. HCL string literals only support `\uNNNN` Unicode escapes; there is no `\xNN` byte-escape syntax. A value spelled `"\u00ff"` arrives as the two UTF-8 bytes `0xc3 0xbf`, *not* the single byte `0xff`. An OpenSSL-style hex value like `"00ff"` is similarly interpreted as four ASCII characters, *not* two raw bytes. For arbitrary-byte inputs (RFC test vectors, hex-encoded keys, anything outside ASCII), encode upstream as base64 in your variable and pass `base64decode(var.x)` to this function. Burnham does not currently ship a `hex_decode` helper.
 

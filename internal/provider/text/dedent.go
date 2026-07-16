@@ -8,6 +8,7 @@ package text
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 	"strings"
 
@@ -60,6 +61,9 @@ func commonPrefix(a, b string) string {
 
 var _ function.Function = (*DedentFunction)(nil)
 
+//go:embed descriptions/dedent.md
+var dedentDescription string
+
 type DedentFunction struct{}
 
 func NewDedentFunction() function.Function { return &DedentFunction{} }
@@ -71,7 +75,7 @@ func (f *DedentFunction) Metadata(_ context.Context, _ function.MetadataRequest,
 func (f *DedentFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Remove common leading whitespace from every line",
-		MarkdownDescription: "Removes the longest run of leading whitespace common to all non-blank lines, leaving relative indentation intact, the `textwrap.dedent` operation. Terraform ships `indent` but no inverse, so an indented heredoc (cloud-init, a shell script, an embedded YAML/JSON block) comes out indented; `dedent` left-aligns it.\n\nWhitespace-only lines don't count toward the common margin and are normalized to empty. Tabs and spaces must match exactly to be considered common, so don't mix them in the indentation you intend to strip.\n\n```\ndedent(\"    if x:\\n        y\")\n→ \"if x:\\n    y\"\n```",
+		MarkdownDescription: dedentDescription,
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "s", Description: "The string to dedent."},
 		},

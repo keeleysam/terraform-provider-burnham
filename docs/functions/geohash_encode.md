@@ -22,6 +22,8 @@ Returns the [geohash](https://en.wikipedia.org/wiki/Geohash) of the given `(lati
 
 `precision` must be in `[1, 12]`. `latitude` must be in `[-90, 90]` and `longitude` in `[-180, 180]`.
 
+~> **Note:** the upper bounds wrap under the standard encoder. A `latitude` at or within one ULP of `90`, and a `longitude` at or within one ULP of `180`, are rejected (they would wrap to the south pole / antimeridian). Pass a value at least two ULPs below, or use the equivalent `-90` / `-180` edge. The lower bounds `-90` and `-180` encode fine.
+
 ```
 geohash_encode(37.7749, -122.4194, 7)
 → "9q8yyk8"   (≈ Civic Center, San Francisco)

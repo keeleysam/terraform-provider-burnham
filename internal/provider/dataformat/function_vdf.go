@@ -1,6 +1,8 @@
 package dataformat
 
 import (
+	_ "embed"
+
 	"context"
 	"fmt"
 	"sort"
@@ -15,6 +17,9 @@ import (
 
 var _ function.Function = (*VDFDecodeFunction)(nil)
 
+//go:embed descriptions/vdfdecode.md
+var vdfdecodeDescription string
+
 type VDFDecodeFunction struct{}
 
 func NewVDFDecodeFunction() function.Function {
@@ -28,7 +33,7 @@ func (f *VDFDecodeFunction) Metadata(_ context.Context, _ function.MetadataReque
 func (f *VDFDecodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Parse a Valve Data Format (VDF) string into a Terraform value",
-		MarkdownDescription: "Parses a [Valve Data Format (VDF)](https://developer.valvesoftware.com/wiki/KeyValues) string into a Terraform object. VDF is a nested key-value format used by Steam and the Source engine; the only types are strings and nested objects, so all leaf values come back as strings.\n\n`//` comments are stripped during parsing.\n\n**Common uses:** reading Steam app manifests (`appmanifest_*.acf`), Source engine config files, or any Valve-tooling artifact where the on-disk format is VDF rather than INI/JSON.",
+		MarkdownDescription: vdfdecodeDescription,
 		Parameters: []function.Parameter{
 			function.StringParameter{
 				Name:        "input",
@@ -69,6 +74,9 @@ func (f *VDFDecodeFunction) Run(ctx context.Context, req function.RunRequest, re
 
 var _ function.Function = (*VDFEncodeFunction)(nil)
 
+//go:embed descriptions/vdfencode.md
+var vdfencodeDescription string
+
 type VDFEncodeFunction struct{}
 
 func NewVDFEncodeFunction() function.Function {
@@ -82,7 +90,7 @@ func (f *VDFEncodeFunction) Metadata(_ context.Context, _ function.MetadataReque
 func (f *VDFEncodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Encode a value as a Valve Data Format (VDF) string",
-		MarkdownDescription: "Encodes a Terraform object as a [Valve Data Format (VDF)](https://developer.valvesoftware.com/wiki/KeyValues) string. VDF is a nested key-value format; the only valid value types are strings (or nested objects). Other types must be converted to strings in HCL before encoding.\n\n**Common uses:** generating Steam workshop or app config files, dedicated-server configs for Source-engine games, or any other artifact where downstream Valve tooling expects VDF input.",
+		MarkdownDescription: vdfencodeDescription,
 		Parameters: []function.Parameter{
 			function.DynamicParameter{
 				Name:        "value",

@@ -2,6 +2,7 @@ package network
 
 import (
 	"context"
+	_ "embed"
 
 	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -16,10 +17,13 @@ func (f *CIDRIntersectFunction) Metadata(_ context.Context, _ function.MetadataR
 	resp.Name = "cidr_intersect"
 }
 
+//go:embed descriptions/cidr_intersect.md
+var cidrIntersectDescription string
+
 func (f *CIDRIntersectFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Return the intersection of two CIDR lists",
-		MarkdownDescription: "Returns the set of CIDRs that represent the address space shared between list `a` and list `b`. The result is merged into the smallest equivalent set.",
+		MarkdownDescription: cidrIntersectDescription,
 		Parameters: []function.Parameter{
 			function.ListParameter{
 				Name:        "a",

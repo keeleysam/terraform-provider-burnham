@@ -2,6 +2,7 @@ package network
 
 import (
 	"context"
+	_ "embed"
 
 	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -16,10 +17,13 @@ func (f *CIDRsAreDisjointFunction) Metadata(_ context.Context, _ function.Metada
 	resp.Name = "cidrs_are_disjoint"
 }
 
+//go:embed descriptions/cidrs_are_disjoint.md
+var cidrsAreDisjointDescription string
+
 func (f *CIDRsAreDisjointFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Check that no two CIDRs in a list overlap each other",
-		MarkdownDescription: "Returns `true` if every CIDR in the list is non-overlapping with every other. Unlike `cidrs_overlap_any`, which compares two separate lists, this checks a single list against itself.\n\n**Common uses:** validating a `list(string)` variable of subnet CIDRs to ensure no two subnets overlap before creating them. This catches mistakes like including both a summary prefix and a more-specific one in the same list.",
+		MarkdownDescription: cidrsAreDisjointDescription,
 		Parameters: []function.Parameter{
 			function.ListParameter{
 				Name:        "cidrs",

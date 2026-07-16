@@ -2,6 +2,7 @@ package network
 
 import (
 	"context"
+	_ "embed"
 
 	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -16,10 +17,13 @@ func (f *CIDRSubtractFunction) Metadata(_ context.Context, _ function.MetadataRe
 	resp.Name = "cidr_subtract"
 }
 
+//go:embed descriptions/cidr_subtract.md
+var cidrSubtractDescription string
+
 func (f *CIDRSubtractFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Subtract CIDRs from an input list",
-		MarkdownDescription: "Returns the set of CIDRs that remain after removing all addresses covered by the `exclude` list from the `input` list. The result is merged into the smallest equivalent set.",
+		MarkdownDescription: cidrSubtractDescription,
 		Parameters: []function.Parameter{
 			function.ListParameter{
 				Name:        "input",

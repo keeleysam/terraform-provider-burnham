@@ -2,10 +2,14 @@ package cedar
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/function"
 )
+
+//go:embed descriptions/cedarformat.md
+var cedarformatDescription string
 
 var _ function.Function = (*CedarFormatFunction)(nil)
 
@@ -20,7 +24,7 @@ func (f *CedarFormatFunction) Metadata(_ context.Context, _ function.MetadataReq
 func (f *CedarFormatFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Canonicalize a Cedar policy document",
-		MarkdownDescription: "Parses a [Cedar](https://www.cedarpolicy.com) policy document and returns its canonical text serialization: normalized layout and indentation, with statements kept in their input order. It fails the plan on syntactically invalid input (use `cedarvalidate` for a non-failing boolean check).\n\nComments are dropped and formatting is normalized (each policy is re-rendered from the parsed AST); annotations such as `@id(...)` are preserved. The output is stable and idempotent, so two documents that differ only in whitespace or comments canonicalize to the same string. Backed by [cedar-go](https://github.com/cedar-policy/cedar-go), the official Go implementation of Cedar.",
+		MarkdownDescription: cedarformatDescription,
 		Parameters: []function.Parameter{
 			function.StringParameter{
 				Name:        "policies",

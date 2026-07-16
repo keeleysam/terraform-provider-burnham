@@ -2,6 +2,7 @@ package network
 
 import (
 	"context"
+	_ "embed"
 
 	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/keeleysam/terraform-burnham/internal/provider/network/iputil"
@@ -15,10 +16,13 @@ func (f *IPIsPrivateFunction) Metadata(_ context.Context, _ function.MetadataReq
 	resp.Name = "ip_is_private"
 }
 
+//go:embed descriptions/ip_is_private.md
+var ipIsPrivateDescription string
+
 func (f *IPIsPrivateFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Check whether an IP address is in a private range",
-		MarkdownDescription: "Returns `true` if the IP address is within a private, loopback, link-local, or CGNAT range (RFC1918, RFC6598, RFC4193, loopback, link-local).",
+		MarkdownDescription: ipIsPrivateDescription,
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "ip", Description: "The IP address to check."},
 		},
@@ -50,10 +54,13 @@ func (f *CIDRIsPrivateFunction) Metadata(_ context.Context, _ function.MetadataR
 	resp.Name = "cidr_is_private"
 }
 
+//go:embed descriptions/cidr_is_private.md
+var cidrIsPrivateDescription string
+
 func (f *CIDRIsPrivateFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Check whether a CIDR falls entirely within a private range",
-		MarkdownDescription: "Returns `true` if the entire CIDR is contained within a private, loopback, link-local, or CGNAT range (RFC1918, RFC6598, RFC4193, loopback, link-local).",
+		MarkdownDescription: cidrIsPrivateDescription,
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "cidr", Description: "The CIDR to check."},
 		},

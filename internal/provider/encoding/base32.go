@@ -8,6 +8,7 @@ package encoding
 
 import (
 	"context"
+	_ "embed"
 	"encoding/base32"
 	"fmt"
 	"strings"
@@ -109,6 +110,9 @@ func base32DecodeOptions(opts []types.Dynamic) (hexAlphabet bool, ferr *function
 
 // ─── base32encode ───────────────────────────────────────────────
 
+//go:embed descriptions/base32encode.md
+var base32encodeDescription string
+
 var _ function.Function = (*Base32EncodeFunction)(nil)
 
 type Base32EncodeFunction struct{}
@@ -122,7 +126,7 @@ func (f *Base32EncodeFunction) Metadata(_ context.Context, _ function.MetadataRe
 func (f *Base32EncodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Base32-encode bytes (RFC 4648), with options for alphabet and padding",
-		MarkdownDescription: "Base32-encodes the input's bytes per [RFC 4648](https://www.rfc-editor.org/rfc/rfc4648). Terraform core has no base32 function; with no options this produces standard, padded base32. The optional object selects the variant:\n\n- `hex_alphabet` (bool, default `false`): use the extended-hex alphabet (`0–9A–V`, §7) instead of the standard one (`A–Z2–7`, §6). The hex alphabet sorts in the same order as the underlying bytes and is used by DNSSEC NSEC3.\n- `padding` (bool, default `true`): emit `=` padding. Set `false` for the raw form (e.g. TOTP/MFA secrets are unpadded standard base32).\n\nThe input is taken as raw bytes (the literal UTF-8 bytes of the string); to encode bytes held as hex, pass `hexdecode(var.x)`.\n\n```\nbase32encode(\"foobar\")                  → \"MZXW6YTBOI======\"\nbase32encode(var.secret, { padding = false })\n```",
+		MarkdownDescription: base32encodeDescription,
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "input", Description: "The bytes to encode, taken as the raw UTF-8 bytes of the string."},
 		},
@@ -155,6 +159,9 @@ func (f *Base32EncodeFunction) Run(ctx context.Context, req function.RunRequest,
 
 // ─── base32decode ───────────────────────────────────────────────
 
+//go:embed descriptions/base32decode.md
+var base32decodeDescription string
+
 var _ function.Function = (*Base32DecodeFunction)(nil)
 
 type Base32DecodeFunction struct{}
@@ -168,7 +175,7 @@ func (f *Base32DecodeFunction) Metadata(_ context.Context, _ function.MetadataRe
 func (f *Base32DecodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Base32-decode (RFC 4648), lenient on case and padding",
-		MarkdownDescription: "Decodes base32 to its bytes, returned as a string of those raw bytes. Lenient: it uppercases the input (base32 is case-insensitive in practice), ignores ASCII whitespace, and tolerates missing `=` padding, so a TOTP secret pasted in any case, padded or not, decodes cleanly.\n\nUnlike `base64decode`, the alphabet cannot be auto-detected: the standard (`A–Z2–7`) and extended-hex (`0–9A–V`) alphabets overlap, so an ambiguous string could be either. Pass `{ hex_alphabet = true }` to decode the hex alphabet; the default is standard.\n\nThe result is a byte string; for binary that isn't valid UTF-8 you will usually feed it into another function (e.g. `hmac(\"sha1\", base32decode(var.totp_secret), …)`) rather than printing it.\n\n```\nbase32decode(\"MZXW6YTBOI\")   # unpadded, any case, fine\n→ \"foobar\"\n```",
+		MarkdownDescription: base32decodeDescription,
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "input", Description: "Base32 (case-insensitive, padding optional, ASCII whitespace ignored)."},
 		},

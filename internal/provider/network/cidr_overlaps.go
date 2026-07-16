@@ -2,6 +2,7 @@ package network
 
 import (
 	"context"
+	_ "embed"
 
 	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/keeleysam/terraform-burnham/internal/provider/network/iputil"
@@ -15,10 +16,13 @@ func (f *CIDROverlapsFunction) Metadata(_ context.Context, _ function.MetadataRe
 	resp.Name = "cidr_overlaps"
 }
 
+//go:embed descriptions/cidr_overlaps.md
+var cidrOverlapsDescription string
+
 func (f *CIDROverlapsFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Check whether two CIDRs share any addresses",
-		MarkdownDescription: "Returns `true` if CIDR `a` and CIDR `b` overlap (share at least one address).",
+		MarkdownDescription: cidrOverlapsDescription,
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "a", Description: "First CIDR."},
 			function.StringParameter{Name: "b", Description: "Second CIDR."},

@@ -2,6 +2,7 @@ package transform
 
 import (
 	"context"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"math/big"
@@ -22,6 +23,9 @@ const jqTimeout = 30 * time.Second
 // jqMaxOutputs caps the number of values a program may emit. A generator like `repeat(1)` produces an unbounded stream, and without a cap the result slice would exhaust memory before the timeout ever fired. 1,000,000 is far above any realistic query result.
 const jqMaxOutputs = 1_000_000
 
+//go:embed descriptions/jq.md
+var jqDescription string
+
 var _ function.Function = (*JQFunction)(nil)
 
 type JQFunction struct{}
@@ -35,7 +39,7 @@ func (f *JQFunction) Metadata(_ context.Context, _ function.MetadataRequest, res
 func (f *JQFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Run a jq program against a value",
-		MarkdownDescription: "Evaluates a [jq](https://jqlang.github.io/jq/) program against a Terraform value and returns the program's output stream as a list. jq is the most widely-used JSON query language; this is the expressive sibling of `jmespath_query` and `jsonpath_query`, with full support for pipes, `reduce`, `map`/`select`, string interpolation, object construction, and the rest of the jq language.\n\nBecause a jq program is a *stream* (`.[]` emits one result per element, `.a, .b` emits two), `jq` always returns a **list**, with one element per value the program produced. A program that yields a single value returns a one-element list; collapse it with `one(provider::burnham::jq(...))` or index the first element. A program that yields nothing returns an empty list.\n\nNamed bindings are passed through the optional `vars` object and referenced as jq variables: `provider::burnham::jq(local.data, \".items[] | select(.tier == $tier)\", { vars = { tier = \"prod\" } })` binds `$tier`.\n\n**Determinism caveat.** Most jq programs are pure functions of their input and produce the same output on every run. A few builtins are not: `now` and `localtime` read the wall clock (and host timezone), so any program deriving from them may produce different output on each plan or apply, and will churn the plan. Use them only when you intend that. The `env`/`$ENV` builtins return an empty object (this function does not expose the host process environment) and `input`/`inputs` error, because there is no secondary input stream. Numbers are handled with IEEE-754 `float64` precision for non-integers, matching the `jmespath_query` / `jsonpath_query` siblings; integers beyond 2⁵³ are preserved exactly.\n\nBacked by [itchyny/gojq](https://github.com/itchyny/gojq), a pure-Go jq implementation.",
+		MarkdownDescription: jqDescription,
 		Parameters: []function.Parameter{
 			function.DynamicParameter{
 				Name:        "value",

@@ -2,6 +2,7 @@ package oel
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/function"
@@ -9,6 +10,9 @@ import (
 )
 
 var _ function.Function = (*OELDecodeFunction)(nil)
+
+//go:embed descriptions/oeldecode.md
+var oeldecodeDescription string
 
 type OELDecodeFunction struct{}
 
@@ -21,7 +25,7 @@ func (f *OELDecodeFunction) Metadata(_ context.Context, _ function.MetadataReque
 func (f *OELDecodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Decode an Okta EL expression string into an oelencode data tree",
-		MarkdownDescription: "Parses an [Okta Expression Language](https://developer.okta.com/docs/reference/okta-expression-language/) string and returns it as the HCL data tree that `oelencode` consumes, so `provider::burnham::oelencode(provider::burnham::oeldecode(expr))` round-trips to the canonical form of `expr`. Primarily a tool for testing and for migrating hand-written expressions into the data model.\n\nReferences decode to `{ ident = \"...\" }`, operators to their token keys, and calls to the `call` forms; a dotted path that embeds a group-membership method hop, which has no direct surface form, decodes to a `{ raw = \"...\" }` escape that `oelencode` re-parses. The return is a dynamic value; list literals decode to Terraform tuples (heterogeneous), which `oelencode` accepts on the way back. Covers the full documented grammar. Backed by [okta-expression-parser](https://github.com/keeleysam/okta-expression-parser).",
+		MarkdownDescription: oeldecodeDescription,
 		Parameters: []function.Parameter{
 			function.StringParameter{
 				Name:        "expr",

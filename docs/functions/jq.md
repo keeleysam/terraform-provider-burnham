@@ -9,13 +9,33 @@ description: |-
 
 # function: jq
 
-Evaluates a [jq](https://jqlang.github.io/jq/) program against a Terraform value and returns the program's output stream as a list. jq is the most widely-used JSON query language; this is the expressive sibling of `jmespath_query` and `jsonpath_query`, with full support for pipes, `reduce`, `map`/`select`, string interpolation, object construction, and the rest of the jq language.
+Evaluates a [jq](https://jqlang.github.io/jq/) program against a Terraform value and returns the program's output stream as a list. jq is the most widely-used JSON query language, and this is the expressive sibling of `jmespath_query` and `jsonpath_query`: it supports pipes, `reduce`, `map`/`select`, string interpolation, object construction, and the rest of the jq language.
 
-Because a jq program is a *stream* (`.[]` emits one result per element, `.a, .b` emits two), `jq` always returns a **list**, with one element per value the program produced. A program that yields a single value returns a one-element list; collapse it with `one(provider::burnham::jq(...))` or index the first element. A program that yields nothing returns an empty list.
+Because a jq program is a *stream* (`.[]` emits one result per element, `.a, .b` emits two), `jq` always returns a **list** with one element per value the program produced:
 
-Named bindings are passed through the optional `vars` object and referenced as jq variables: `provider::burnham::jq(local.data, ".items[] | select(.tier == $tier)", { vars = { tier = "prod" } })` binds `$tier`.
+- A program that yields a single value returns a one-element list. Collapse it with `one(provider::burnham::jq(...))` or index the first element.
+- A program that yields nothing returns an empty list.
 
-**Determinism caveat.** Most jq programs are pure functions of their input and produce the same output on every run. A few builtins are not: `now` and `localtime` read the wall clock (and host timezone), so any program deriving from them may produce different output on each plan or apply, and will churn the plan. Use them only when you intend that. The `env`/`$ENV` builtins return an empty object (this function does not expose the host process environment) and `input`/`inputs` error, because there is no secondary input stream. Numbers are handled with IEEE-754 `float64` precision for non-integers, matching the `jmespath_query` / `jsonpath_query` siblings; integers beyond 2⁵³ are preserved exactly.
+Named bindings are passed through the optional `vars` object and referenced as jq variables. For example, `{ vars = { tier = "prod" } }` binds `$tier`, so the program can `select(.tier == $tier)`.
+
+### Number handling
+
+Numbers use IEEE-754 `float64` precision for non-integers, matching the `jmespath_query` and `jsonpath_query` siblings. Integers beyond 2^53 are preserved exactly.
+
+### Unsupported builtins
+
+- `env` and `$ENV` return an empty object; this function does not expose the host process environment.
+- `input` and `inputs` error, because there is no secondary input stream.
+
+### Execution limits
+
+Execution is bounded so a runaway program fails instead of hanging or exhausting memory:
+
+- A program that runs longer than 30 seconds is cancelled and returns an error, guarding against non-terminating programs (jq is Turing-complete).
+- A program that emits more than 1,000,000 values fails rather than accumulating an unbounded result.
+- A result nested deeper than 1024 levels returns `result exceeds maximum supported nesting depth`.
+
+~> **Note:** Most jq programs are pure functions of their input, but `now` and `localtime` read the wall clock (and host timezone). Any program deriving from them may produce different output on each plan or apply and will churn the plan, so use them only when you intend that.
 
 Backed by [itchyny/gojq](https://github.com/itchyny/gojq), a pure-Go jq implementation.
 

@@ -17,6 +17,7 @@ import (
 	"crypto/sha256"
 	"crypto/sha512"
 	"crypto/x509"
+	_ "embed"
 	"encoding/asn1"
 	"encoding/pem"
 	"fmt"
@@ -38,6 +39,9 @@ const (
 
 var _ function.Function = (*ECDSAP256KeyFromSeedFunction)(nil)
 
+//go:embed descriptions/ecdsa_p256_key_from_seed.md
+var ecdsaP256KeyFromSeedDescription string
+
 type ECDSAP256KeyFromSeedFunction struct{}
 
 func NewECDSAP256KeyFromSeedFunction() function.Function { return &ECDSAP256KeyFromSeedFunction{} }
@@ -49,7 +53,7 @@ func (f *ECDSAP256KeyFromSeedFunction) Metadata(_ context.Context, _ function.Me
 func (f *ECDSAP256KeyFromSeedFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Derive a deterministic ECDSA P-256 private key from a seed (PEM PKCS#8 output)",
-		MarkdownDescription: fmt.Sprintf("Stretches `seed` to 48 bytes with HKDF-SHA256 (info string `%q`), reduces modulo (n-1) and adds 1 to land in [1, n-1] uniformly, and assembles the resulting scalar into a `secp256r1` private key. Output is PEM PKCS#8.\n\nDeterministic by construction: same `seed` → same key, every time. Useful when you want a stable signing identity that's derived from a checked-in secret or input artefact rather than randomly generated and stored.\n\n```\nprovider::burnham::ecdsa_p256_key_from_seed(sha512(file(\"input.bin\")))\n→ \"-----BEGIN PRIVATE KEY-----\\nMIGHAgEAM…\\n-----END PRIVATE KEY-----\\n\"\n```\n\nPair with [`x509_self_sign`](#function-x509_self_sign) and [`pkcs7_sign`](#function-pkcs7_sign) to build deterministic signing pipelines that are byte-stable across Terraform plans.\n\n%s", ecdsaKeyFromSeedInfo, hclByteHandlingGotcha),
+		MarkdownDescription: fmt.Sprintf(ecdsaP256KeyFromSeedDescription, ecdsaKeyFromSeedInfo, hclByteHandlingGotcha),
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "seed", Description: fmt.Sprintf("Input keying material (raw bytes). Any length works; HKDF stretches to the 48 bytes the scalar derivation needs. Must not be empty and must not exceed %d bytes (%d MiB). For cryptographic security pass at least 16 bytes of high-entropy input.", signingSeedMaxBytes, signingSeedMaxBytes/(1024*1024))},
 		},

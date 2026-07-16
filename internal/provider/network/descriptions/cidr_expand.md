@@ -1,0 +1,1 @@
+Returns every individual IP address within the given CIDR as a list of strings. Returns an error if the CIDR contains more than 65536 addresses to prevent accidental large expansions.
