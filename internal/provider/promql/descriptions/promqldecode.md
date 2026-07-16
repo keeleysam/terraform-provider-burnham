@@ -9,6 +9,6 @@ Two normalizations to expect in the output:
 - Every node is fully structured, so the tree never contains a `raw` fragment.
 - The implicit `__name__` matcher that a bare metric name carries is folded into the `name` field rather than repeated as a matcher.
 
-Because the parser normalizes as it reads (label matchers sort alphabetically, redundant braces drop, spacing is regularized), the tree reflects the canonical query rather than the original byte layout, and re-encoding it yields `promqlformat`'s output.
+Because the parser normalizes as it reads (label matchers sort alphabetically, redundant braces drop, spacing is regularized), the tree reflects the canonical query rather than the original byte layout.
 
 ~> **Note:** Fails the plan on invalid input, or on a query longer than 64 KiB, the same as `promqlformat`. Backed by [prometheus/prometheus](https://github.com/prometheus/prometheus)'s own parser.

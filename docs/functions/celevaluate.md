@@ -15,7 +15,7 @@ This evaluates **standard CEL only**: cel-go's standard library, its extension l
 
 ~> **Note:** Dialect-specific functions provided by a downstream host (GCP's `inIpRange`, Kubernetes' `quantity` / `authorizer`, and the like) are **not** available and will fail to compile, since this provider does not implement them.
 
-Every variable referenced by the expression must be supplied in `vars`; an undeclared variable or function is a compile error. Variables are declared dynamically, so no type annotations are needed.
+Every variable referenced by the expression must be supplied in `vars`; an undeclared variable or function is a compile error. Variables are declared dynamically, so no type annotations are needed. Bindings and the format options below live in an optional second object argument: `celevaluate("x > 1", { vars = { x = 2 } })`.
 
 -> **Note:** Evaluation is deterministic (CEL has no wall-clock or randomness), so results are stable across plan and apply.
 

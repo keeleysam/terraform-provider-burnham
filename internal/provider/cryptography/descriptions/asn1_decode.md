@@ -1,4 +1,4 @@
-Decodes ASN.1 DER (or BER) bytes into a recursive object tree you can walk in HCL, for pulling apart an extension payload, a field inside an opaque blob, or any structure Terraform has no native decoder for.
+Decodes ASN.1 DER bytes into a recursive object tree you can walk in HCL, for pulling apart an extension payload, a field inside an opaque blob, or any structure Terraform has no native decoder for.
 
 Input is base64-encoded DER bytes, the same shape `pem_decode` returns in `base64_body`, which keeps inputs ASCII-safe inside HCL strings.
 
@@ -36,4 +36,4 @@ The decoder bounds adversarial input:
 - Nesting may be at most 64 levels deep. RFC 5280 X.509 nesting fits comfortably under this limit.
 - A single decode may produce at most 100,000 nodes. The largest realistic certs sit around 1,000.
 
-~> **Note:** Fails when the bytes are not well-formed BER/DER, when an INTEGER is malformed or not canonically DER-encoded, when a date stamp can't be parsed, or when any of the above limits are exceeded.
+~> **Note:** Fails when the bytes are not well-formed DER, when an INTEGER is malformed or not canonically DER-encoded, when a date stamp can't be parsed, or when any of the above limits are exceeded.

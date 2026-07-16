@@ -1,4 +1,4 @@
-Parses [NDJSON](https://github.com/ndjson/ndjson-spec) (newline-delimited JSON, also called JSON Lines) into a list. Each non-empty line is parsed as an independent JSON value; the result is a tuple containing one element per line.
+Parses [NDJSON](https://github.com/ndjson/ndjson-spec) (newline-delimited JSON, also called JSON Lines) into a list. Parsing follows the JSON grammar (a streaming decoder), not line boundaries, so each JSON value in the stream becomes one tuple element. Standard NDJSON (one value per line) behaves as expected.
 
 Blank lines and trailing newlines are tolerated. Numbers preserve precision via `json.Number`.
 

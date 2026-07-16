@@ -30,7 +30,7 @@ Each scope is an object with an `op` field. The shape of the rest of the object 
 
 -> **Note:** The simplest way to get the EST shape for a non-trivial policy or condition is to write it as Cedar text and run it through `cedardecode`.
 
-The tree is validated as it is converted, so `cedarencode` never emits a syntactically invalid policy, and the output is canonical (byte-identical to what `cedarformat` produces for one policy). Backed by [cedar-go](https://github.com/cedar-policy/cedar-go), the official Go implementation of Cedar.
+The tree is validated as it is converted, so `cedarencode` never emits a syntactically invalid policy, and the output is canonical and deterministic: record-literal keys are always emitted in lexicographic order. It matches what `cedarformat` produces for one policy, except when the source policy lists record-literal keys in some other order (`cedarformat` preserves the source order, `cedarencode` sorts them). Backed by [cedar-go](https://github.com/cedar-policy/cedar-go), the official Go implementation of Cedar.
 
 ## Example Usage
 

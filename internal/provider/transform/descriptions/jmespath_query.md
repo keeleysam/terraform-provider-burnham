@@ -8,7 +8,7 @@ The expression follows the JMESPath specification, including:
 - Functions: `length`, `sort_by`, `to_string`, and the rest
 - Multi-select hashes: `{a: foo, b: bar}`
 
-Returns `null` when the expression matches nothing.
+A field or index that does not exist evaluates to `null`; a filter or projection that matches nothing evaluates to an empty list `[]`.
 
 ~> **Note:** Numbers are evaluated as IEEE 754 double-precision floats, the only numeric type the JMESPath engine supports, so an integer whose magnitude exceeds 2^53 can come back rounded. If you need to carry such a value through unchanged, select it with a different function (for example `jq`) rather than JMESPath.
 

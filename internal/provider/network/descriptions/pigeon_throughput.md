@@ -15,8 +15,10 @@ Returns a fixed-shape object describing the theoretical IP-over-Avian-Carriers t
   - `"standard"` (< 500 m)
   - `"express"` (< 1500 m)
   - `"stratus"` (≥ 1500 m)
-- `frame_format`: verbatim RFC 1149 §3 frame description.
+- `frame_format`: near-verbatim RFC 1149 §3 frame description.
 - `rfc_citations`: sources for each field, so callers can audit the spec basis.
+
+-> **Note:** When `distance_km` is `0`, `flight_time_seconds` is `0`, so `throughput_bps`, `effective_throughput_bps`, and `packet_loss_probability` are reported as `0` rather than applying the formulas above (which would divide by zero).
 
 ### Modelling assumptions
 

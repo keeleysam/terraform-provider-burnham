@@ -18,7 +18,7 @@ slugify("Hello, World!")     → "hello-world"
 
 Options object:
 
-- `language` (string): ISO 639-1 hint for transliteration (e.g. `"en"`, `"de"`, `"ja"`). The default heuristic produces good output for Latin-script input; pick a language to handle non-Latin input correctly. Library list of supported codes: see [gosimple/slug](https://github.com/gosimple/slug).
+- `language` (string): ISO 639-1 hint for transliteration (e.g. `"en"`, `"de"`, `"ja"`). The default heuristic produces good output for Latin-script input; pick a language to handle non-Latin input correctly. For the list of supported language codes, see [gosimple/slug](https://github.com/gosimple/slug).
 - `separator` (string): the joiner between words. Default `"-"`.
 - `lowercase` (bool): lowercase the result. Default `true`.
 

@@ -20,12 +20,12 @@ The result is a two-level map: registry key paths at the outer level, value name
 
 `REG_SZ` values become plain strings. Every other type decodes as a tagged object with `__reg_type` and `value` keys, round-trippable through `regencode`. The `__reg_type` tag holds the lowercase short form shown in backticks below, not the `REG_*` name:
 
-- `REG_DWORD` (`__reg_type = "dword"`)
-- `REG_QWORD` (`"qword"`)
-- `REG_BINARY` (`"binary"`)
-- `REG_MULTI_SZ` (`"multi_sz"`)
-- `REG_EXPAND_SZ` (`"expand_sz"`)
-- `REG_NONE` (`"none"`; its `value` is a hex-encoded string)
+- `REG_DWORD` (`__reg_type = "dword"`; `value` is a decimal string)
+- `REG_QWORD` (`"qword"`; `value` is a decimal string)
+- `REG_BINARY` (`"binary"`; `value` is a hex-encoded string)
+- `REG_MULTI_SZ` (`"multi_sz"`; `value` is a list of strings, matching what `regmulti()` accepts)
+- `REG_EXPAND_SZ` (`"expand_sz"`; `value` is a plain string)
+- `REG_NONE` (`"none"`; `value` is a hex-encoded string)
 - a value removal (`"Name"=-`) becomes `{ __reg_type = "delete", value = "" }`
 
 **Common uses:** importing existing `.reg` exports from a reference machine, normalizing them into a typed Terraform value, or staging registry policy snapshots for diff review before redeployment.

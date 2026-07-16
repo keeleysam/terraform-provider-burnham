@@ -20,7 +20,7 @@ Each node object has these keys:
 
 Both KDL v1 and v2 input are accepted; the parser auto-detects the version.
 
-**Common uses:** reading KDL-based configuration files such as the [`kdl-org/kdl`](https://github.com/kdl-org/kdl) specification documents, Cargo-style nested configuration, or any tool that's adopted KDL as its config format.
+**Common uses:** reading KDL-based configuration files, Cargo-style nested configuration, or any tool that's adopted KDL as its config format.
 
 ## Example Usage
 

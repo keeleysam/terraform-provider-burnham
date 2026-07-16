@@ -5,8 +5,8 @@ Evaluates an [Okta Expression Language](https://developer.okta.com/docs/referenc
 The optional second argument is a context object with these keys:
 
 - `user`: an object resolved by `user.<attr>` paths.
-- `group_ids`: a list of group IDs the user is a member of, for `isMemberOfGroup` and `isMemberOfAnyGroup`.
-- `groups`: group metadata keyed by ID, each with a nested `profile.name`, for the `isMemberOfGroupName` family.
+- `group_ids`: a list of group IDs the user is a member of. Used by every `isMemberOf*` builtin; the `isMemberOfGroupName` family cross-references these IDs against `groups`.
+- `groups`: group metadata keyed by ID, each with a nested `profile.name`. Supplements `group_ids` so the `isMemberOfGroupName` family can resolve the user's IDs to names (that family needs both keys).
 - `strict`: a bool. When true, a path access to an attribute absent from `user` errors instead of resolving to null.
 
 For example, `provider::burnham::oelevaluate("user.department == \"Sales\"", { user = { department = "Sales" } })` returns `true`.

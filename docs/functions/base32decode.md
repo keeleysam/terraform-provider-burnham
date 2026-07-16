@@ -22,7 +22,7 @@ Decoding is lenient, so a TOTP secret pasted in any case, padded or not, decodes
 -> **Note:** The result is a byte string. For binary that isn't valid UTF-8 you will usually feed it into another function (for example `hmac("sha1", base32decode(var.totp_secret), …)`) rather than printing it.
 
 ```
-base32decode("MZXW6YTBOI")   # unpadded, any case, fine
+base32decode("mzxw6YTBoi")   # unpadded, mixed case, fine
 → "foobar"
 ```
 

@@ -17,7 +17,7 @@ Returns the [Plus code](https://maps.google.com/pluscodes/) (Open Location Code)
 | 4 | 1° × 1° (~110 km) |
 | 6 | 0.05° × 0.05° (~5.5 km) |
 | 8 | 0.0025° × 0.0025° (~275 m) |
-| 10 | 0.000125° × 0.000125° (~14 m, default) |
+| 10 | 0.000125° × 0.000125° (~14 m, OLC standard precision) |
 | 11 | ~3.5 m |
 | 12 | ~90 cm |
 

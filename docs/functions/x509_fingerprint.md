@@ -9,7 +9,7 @@ description: |-
 
 # function: x509_fingerprint
 
-Returns the hex-encoded `algorithm` digest of the first `CERTIFICATE` block's DER bytes, the same value `openssl x509 -fingerprint -<algorithm>` produces, minus the colon separators between byte pairs. Handy for pinning a certificate or comparing it against a known-good digest.
+Returns the hex-encoded `algorithm` digest of the first `CERTIFICATE` block's DER bytes, the same value `openssl x509 -fingerprint -<algorithm>` produces, lowercased and with the colon separators between byte pairs removed. Handy for pinning a certificate or comparing it against a known-good digest.
 
 `algorithm` is one of:
 
