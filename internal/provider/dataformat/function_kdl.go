@@ -202,6 +202,9 @@ func (f *KDLEncodeFunction) Run(ctx context.Context, req function.RunRequest, re
 	if resp.Error != nil {
 		return
 	}
+	if unknownStringResultIfNeeded(ctx, resp, value.UnderlyingValue(), optsArgs) {
+		return
+	}
 
 	version := kdl.Version2
 	if len(optsArgs) == 1 {

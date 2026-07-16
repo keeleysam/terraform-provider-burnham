@@ -100,6 +100,9 @@ func (f *VDFEncodeFunction) Run(ctx context.Context, req function.RunRequest, re
 	if resp.Error != nil {
 		return
 	}
+	if unknownStringResultIfNeeded(ctx, resp, value.UnderlyingValue(), nil) {
+		return
+	}
 
 	obj, ok := value.UnderlyingValue().(basetypes.ObjectValue)
 	if !ok {

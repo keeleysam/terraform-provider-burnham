@@ -44,6 +44,9 @@ func (f *JMESPathQueryFunction) Run(ctx context.Context, req function.RunRequest
 	if resp.Error != nil {
 		return
 	}
+	if unknownDynamicResultIfNeeded(ctx, resp, value.UnderlyingValue()) {
+		return
+	}
 
 	data, err := terraformToJSON(value.UnderlyingValue())
 	if err != nil {

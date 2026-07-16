@@ -1,6 +1,7 @@
 package transform
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -8,6 +9,7 @@ import (
 	"sort"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
@@ -24,6 +26,60 @@ const (
 	// transformMaxNodes caps the total node count traversed by terraformToJSON in a single call. JMESPath/JSONPath wildcards plus a million-element array can spend minutes searching at plan time. 1,000,000 is far above any realistic config; below that, query cost is bounded by the engine's internal complexity.
 	transformMaxNodes = 1_000_000
 )
+
+// hasUnknown reports whether v holds an unknown value at any depth. Terraform only auto-defers a function call when a whole argument is unknown, so a known container with an unknown nested value reaches Run; the query and patch functions check this and return an unknown result rather than silently dropping the nested unknown to null, which would be a concrete plan value that changes at apply.
+func hasUnknown(v attr.Value) bool {
+	if v == nil {
+		return false
+	}
+	if v.IsUnknown() {
+		return true
+	}
+	switch val := v.(type) {
+	case basetypes.DynamicValue:
+		return hasUnknown(val.UnderlyingValue())
+	case basetypes.TupleValue:
+		return elementsHaveUnknown(val.Elements())
+	case basetypes.ListValue:
+		return elementsHaveUnknown(val.Elements())
+	case basetypes.SetValue:
+		return elementsHaveUnknown(val.Elements())
+	case basetypes.ObjectValue:
+		return attributesHaveUnknown(val.Attributes())
+	case basetypes.MapValue:
+		return attributesHaveUnknown(val.Elements())
+	}
+	return false
+}
+
+func elementsHaveUnknown(elems []attr.Value) bool {
+	for _, e := range elems {
+		if hasUnknown(e) {
+			return true
+		}
+	}
+	return false
+}
+
+func attributesHaveUnknown(attrs map[string]attr.Value) bool {
+	for _, a := range attrs {
+		if hasUnknown(a) {
+			return true
+		}
+	}
+	return false
+}
+
+// unknownDynamicResultIfNeeded sets an unknown dynamic result and returns true when any of the given values carries a nested unknown, so a query or patch function can short-circuit before it converts and evaluates.
+func unknownDynamicResultIfNeeded(ctx context.Context, resp *function.RunResponse, values ...attr.Value) bool {
+	for _, v := range values {
+		if hasUnknown(v) {
+			resp.Error = function.ConcatFuncErrors(resp.Error, resp.Result.Set(ctx, types.DynamicUnknown()))
+			return true
+		}
+	}
+	return false
+}
 
 // terraformToJSON converts a Terraform attr.Value to a Go interface{} drawn from the JSON value space (nil, bool, string, json.Number, []interface{}, map[string]interface{}). Numbers are returned as json.Number to preserve precision.
 func terraformToJSON(v attr.Value) (interface{}, error) {

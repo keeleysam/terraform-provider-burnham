@@ -274,6 +274,9 @@ func (f *RegEncodeFunction) Run(ctx context.Context, req function.RunRequest, re
 	if resp.Error != nil {
 		return
 	}
+	if unknownStringResultIfNeeded(ctx, resp, value.UnderlyingValue(), optsArgs) {
+		return
+	}
 
 	var comments attr.Value
 

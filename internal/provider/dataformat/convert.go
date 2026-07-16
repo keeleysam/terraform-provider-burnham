@@ -2,6 +2,7 @@ package dataformat
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -12,6 +13,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
@@ -29,6 +31,67 @@ const (
 	// dataformatMaxInputBytes is an upper bound on the size of an inbound encoded payload (CBOR / msgpack / VDF / KDL / plist / etc.). 16 MiB is much larger than any realistic config blob a Terraform plan would carry, but small enough to bound memory in absolute terms when the underlying parser does not enforce its own limits (vmihailenco/msgpack v5, sblinch/kdl-go, andreoliwa/go-vdf).
 	dataformatMaxInputBytes = 16 * 1024 * 1024
 )
+
+// hasUnknown reports whether v holds an unknown value at any depth. Terraform only auto-defers a function call when a whole argument is unknown, so a known container with an unknown nested value reaches Run; the encode functions check this and return an unknown result rather than baking a concrete plan value (nested unknowns would otherwise collapse to null) that changes at apply.
+func hasUnknown(v attr.Value) bool {
+	if v == nil {
+		return false
+	}
+	if v.IsUnknown() {
+		return true
+	}
+	switch val := v.(type) {
+	case basetypes.DynamicValue:
+		return hasUnknown(val.UnderlyingValue())
+	case basetypes.TupleValue:
+		return elementsHaveUnknown(val.Elements())
+	case basetypes.ListValue:
+		return elementsHaveUnknown(val.Elements())
+	case basetypes.SetValue:
+		return elementsHaveUnknown(val.Elements())
+	case basetypes.ObjectValue:
+		return attributesHaveUnknown(val.Attributes())
+	case basetypes.MapValue:
+		return attributesHaveUnknown(val.Elements())
+	}
+	return false
+}
+
+func elementsHaveUnknown(elems []attr.Value) bool {
+	for _, e := range elems {
+		if hasUnknown(e) {
+			return true
+		}
+	}
+	return false
+}
+
+func attributesHaveUnknown(attrs map[string]attr.Value) bool {
+	for _, a := range attrs {
+		if hasUnknown(a) {
+			return true
+		}
+	}
+	return false
+}
+
+// unknownStringResultIfNeeded sets an unknown string result and returns true when the value or any option carries a nested unknown, so an encode function returning a string can short-circuit before it converts and encodes. opts may be nil for encoders that take no options.
+func unknownStringResultIfNeeded(ctx context.Context, resp *function.RunResponse, value attr.Value, opts []types.Dynamic) bool {
+	unknown := hasUnknown(value)
+	if !unknown {
+		for _, o := range opts {
+			if hasUnknown(o) {
+				unknown = true
+				break
+			}
+		}
+	}
+	if !unknown {
+		return false
+	}
+	resp.Error = function.ConcatFuncErrors(resp.Error, resp.Result.Set(ctx, types.StringUnknown()))
+	return true
+}
 
 // goToTerraformValue converts a Go interface{} (as returned by json.Unmarshal or a binary-format decoder) to a Terraform attr.Value, using the JSON value space: null, bool, string, number, list, object. []byte is rendered as a base64 string, time.Time as an RFC 3339 string, big.Int / *big.Int as an arbitrary-precision number. Use goToTerraformValuePlist when round-tripping plist-tagged types.
 func goToTerraformValue(v interface{}) (attr.Value, error) {

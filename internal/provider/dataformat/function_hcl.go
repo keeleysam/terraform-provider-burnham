@@ -135,6 +135,9 @@ func (f *HCLEncodeFunction) Run(ctx context.Context, req function.RunRequest, re
 	if resp.Error != nil {
 		return
 	}
+	if unknownStringResultIfNeeded(ctx, resp, value.UnderlyingValue(), nil) {
+		return
+	}
 
 	goVal, err := terraformValueToGo(value.UnderlyingValue(), false)
 	if err != nil {

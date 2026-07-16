@@ -109,6 +109,9 @@ func (f *NDJSONEncodeFunction) Run(ctx context.Context, req function.RunRequest,
 	if resp.Error != nil {
 		return
 	}
+	if unknownStringResultIfNeeded(ctx, resp, value.UnderlyingValue(), nil) {
+		return
+	}
 
 	goVal, err := terraformValueToGo(value.UnderlyingValue(), false)
 	if err != nil {

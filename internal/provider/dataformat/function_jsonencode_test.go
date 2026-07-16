@@ -133,6 +133,53 @@ func TestJSONEncode_Number(t *testing.T) {
 	}
 }
 
+func TestJSONEncode_NestedUnknownReturnsUnknown(t *testing.T) {
+	// A known object with an unknown nested value reaches Run (core only defers a
+	// wholly-unknown argument). Encoding it would bake a concrete plan value
+	// (a: null) that changes at apply; the result must be unknown instead.
+	f := &JSONEncodeFunction{}
+	obj := types.ObjectValueMust(
+		map[string]attr.Type{"a": types.StringType, "b": types.StringType},
+		map[string]attr.Value{"a": types.StringUnknown(), "b": types.StringValue("x")},
+	)
+	args := function.NewArgumentsData([]attr.Value{
+		types.DynamicValue(obj),
+		types.TupleValueMust([]attr.Type{}, []attr.Value{}),
+	})
+	resp := &function.RunResponse{Result: function.NewResultData(types.StringValue(""))}
+	f.Run(context.Background(), function.RunRequest{Arguments: args}, resp)
+	if resp.Error != nil {
+		t.Fatalf("unexpected error: %v", resp.Error)
+	}
+	if !resp.Result.Value().IsUnknown() {
+		t.Fatalf("expected unknown result for nested unknown, got %#v", resp.Result.Value())
+	}
+}
+
+func TestJSONEncode_UnknownOptionReturnsUnknown(t *testing.T) {
+	f := &JSONEncodeFunction{}
+	obj := types.ObjectValueMust(
+		map[string]attr.Type{"a": types.StringType},
+		map[string]attr.Value{"a": types.StringValue("x")},
+	)
+	opts := types.ObjectValueMust(
+		map[string]attr.Type{"escape_html": types.BoolType},
+		map[string]attr.Value{"escape_html": types.BoolUnknown()},
+	)
+	args := function.NewArgumentsData([]attr.Value{
+		types.DynamicValue(obj),
+		types.TupleValueMust([]attr.Type{types.DynamicType}, []attr.Value{types.DynamicValue(opts)}),
+	})
+	resp := &function.RunResponse{Result: function.NewResultData(types.StringValue(""))}
+	f.Run(context.Background(), function.RunRequest{Arguments: args}, resp)
+	if resp.Error != nil {
+		t.Fatalf("unexpected error: %v", resp.Error)
+	}
+	if !resp.Result.Value().IsUnknown() {
+		t.Fatalf("expected unknown result for unknown option, got %#v", resp.Result.Value())
+	}
+}
+
 func TestJSONEncode_NestedStructure(t *testing.T) {
 	inner := types.TupleValueMust(
 		[]attr.Type{types.NumberType, types.NumberType},

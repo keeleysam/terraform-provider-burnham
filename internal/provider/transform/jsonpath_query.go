@@ -44,6 +44,9 @@ func (f *JSONPathQueryFunction) Run(ctx context.Context, req function.RunRequest
 	if resp.Error != nil {
 		return
 	}
+	if unknownDynamicResultIfNeeded(ctx, resp, value.UnderlyingValue()) {
+		return
+	}
 
 	path, err := jsonpath.Parse(expression)
 	if err != nil {

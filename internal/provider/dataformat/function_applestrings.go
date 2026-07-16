@@ -100,6 +100,9 @@ func (f *AppleStringsEncodeFunction) Run(ctx context.Context, req function.RunRe
 	if resp.Error != nil {
 		return
 	}
+	if unknownStringResultIfNeeded(ctx, resp, value.UnderlyingValue(), nil) {
+		return
+	}
 
 	entries, err := appleStringsFromValue(value.UnderlyingValue())
 	if err != nil {

@@ -45,6 +45,9 @@ func (f *JSONPatchFunction) Run(ctx context.Context, req function.RunRequest, re
 	if resp.Error != nil {
 		return
 	}
+	if unknownDynamicResultIfNeeded(ctx, resp, value.UnderlyingValue(), patch.UnderlyingValue()) {
+		return
+	}
 
 	docGo, err := terraformToJSON(value.UnderlyingValue())
 	if err != nil {

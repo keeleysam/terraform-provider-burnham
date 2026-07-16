@@ -79,6 +79,9 @@ func (f *YAMLEncodeFunction) Run(ctx context.Context, req function.RunRequest, r
 	if resp.Error != nil {
 		return
 	}
+	if unknownStringResultIfNeeded(ctx, resp, value.UnderlyingValue(), optsArgs) {
+		return
+	}
 
 	opts := defaultYAMLOpts()
 

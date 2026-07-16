@@ -2,9 +2,61 @@ package encoding
 
 import (
 	"bytes"
+	"context"
 	"strings"
 	"testing"
+
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/function"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
+
+// runEncoder invokes an encode/decode function with an input string and a single
+// options object, returning the result value so the caller can assert on its
+// unknown-ness.
+func runEncoder(t *testing.T, f function.Function, input string, opts attr.Value) attr.Value {
+	t.Helper()
+	args := function.NewArgumentsData([]attr.Value{
+		types.StringValue(input),
+		types.TupleValueMust([]attr.Type{types.DynamicType}, []attr.Value{types.DynamicValue(opts)}),
+	})
+	resp := &function.RunResponse{Result: function.NewResultData(types.StringValue(""))}
+	f.Run(context.Background(), function.RunRequest{Arguments: args}, resp)
+	if resp.Error != nil {
+		t.Fatalf("unexpected error: %v", resp.Error)
+	}
+	return resp.Result.Value()
+}
+
+func TestBase64Encode_UnknownOptionReturnsUnknown(t *testing.T) {
+	opts := types.ObjectValueMust(
+		map[string]attr.Type{"url_safe": types.BoolType},
+		map[string]attr.Value{"url_safe": types.BoolUnknown()},
+	)
+	if got := runEncoder(t, NewBase64EncodeFunction(), "Hello", opts); !got.IsUnknown() {
+		t.Fatalf("expected unknown result for unknown url_safe, got %#v", got)
+	}
+}
+
+func TestBase32Encode_UnknownOptionReturnsUnknown(t *testing.T) {
+	opts := types.ObjectValueMust(
+		map[string]attr.Type{"padding": types.BoolType},
+		map[string]attr.Value{"padding": types.BoolUnknown()},
+	)
+	if got := runEncoder(t, NewBase32EncodeFunction(), "foobar", opts); !got.IsUnknown() {
+		t.Fatalf("expected unknown result for unknown padding, got %#v", got)
+	}
+}
+
+func TestBase32Decode_UnknownOptionReturnsUnknown(t *testing.T) {
+	opts := types.ObjectValueMust(
+		map[string]attr.Type{"hex_alphabet": types.BoolType},
+		map[string]attr.Value{"hex_alphabet": types.BoolUnknown()},
+	)
+	if got := runEncoder(t, NewBase32DecodeFunction(), "MZXW6YTBOI", opts); !got.IsUnknown() {
+		t.Fatalf("expected unknown result for unknown hex_alphabet, got %#v", got)
+	}
+}
 
 func TestHexEncode_Known(t *testing.T) {
 	if got := hexEncode([]byte("Hi")); got != "4869" {

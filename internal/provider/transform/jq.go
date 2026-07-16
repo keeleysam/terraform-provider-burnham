@@ -90,6 +90,14 @@ func (f *JQFunction) Run(ctx context.Context, req function.RunRequest, resp *fun
 	if resp.Error != nil {
 		return
 	}
+	if unknownDynamicResultIfNeeded(ctx, resp, value.UnderlyingValue()) {
+		return
+	}
+	for _, o := range optsArgs {
+		if unknownDynamicResultIfNeeded(ctx, resp, o) {
+			return
+		}
+	}
 
 	vars, ferr := jqOptions(optsArgs)
 	if ferr != nil {

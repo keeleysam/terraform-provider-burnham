@@ -100,6 +100,9 @@ func (f *Base64EncodeFunction) Run(ctx context.Context, req function.RunRequest,
 	if resp.Error != nil {
 		return
 	}
+	if unknownStringOptionResult(ctx, resp, optsArgs) {
+		return
+	}
 	urlSafe, padding, ferr := base64EncodeOptions(optsArgs)
 	if ferr != nil {
 		resp.Error = ferr

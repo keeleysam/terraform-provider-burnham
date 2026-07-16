@@ -116,6 +116,9 @@ func (f *HuJSONEncodeFunction) Run(ctx context.Context, req function.RunRequest,
 	if resp.Error != nil {
 		return
 	}
+	if unknownStringResultIfNeeded(ctx, resp, value.UnderlyingValue(), optsArgs) {
+		return
+	}
 
 	indent := "\t"
 	compact := false

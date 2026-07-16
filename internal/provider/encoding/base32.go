@@ -128,6 +128,9 @@ func (f *Base32EncodeFunction) Run(ctx context.Context, req function.RunRequest,
 	if resp.Error != nil {
 		return
 	}
+	if unknownStringOptionResult(ctx, resp, optsArgs) {
+		return
+	}
 	hexAlphabet, padding, ferr := base32EncodeOptions(optsArgs)
 	if ferr != nil {
 		resp.Error = ferr
@@ -169,6 +172,9 @@ func (f *Base32DecodeFunction) Run(ctx context.Context, req function.RunRequest,
 	var optsArgs []types.Dynamic
 	resp.Error = function.ConcatFuncErrors(resp.Error, req.Arguments.Get(ctx, &input, &optsArgs))
 	if resp.Error != nil {
+		return
+	}
+	if unknownStringOptionResult(ctx, resp, optsArgs) {
 		return
 	}
 	hexAlphabet, ferr := base32DecodeOptions(optsArgs)

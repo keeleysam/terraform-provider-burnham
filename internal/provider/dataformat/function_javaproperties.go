@@ -105,6 +105,9 @@ func (f *JavaPropertiesEncodeFunction) Run(ctx context.Context, req function.Run
 	if resp.Error != nil {
 		return
 	}
+	if unknownStringResultIfNeeded(ctx, resp, value.UnderlyingValue(), nil) {
+		return
+	}
 
 	entries, err := javaPropertiesFromValue(value.UnderlyingValue())
 	if err != nil {

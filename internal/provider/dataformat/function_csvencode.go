@@ -54,6 +54,9 @@ func (f *CSVEncodeFunction) Run(ctx context.Context, req function.RunRequest, re
 	if resp.Error != nil {
 		return
 	}
+	if unknownStringResultIfNeeded(ctx, resp, rowsVal.UnderlyingValue(), optsArgs) {
+		return
+	}
 
 	if len(optsArgs) > 1 {
 		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewArgumentFuncError(1, "At most one options argument may be provided."))

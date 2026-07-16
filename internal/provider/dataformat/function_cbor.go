@@ -115,6 +115,9 @@ func (f *CBOREncodeFunction) Run(ctx context.Context, req function.RunRequest, r
 	if resp.Error != nil {
 		return
 	}
+	if unknownStringResultIfNeeded(ctx, resp, value.UnderlyingValue(), nil) {
+		return
+	}
 
 	goVal, err := terraformValueToGo(value.UnderlyingValue(), false)
 	if err != nil {
