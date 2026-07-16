@@ -2,7 +2,6 @@ package cedar
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/function"
 )
@@ -38,7 +37,8 @@ func (f *CedarValidateFunction) Run(ctx context.Context, req function.RunRequest
 		return
 	}
 	if len(policies) > cedarMaxInputBytes {
-		resp.Error = function.NewArgumentFuncError(0, fmt.Sprintf("policy document exceeds maximum supported length of %d bytes", cedarMaxInputBytes))
+		// Over the size guard, report not-valid rather than failing the plan, keeping the "does not fail the plan" contract absolute (a policy document this large is not a real one).
+		resp.Error = function.ConcatFuncErrors(resp.Error, resp.Result.Set(ctx, false))
 		return
 	}
 	resp.Error = function.ConcatFuncErrors(resp.Error, resp.Result.Set(ctx, IsValid(policies)))

@@ -72,21 +72,12 @@ func (f *OELEvaluateFunction) Run(ctx context.Context, req function.RunRequest, 
 	}
 	value, err := nodeToAttr(result)
 	if err != nil {
-		resp.Error = function.NewArgumentFuncError(0, err.Error())
+		// Post-parse internal conversion failure, not an invalid argument.
+		resp.Error = function.NewFuncError(err.Error())
 		return
 	}
 
 	resp.Error = function.ConcatFuncErrors(resp.Error, resp.Result.Set(ctx, types.DynamicValue(value)))
-}
-
-// optionsHaveUnknown reports whether the variadic context object holds any unknown value.
-func optionsHaveUnknown(opts []types.Dynamic) bool {
-	for _, o := range opts {
-		if hasUnknown(o) {
-			return true
-		}
-	}
-	return false
 }
 
 // evaluateContext parses the optional { user, group_ids, groups, strict } context object at parameter index 1.

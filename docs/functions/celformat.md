@@ -29,6 +29,10 @@ output "wrapped" {
     "aaaaa == 1 && bbbbb == 2 && ccccc == 3 && ddddd == 4",
     { format = { wrap_on_column = 30, wrap_on_operators = ["&&"], wrap_after_column_limit = true } },
   )
+  /* →
+     aaaaa == 1 && bbbbb == 2 && ccccc == 3 &&
+     ddddd == 4
+  */
 }
 ```
 

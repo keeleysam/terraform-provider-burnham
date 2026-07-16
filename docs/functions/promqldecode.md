@@ -4,7 +4,7 @@
 page_title: "promqldecode function - burnham"
 subcategory: "Expression Languages"
 description: |-
-  Parse a PromQL query into a promqlencode data tree
+  Decode a PromQL query into a promqlencode data tree
 ---
 
 # function: promqldecode

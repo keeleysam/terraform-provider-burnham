@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
@@ -62,6 +63,16 @@ func elementsHaveUnknown(elems []attr.Value) bool {
 func attributesHaveUnknown(attrs map[string]attr.Value) bool {
 	for _, a := range attrs {
 		if hasUnknown(a) {
+			return true
+		}
+	}
+	return false
+}
+
+// optionsHaveUnknown reports whether the variadic options object holds any unknown value.
+func optionsHaveUnknown(opts []types.Dynamic) bool {
+	for _, o := range opts {
+		if hasUnknown(o) {
 			return true
 		}
 	}

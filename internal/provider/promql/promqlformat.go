@@ -90,13 +90,3 @@ func promqlFormatOptions(opts []types.Dynamic) (bool, *function.FuncError) {
 	}
 	return pretty, nil
 }
-
-// optionsHaveUnknown reports whether the variadic options object holds any unknown value.
-func optionsHaveUnknown(opts []types.Dynamic) bool {
-	for _, o := range opts {
-		if hasUnknown(o) {
-			return true
-		}
-	}
-	return false
-}

@@ -16,7 +16,7 @@ const (
 	celMaxDepth = 1024
 	// celMaxNodes caps the total node count traversed in a single conversion.
 	celMaxNodes = 1_000_000
-	// celMaxInputBytes caps the length of a CEL string argument, matching the dataformat family's input guard.
+	// celMaxInputBytes caps the length of a CEL string argument to the string-input functions.
 	celMaxInputBytes = 16 << 20 // 16 MiB
 )
 

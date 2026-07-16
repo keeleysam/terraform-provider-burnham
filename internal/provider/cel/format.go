@@ -6,6 +6,7 @@ import (
 	"github.com/elastic/celfmt"
 	"github.com/google/cel-go/common"
 	"github.com/google/cel-go/common/ast"
+	"github.com/google/cel-go/common/operators"
 	"github.com/google/cel-go/parser"
 )
 
@@ -33,13 +34,40 @@ func Pretty() FormatOption          { return func(c *formatConfig) { c.pretty = 
 func Indent(s string) FormatOption  { return func(c *formatConfig) { c.indent = &s } }
 func AlwaysComma() FormatOption     { return func(c *formatConfig) { c.alwaysComma = true } }
 
+// logicalWrapOperatorIDs covers the operator symbols cel-go's operators.Find does not map (the logical and conditional operators), which are the defaults callers most often wrap on. Find already covers the arithmetic and comparison symbols.
+var logicalWrapOperatorIDs = map[string]string{
+	"&&": operators.LogicalAnd,
+	"||": operators.LogicalOr,
+	"?:": operators.Conditional,
+}
+
+// wrapOperatorIDs translates the human-friendly operator symbols the options accept ("&&", "==", ...) into the operator ids cel-go's parser.WrapOnOperators expects ("_&&_", "_==_", ...). A symbol cel-go does not recognize is passed through unchanged, so cel-go reports the error at unparse time.
+func wrapOperatorIDs(symbols []string) []string {
+	if symbols == nil {
+		return nil
+	}
+	ids := make([]string, len(symbols))
+	for i, s := range symbols {
+		if id, ok := operators.Find(s); ok {
+			ids[i] = id
+			continue
+		}
+		if id, ok := logicalWrapOperatorIDs[s]; ok {
+			ids[i] = id
+			continue
+		}
+		ids[i] = s
+	}
+	return ids
+}
+
 func (c formatConfig) unparserOpts() []parser.UnparserOption {
 	var o []parser.UnparserOption
 	if c.wrapCol > 0 {
 		o = append(o, parser.WrapOnColumn(c.wrapCol))
 	}
 	if c.wrapOps != nil {
-		o = append(o, parser.WrapOnOperators(c.wrapOps...))
+		o = append(o, parser.WrapOnOperators(wrapOperatorIDs(c.wrapOps)...))
 	}
 	if c.wrapAfter != nil {
 		o = append(o, parser.WrapAfterColumnLimit(*c.wrapAfter))
@@ -68,7 +96,7 @@ func formatExpr(expr ast.Expr, si *ast.SourceInfo, opts ...FormatOption) (string
 	}
 	uo := []parser.UnparserOption{parser.WrapOnColumn(col)}
 	if cfg.wrapOps != nil {
-		uo = append(uo, parser.WrapOnOperators(cfg.wrapOps...))
+		uo = append(uo, parser.WrapOnOperators(wrapOperatorIDs(cfg.wrapOps)...))
 	}
 	if cfg.wrapAfter != nil {
 		uo = append(uo, parser.WrapAfterColumnLimit(*cfg.wrapAfter))

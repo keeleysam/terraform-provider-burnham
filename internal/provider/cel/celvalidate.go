@@ -2,7 +2,6 @@ package cel
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -50,7 +49,8 @@ func (f *CELValidateFunction) Run(ctx context.Context, req function.RunRequest, 
 	}
 
 	if len(expr) > celMaxInputBytes {
-		resp.Error = function.NewArgumentFuncError(0, fmt.Sprintf("expression exceeds maximum supported length of %d bytes", celMaxInputBytes))
+		// Over the size guard, report not-valid rather than failing the plan, keeping the "does not fail the plan" contract absolute (an expression this large is not a real one).
+		resp.Error = function.ConcatFuncErrors(resp.Error, resp.Result.Set(ctx, false))
 		return
 	}
 	if optionsHaveUnknown(optsArgs) {

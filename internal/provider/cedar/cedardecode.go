@@ -39,7 +39,7 @@ func (f *CedarDecodeFunction) Run(ctx context.Context, req function.RunRequest, 
 		return
 	}
 	if len(policy) > cedarMaxInputBytes {
-		resp.Error = function.NewArgumentFuncError(0, fmt.Sprintf("policy exceeds maximum supported length of %d bytes", cedarMaxInputBytes))
+		resp.Error = function.NewArgumentFuncError(0, fmt.Sprintf("policy document exceeds maximum supported length of %d bytes", cedarMaxInputBytes))
 		return
 	}
 
@@ -50,7 +50,8 @@ func (f *CedarDecodeFunction) Run(ctx context.Context, req function.RunRequest, 
 	}
 	value, err := nodeToAttr(tree)
 	if err != nil {
-		resp.Error = function.NewArgumentFuncError(0, err.Error())
+		// Post-parse internal conversion failure, not an invalid argument.
+		resp.Error = function.NewFuncError(err.Error())
 		return
 	}
 	resp.Error = function.ConcatFuncErrors(resp.Error, resp.Result.Set(ctx, types.DynamicValue(value)))

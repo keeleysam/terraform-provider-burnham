@@ -1,4 +1,4 @@
-// Package promql provides Terraform provider functions to validate and format PromQL (Prometheus Query Language) expressions.
+// Package promql provides Terraform provider functions to build, decode, validate, and format PromQL (Prometheus Query Language) queries from HCL data.
 //
 // PromQL is hand-authored in alerting and recording rules (grafana_rule_group, Mimir rules, prometheus-operator PrometheusRule manifests) and dashboard panels. These functions catch invalid queries at plan time and canonicalize them.
 //

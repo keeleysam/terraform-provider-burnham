@@ -37,7 +37,7 @@ func (f *PromQLValidateFunction) Run(ctx context.Context, req function.RunReques
 		return
 	}
 	if len(query) > promqlMaxInputBytes {
-		// Over the size guard, report not-valid rather than failing the plan, keeping the "never fails" contract absolute (a query this large is not a real one).
+		// Over the size guard, report not-valid rather than failing the plan, keeping the "does not fail the plan" contract absolute (a query this large is not a real one).
 		resp.Error = function.ConcatFuncErrors(resp.Error, resp.Result.Set(ctx, false))
 		return
 	}

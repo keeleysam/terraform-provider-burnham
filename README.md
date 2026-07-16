@@ -42,9 +42,9 @@ Build, check, format, round-trip, and (for CEL) evaluate expression-language str
 | Function | Purpose |
 |----------|---------|
 | `celencode` | Build a CEL string from an HCL data tree (a readable surface notation or the canonical `syntax.proto` field-name notation, mixable). References are marked `{ ident = "..." }`; everything else is a literal. |
+| `celdecode` | The inverse of `celencode`: parse a CEL string back into the data tree, in a chosen notation. `celencode(celdecode(x))` round-trips to the canonical form of `x`. |
 | `celvalidate` | Report whether a string is syntactically valid CEL (returns a bool, does not fail the plan). `{ strict = true }` checks against base CEL with no extensions. |
 | `celformat` | Parse and return the canonical, optionally pretty-printed CEL string (fails on invalid input). |
-| `celdecode` | The inverse of `celencode`: parse a CEL string back into the data tree, in a chosen notation. `celencode(celdecode(x))` round-trips to the canonical form of `x`. |
 | `celevaluate` | Evaluate a *standard* CEL expression against variable bindings and return the result. Runs cel-go's standard library plus extensions; host-specific functions (GCP `inIpRange`, Kubernetes `quantity`, and the like) are not implemented. |
 
 The encode / validate / format / decode functions are syntax-only and dialect-neutral, so they accept any function name and suit any CEL sink. Only `celevaluate` actually runs the expression, so it is limited to standard CEL. Backed by [cel-go](https://github.com/google/cel-go) (and [celfmt](https://github.com/elastic/celfmt) for pretty-printing).
@@ -56,9 +56,9 @@ The encode / validate / format / decode functions are syntax-only and dialect-ne
 | Function | Purpose |
 |----------|---------|
 | `oelencode` | Build an OEL string from an HCL data tree. References are marked `{ ident = "user.department" }`; everything else is a literal. Operators are tokens or aliases (`==`/`eq`, `and`/`or`/`not`, `+`, `cond`, `elvis`, `matches`); calls take a `class`/`method` form (`String.stringContains(...)`), a bare `function` form (`isMemberOfAnyGroup(...)`, `substringBefore(...)`), or a receiver `target`/`method` form (`user.getInternalProperty("status")`, `user.isMemberOf({...})`); plus `select`, `index`, `project`, and `map`. |
+| `oeldecode` | The inverse of `oelencode`: parse an OEL string back into the data tree, so `oelencode(oeldecode(x))` round-trips to the canonical form of `x`. |
 | `oelvalidate` | Report whether a string is syntactically valid OEL (returns a bool, does not fail the plan). |
 | `oelformat` | Parse and return the canonical OEL string (normalized spacing and quoting; fails on invalid input). |
-| `oeldecode` | The inverse of `oelencode`: parse an OEL string back into the data tree, so `oelencode(oeldecode(x))` round-trips to the canonical form of `x`. |
 | `oelevaluate` | Evaluate an OEL expression against a sample `user` profile and group memberships and return the result, for previewing or testing a group rule at plan time. A local approximation of the group-rule subset, not Okta's server-side engine. |
 
 `oelencode` output is parsed back before it is returned, so it never emits a syntactically invalid expression, and it is byte-identical to `oelformat`'s canonical form. `oelencode`, `oelvalidate`, `oelformat`, and `oeldecode` cover the full documented OEL grammar (the classic namespaced subset plus receiver method calls, the Identity Engine method dialect, `isMemberOf({...})`, indexing, projection, Elvis, and `matches`); `oelevaluate` is limited to the group-rule subset it can actually evaluate. Backed by a fork of [okta-expression-parser](https://github.com/keeleysam/okta-expression-parser) that extends the parser to the full grammar (pending upstream contribution).

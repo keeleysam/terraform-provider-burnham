@@ -14,8 +14,8 @@ import (
 	cedar "github.com/cedar-policy/cedar-go"
 )
 
-// errInvalidOutput signals that the EST data tree did not describe a valid Cedar policy, so no DSL could be built from it. It lets callers attribute the failure.
-var errInvalidOutput = errors.New("EST data tree is not a valid Cedar policy")
+// errInvalidOutput signals that the EST data tree could not be marshaled to JSON for cedar-go to parse. It should be unreachable, since terraformToNode only produces JSON-marshalable values; the functions report it as an internal error, not an argument error. A tree that is well-formed JSON but not a valid Cedar policy is ordinary bad input and is reported as a plain (argument-attributable) error instead.
+var errInvalidOutput = errors.New("internal error: could not encode Cedar EST as JSON")
 
 // Encode builds a single Cedar policy in the DSL syntax from an EST data tree (the Cedar JSON policy format), the inverse of Decode.
 //
@@ -26,11 +26,11 @@ func Encode(tree any) (string, error) {
 	// Cedar EST keys include operators like "&&"; keep them literal rather than &-escaped (cedar-go accepts either, but the unescaped JSON is cleaner).
 	enc.SetEscapeHTML(false)
 	if err := enc.Encode(tree); err != nil {
-		return "", fmt.Errorf("encode EST as JSON: %w", err)
+		return "", fmt.Errorf("%w: %v", errInvalidOutput, err)
 	}
 	var p cedar.Policy
 	if err := p.UnmarshalJSON(buf.Bytes()); err != nil {
-		return "", fmt.Errorf("%w: %v", errInvalidOutput, err)
+		return "", fmt.Errorf("EST data tree is not a valid Cedar policy: %v", err)
 	}
 	return string(p.MarshalCedar()), nil
 }

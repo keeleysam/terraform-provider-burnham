@@ -2,7 +2,6 @@ package oel
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/function"
 )
@@ -38,7 +37,8 @@ func (f *OELValidateFunction) Run(ctx context.Context, req function.RunRequest, 
 		return
 	}
 	if len(expr) > oelMaxInputBytes {
-		resp.Error = function.NewArgumentFuncError(0, fmt.Sprintf("expression exceeds maximum supported length of %d bytes", oelMaxInputBytes))
+		// Over the size guard, report not-valid rather than failing the plan, keeping the "does not fail the plan" contract absolute (an expression this large is not a real one).
+		resp.Error = function.ConcatFuncErrors(resp.Error, resp.Result.Set(ctx, false))
 		return
 	}
 	resp.Error = function.ConcatFuncErrors(resp.Error, resp.Result.Set(ctx, IsValid(expr)))

@@ -50,7 +50,8 @@ func (f *OELDecodeFunction) Run(ctx context.Context, req function.RunRequest, re
 	}
 	value, err := nodeToAttr(node)
 	if err != nil {
-		resp.Error = function.NewArgumentFuncError(0, err.Error())
+		// Post-parse internal conversion failure, not an invalid argument.
+		resp.Error = function.NewFuncError(err.Error())
 		return
 	}
 	resp.Error = function.ConcatFuncErrors(resp.Error, resp.Result.Set(ctx, types.DynamicValue(value)))
