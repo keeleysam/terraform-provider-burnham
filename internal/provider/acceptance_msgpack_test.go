@@ -48,7 +48,7 @@ func TestAcc_MsgpackDecode_BinaryFieldIsBase64String(t *testing.T) {
 }
 
 func TestAcc_MsgpackDecode_InvalidPayload(t *testing.T) {
-	// 0xc1 (base64 "wQ==") is the reserved/never-used byte in msgpack — guaranteed parse failure.
+	// 0xc1 (base64 "wQ==") is the reserved/never-used byte in msgpack: guaranteed parse failure.
 	runErrorTest(t,
 		`output "test" { value = provider::burnham::msgpackdecode("wQ==") }`,
 		regexp.MustCompile(`(?i)msgpack|messagepack|decode`),

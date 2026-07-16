@@ -28,7 +28,7 @@ func (f *PlistDecodeFunction) Metadata(_ context.Context, _ function.MetadataReq
 func (f *PlistDecodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Parse an Apple property list into a Terraform value",
-		MarkdownDescription: "Parses an [Apple property list](https://developer.apple.com/documentation/foundation/archives_and_serialization/property_lists) string into a Terraform value. Auto-detects XML, binary, OpenStep, and GNUStep formats. For binary plists, pass the output of `filebase64()` — base64-encoded input is detected automatically.\n\n`<date>` elements decode as tagged objects of the form `{ __plist_type = \"date\", value = \"<RFC 3339 string>\" }`; `<data>` elements as `{ __plist_type = \"data\", value = \"<base64>\" }`; whole-number `<real>` elements as `{ __plist_type = \"real\", value = \"...\" }` (to distinguish from `<integer>`). All three round-trip cleanly back through `plistencode`.\n\n**Common uses:** reading Apple configuration profiles (`.mobileconfig`), `.plist` preference files, or any payload from MDM tooling where the on-disk format may be XML or binary.",
+		MarkdownDescription: "Parses an [Apple property list](https://developer.apple.com/documentation/foundation/archives_and_serialization/property_lists) string into a Terraform value. Auto-detects XML, binary, OpenStep, and GNUStep formats. For binary plists, pass the output of `filebase64()`; base64-encoded input is detected automatically.\n\n`<date>` elements decode as tagged objects of the form `{ __plist_type = \"date\", value = \"<RFC 3339 string>\" }`; `<data>` elements as `{ __plist_type = \"data\", value = \"<base64>\" }`; whole-number `<real>` elements as `{ __plist_type = \"real\", value = \"...\" }` (to distinguish from `<integer>`). All three round-trip cleanly back through `plistencode`.\n\n**Common uses:** reading Apple configuration profiles (`.mobileconfig`), `.plist` preference files, or any payload from MDM tooling where the on-disk format may be XML or binary.",
 		Parameters: []function.Parameter{
 			function.StringParameter{
 				Name:        "input",
@@ -124,7 +124,7 @@ func (f *PlistEncodeFunction) Definition(_ context.Context, _ function.Definitio
 		},
 		VariadicParameter: function.DynamicParameter{
 			Name:        "options",
-			Description: "An optional options object. Supported keys: \"format\" (string) — \"xml\" (default), \"binary\", or \"openstep\"; \"comments\" (object) — mirrored structure where string values become <!-- comment --> in the XML output. Pass at most one.",
+			Description: "An optional options object. Supported keys: \"format\" (string), one of \"xml\" (default), \"binary\", or \"openstep\"; \"comments\" (object), a mirrored structure where string values become <!-- comment --> in the XML output. Pass at most one.",
 		},
 		Return: function.StringReturn{},
 	}
@@ -219,7 +219,7 @@ func parsePlistFormat(s string) (int, error) {
 }
 
 // applyPlistXMLComments injects <!-- comment --> lines into plist XML output.
-// The comments value mirrors the data structure — keys match plist <key> elements,
+// The comments value mirrors the data structure: keys match plist <key> elements,
 // and string values become XML comments above the matching <key> line.
 func applyPlistXMLComments(output string, comments attr.Value) string {
 	commentsObj, ok := comments.(basetypes.ObjectValue)
@@ -254,7 +254,7 @@ func applyPlistCommentsToLines(lines []string, commentsMap map[string]attr.Value
 						result = append(result, indent+"<!-- "+escapeXMLComment(cline)+" -->")
 					}
 				case basetypes.ObjectValue:
-					// Nested comments — find the <dict> that follows the value for this key,
+					// Nested comments: find the <dict> that follows the value for this key,
 					// and recursively apply comments to it. We do this by scanning ahead.
 					result = append(result, lines[i])
 					i++

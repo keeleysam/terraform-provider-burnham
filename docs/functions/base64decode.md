@@ -9,22 +9,22 @@ description: |-
 
 # function: base64decode
 
-Decodes base64 to its bytes, returned as a string of those raw bytes. Deliberately lenient: it accepts both the standard and the URL-safe (§5) alphabets, tolerates missing `=` padding, and ignores ASCII whitespace — so it is a friction-free superset of Terraform's built-in `base64decode` (which rejects URL-safe input) and round-trips anything `base64encode` produces regardless of its options.
+Decodes base64 to its bytes, returned as a string of those raw bytes. Deliberately lenient: it accepts both the standard and the URL-safe (§5) alphabets, tolerates missing `=` padding, and ignores ASCII whitespace, so it is a friction-free superset of Terraform's built-in `base64decode` (which rejects URL-safe input) and round-trips anything `base64encode` produces regardless of its options.
 
 The result is a byte string; for binary that isn't valid UTF-8 you will usually feed it into another function rather than printing it.
 
 ```
-base64decode("SGVsbG8")   # unpadded, url-safe alphabet — both fine
+base64decode("SGVsbG8")   # unpadded, url-safe alphabet, both fine
 → "Hello"
 ```
 
 ## Example Usage
 
 ```terraform
-// base64decode — lenient: accepts standard or URL-safe alphabets, padded or not.
+// base64decode: lenient, accepts standard or URL-safe alphabets, padded or not.
 // A friction-free superset of core base64decode (which rejects URL-safe input).
 output "decoded" {
-  value = provider::burnham::base64decode("SGVsbG8") // unpadded — fine
+  value = provider::burnham::base64decode("SGVsbG8") // unpadded, fine
   // → "Hello"
 }
 ```

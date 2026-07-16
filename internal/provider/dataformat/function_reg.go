@@ -214,7 +214,7 @@ func regValueToTerraform(val *regis3.ValueEntry) (attr.Value, error) {
 		return makeRegTaggedObject(regTypeExpandSz, types.StringValue(val.GetString("")))
 
 	default:
-		// Unknown type — encode as binary hex
+		// Unknown type: encode as binary hex
 		return makeRegTaggedObject(regTypeBinary, types.StringValue(hex.EncodeToString(val.Data())))
 	}
 }
@@ -251,7 +251,7 @@ func (f *RegEncodeFunction) Metadata(_ context.Context, _ function.MetadataReque
 func (f *RegEncodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Encode a value as a Windows .reg file",
-		MarkdownDescription: "Encodes a Terraform object as a [Windows Registry Editor export (`.reg`) file](https://learn.microsoft.com/en-us/windows/win32/sysinfo/regedit) in Version 5 format.\n\nThe input must be a two-level map: registry key paths at the outer level, value names at the inner level. Plain strings become `REG_SZ` values; tagged objects from `regdword()`, `regqword()`, `regbinary()`, `regmulti()`, and `regexpandsz()` are converted to their native registry types. The default value uses the key name `\"@\"`.\n\nPass an optional `comments` key in `options` (mirroring the data structure) to inject `;` comments above specific keys.\n\n**Common uses:** generating `.reg` files for endpoint management — Group Policy alternatives, app preferences, security baselines, or developer-tooling defaults — and committing them to a managed config repo.",
+		MarkdownDescription: "Encodes a Terraform object as a [Windows Registry Editor export (`.reg`) file](https://learn.microsoft.com/en-us/windows/win32/sysinfo/regedit) in Version 5 format.\n\nThe input must be a two-level map: registry key paths at the outer level, value names at the inner level. Plain strings become `REG_SZ` values; tagged objects from `regdword()`, `regqword()`, `regbinary()`, `regmulti()`, and `regexpandsz()` are converted to their native registry types. The default value uses the key name `\"@\"`.\n\nPass an optional `comments` key in `options` (mirroring the data structure) to inject `;` comments above specific keys.\n\n**Common uses:** generating `.reg` files for endpoint management (Group Policy alternatives, app preferences, security baselines, or developer-tooling defaults) and committing them to a managed config repo.",
 		Parameters: []function.Parameter{
 			function.DynamicParameter{
 				Name:        "value",
@@ -260,7 +260,7 @@ func (f *RegEncodeFunction) Definition(_ context.Context, _ function.DefinitionR
 		},
 		VariadicParameter: function.DynamicParameter{
 			Name:        "options",
-			Description: "An optional options object. Supported keys: \"comments\" (object) — mirrored structure where string values become ; comments above the matching key or value. Pass at most one.",
+			Description: "An optional options object. Supported keys: \"comments\" (object), a mirrored structure where string values become ; comments above the matching key or value. Pass at most one.",
 		},
 		Return: function.StringReturn{},
 	}

@@ -9,14 +9,14 @@ description: |-
 
 # function: base64brotli
 
-Compresses `input` with [Brotli](https://www.rfc-editor.org/rfc/rfc7932) and returns the result as a base64-encoded brotli stream. On text-heavy payloads this is ~8–10% smaller than `base64gzip` (and a few percent smaller than `base64zopfli`), at the cost of requiring a brotli decompressor on the consuming side — `brotli -d`, shipped by every current Linux distro. Decompress with `base64 -d | brotli -d`, or any RFC 7932 decoder (browsers' `Content-Encoding: br`, Python `brotli`, etc.).
+Compresses `input` with [Brotli](https://www.rfc-editor.org/rfc/rfc7932) and returns the result as a base64-encoded brotli stream. On text-heavy payloads this is ~8–10% smaller than `base64gzip` (and a few percent smaller than `base64zopfli`), at the cost of requiring a brotli decompressor on the consuming side (`brotli -d`, shipped by every current Linux distro). Decompress with `base64 -d | brotli -d`, or any RFC 7932 decoder (browsers' `Content-Encoding: br`, Python `brotli`, etc.).
 
-The encoder is deterministic for a given input and options — there is no MTIME-equivalent in the brotli format — so same `input` and options always produce byte-identical output, keeping plans stable.
+The encoder is deterministic for a given input and options (there is no MTIME-equivalent in the brotli format), so same `input` and options always produce byte-identical output, keeping plans stable.
 
 The optional `options` object accepts:
 
-- `quality` (number) — compression effort; default `11` (maximum ratio), range `[0, 11]`. Lower is faster with a worse ratio. Default is `11` because `user_data` is compressed once at plan time and decompressed many times.
-- `lgwin` (number) — log₂ of the sliding-window size in bytes (RFC 7932 §9.1); default `22` (a 4 MiB window), range `[10, 24]`. Increase only for genuinely huge inputs with long-range repetition; decrease only if compress-time memory is constrained.
+- `quality` (number): compression effort; default `11` (maximum ratio), range `[0, 11]`. Lower is faster with a worse ratio. Default is `11` because `user_data` is compressed once at plan time and decompressed many times.
+- `lgwin` (number): log₂ of the sliding-window size in bytes (RFC 7932 §9.1); default `22` (a 4 MiB window), range `[10, 24]`. Increase only for genuinely huge inputs with long-range repetition; decrease only if compress-time memory is constrained.
 
 The RFC 7932 §10 encoder `mode` hint (text/generic/font) is intentionally **not** exposed: the pure-Go encoder this provider uses does not apply it (`text` and `generic` are byte-identical, `font` is unreachable through its public API), so a `mode` option would be a no-op rather than an honest knob.
 
@@ -29,7 +29,7 @@ boot_scripts_blob = provider::burnham::base64brotli(jsonencode(scripts), { quali
 
 ```terraform
 /*
-base64brotli — Brotli compression (RFC 7932) then base64.
+base64brotli: Brotli compression (RFC 7932) then base64.
 
 ~8–10% smaller than base64gzip on text-heavy payloads, at the cost of a brotli decompressor on the consuming side. Decompress with `base64 -d | brotli -d`. The encoder is deterministic, so plans stay stable.
 */

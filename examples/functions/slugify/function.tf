@@ -1,4 +1,4 @@
-// URL-safe slugs. Transliterates non-ASCII characters into their nearest ASCII equivalent — different from corefunc's case-conversion functions.
+// URL-safe slugs. Transliterates non-ASCII characters into their nearest ASCII equivalent, different from corefunc's case-conversion functions.
 output "english_lowercase" {
   value = provider::burnham::slugify("Hello, World!")
   // → "hello-world"

@@ -1,4 +1,4 @@
-// JSONPath (RFC 9535) query — returns a list of matching nodes.
+// JSONPath (RFC 9535) query: returns a list of matching nodes.
 output "low_priced_titles" {
   value = provider::burnham::jsonpath_query(
     {

@@ -1,9 +1,9 @@
 /*
 Statistics functions for lists of numbers: mean, median, percentile, variance, stddev, mode.
 
-All operate on `list(number)`, accept Terraform's arbitrary-precision number type, and return a number (or for `mode`, a sorted list of numbers — the data may be multimodal). Empty input is always an error: a statistic of zero observations is undefined.
+All operate on `list(number)`, accept Terraform's arbitrary-precision number type, and return a number (or for `mode`, a sorted list of numbers, since the data may be multimodal). Empty input is always an error: a statistic of zero observations is undefined.
 
-Variance and standard deviation use the **population** formulas — divide the sum of squared deviations by N, not N-1. This matches numpy's default (`ddof=0`). Callers who want sample statistics (Bessel's correction) can multiply variance by N/(N-1) explicitly. Mixing those defaults silently is the kind of foot-gun the rest of this provider tries to avoid.
+Variance and standard deviation use the **population** formulas: divide the sum of squared deviations by N, not N-1. This matches numpy's default (`ddof=0`). Callers who want sample statistics (Bessel's correction) can multiply variance by N/(N-1) explicitly. Mixing those defaults silently is the kind of foot-gun the rest of this provider tries to avoid.
 
 Percentile uses the linear-interpolation method (Type 7 in Hyndman & Fan, the default in numpy, R, and Excel's PERCENTILE.INC): index = p/100 × (N - 1), interpolate between the two nearest observations when p does not land on an integer index.
 
@@ -22,7 +22,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-// numericPrec returns the working precision (in bits) for big.Float arithmetic over the given inputs. We pick the maximum of (a) each input's own precision, (b) a 256-bit floor that comfortably exceeds IEEE 754 double, (c) some headroom proportional to N so summing many values does not lose digits, capped at (d) 4096 bits (≈1233 decimal digits) so a 10K-element list does not blow into multi-megabyte arithmetic for what is realistically a 30-digit answer. Shared with math.go's clamp / mod_floor — same precision policy applies wherever the numerics family does mixed-input big.Float arithmetic.
+// numericPrec returns the working precision (in bits) for big.Float arithmetic over the given inputs. We pick the maximum of (a) each input's own precision, (b) a 256-bit floor that comfortably exceeds IEEE 754 double, (c) some headroom proportional to N so summing many values does not lose digits, capped at (d) 4096 bits (≈1233 decimal digits) so a 10K-element list does not blow into multi-megabyte arithmetic for what is realistically a 30-digit answer. Shared with math.go's clamp / mod_floor: the same precision policy applies wherever the numerics family does mixed-input big.Float arithmetic.
 func numericPrec(xs []*big.Float) uint {
 	const floor = 256
 	const ceiling = 4096
@@ -125,7 +125,7 @@ func (f *MeanFunction) Metadata(_ context.Context, _ function.MetadataRequest, r
 func (f *MeanFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Arithmetic mean (average) of a list of numbers",
-		MarkdownDescription: "Returns Σ x / N, the arithmetic mean of `numbers`. Errors when `numbers` is empty.\n\nUse this when you want a plain average. For weighted means, geometric means, or trimmed means, do the weighting explicitly in HCL — the goal of this function is the unambiguous canonical definition.",
+		MarkdownDescription: "Returns Σ x / N, the arithmetic mean of `numbers`. Errors when `numbers` is empty.\n\nUse this when you want a plain average. For weighted means, geometric means, or trimmed means, do the weighting explicitly in HCL. The goal of this function is the unambiguous canonical definition.",
 		Parameters: []function.Parameter{
 			function.ListParameter{
 				Name:        "numbers",
@@ -211,7 +211,7 @@ func (f *PercentileFunction) Metadata(_ context.Context, _ function.MetadataRequ
 func (f *PercentileFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Percentile of a list of numbers, by linear interpolation",
-		MarkdownDescription: "Returns the `p`-th percentile of `numbers` using linear interpolation between adjacent ordered values. This is **Hyndman & Fan Type 7** — the default method in [NumPy](https://numpy.org/doc/stable/reference/generated/numpy.percentile.html), R, and Excel's `PERCENTILE.INC`.\n\nDefinition: let the sorted observations be `x[0] ≤ x[1] ≤ … ≤ x[N-1]`. Compute `h = (p / 100) × (N - 1)`. If `h` is an integer, return `x[h]`. Otherwise return `x[⌊h⌋] + (h - ⌊h⌋) × (x[⌈h⌉] - x[⌊h⌋])`.\n\nValid `p` is in `[0, 100]`. `p = 0` returns the minimum; `p = 100` returns the maximum; `p = 50` matches `median(numbers)`.",
+		MarkdownDescription: "Returns the `p`-th percentile of `numbers` using linear interpolation between adjacent ordered values. This is **Hyndman & Fan Type 7**, the default method in [NumPy](https://numpy.org/doc/stable/reference/generated/numpy.percentile.html), R, and Excel's `PERCENTILE.INC`.\n\nDefinition: let the sorted observations be `x[0] ≤ x[1] ≤ … ≤ x[N-1]`. Compute `h = (p / 100) × (N - 1)`. If `h` is an integer, return `x[h]`. Otherwise return `x[⌊h⌋] + (h - ⌊h⌋) × (x[⌈h⌉] - x[⌊h⌋])`.\n\nValid `p` is in `[0, 100]`. `p = 0` returns the minimum; `p = 100` returns the maximum; `p = 50` matches `median(numbers)`.",
 		Parameters: []function.Parameter{
 			function.ListParameter{
 				Name:        "numbers",
@@ -274,7 +274,7 @@ func (f *PercentileFunction) Run(ctx context.Context, req function.RunRequest, r
 	floorInt := new(big.Int).Quo(hRat.Num(), hRat.Denom())
 	idx := floorInt.Int64()
 
-	// Exact integer index — no interpolation needed. Covers p = 0, p = 100, and any p that lands on an observation.
+	// Exact integer index, no interpolation needed. Covers p = 0, p = 100, and any p that lands on an observation.
 	if hRat.IsInt() {
 		out := new(big.Float).SetPrec(prec).Copy(sorted[idx])
 		resp.Error = function.ConcatFuncErrors(resp.Error, resp.Result.Set(ctx, out))
@@ -389,7 +389,7 @@ func (f *ModeFunction) Metadata(_ context.Context, _ function.MetadataRequest, r
 func (f *ModeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Most-frequent value(s) in a list of numbers",
-		MarkdownDescription: "Returns the value(s) appearing most frequently in `numbers`, as a sorted ascending list. The result is always a list because the data may be **multimodal** — e.g. `mode([1, 1, 2, 2, 3])` is `[1, 2]`, not just one of them. For unimodal data the list has length 1.\n\n**No mode for all-unique data.** When every value occurs exactly once and the list has more than one element (`mode([1, 2, 3])`), the function returns an empty list rather than echoing the input — having a \"mode\" requires at least one value to repeat. Single-element input `mode([5])` returns `[5]` (degenerate but unambiguous).\n\nTwo numeric values are considered equal here when they compare equal as `*big.Float` (`Cmp == 0`), so `mode([1, 1.0])` collapses to `[1]`. Errors when `numbers` is empty.",
+		MarkdownDescription: "Returns the value(s) appearing most frequently in `numbers`, as a sorted ascending list. The result is always a list because the data may be **multimodal**: e.g. `mode([1, 1, 2, 2, 3])` is `[1, 2]`, not just one of them. For unimodal data the list has length 1.\n\n**No mode for all-unique data.** When every value occurs exactly once and the list has more than one element (`mode([1, 2, 3])`), the function returns an empty list rather than echoing the input, since having a \"mode\" requires at least one value to repeat. Single-element input `mode([5])` returns `[5]` (degenerate but unambiguous).\n\nTwo numeric values are considered equal here when they compare equal as `*big.Float` (`Cmp == 0`), so `mode([1, 1.0])` collapses to `[1]`. Errors when `numbers` is empty.",
 		Parameters: []function.Parameter{
 			function.ListParameter{
 				Name:        "numbers",
@@ -428,7 +428,7 @@ func (f *ModeFunction) Run(ctx context.Context, req function.RunRequest, resp *f
 		}
 	}
 	var modes []*big.Float
-	// All-unique data with more than one element has no mode — returning every input would mislead callers using `mode` to detect repetition. Single-element input is the degenerate case where the value is trivially "the mode".
+	// All-unique data with more than one element has no mode: returning every input would mislead callers using `mode` to detect repetition. Single-element input is the degenerate case where the value is trivially "the mode".
 	if maxCount == 1 && len(buckets) > 1 {
 		modes = []*big.Float{}
 	} else {

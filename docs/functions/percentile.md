@@ -9,7 +9,7 @@ description: |-
 
 # function: percentile
 
-Returns the `p`-th percentile of `numbers` using linear interpolation between adjacent ordered values. This is **Hyndman & Fan Type 7** — the default method in [NumPy](https://numpy.org/doc/stable/reference/generated/numpy.percentile.html), R, and Excel's `PERCENTILE.INC`.
+Returns the `p`-th percentile of `numbers` using linear interpolation between adjacent ordered values. This is **Hyndman & Fan Type 7**, the default method in [NumPy](https://numpy.org/doc/stable/reference/generated/numpy.percentile.html), R, and Excel's `PERCENTILE.INC`.
 
 Definition: let the sorted observations be `x[0] ≤ x[1] ≤ … ≤ x[N-1]`. Compute `h = (p / 100) × (N - 1)`. If `h` is an integer, return `x[h]`. Otherwise return `x[⌊h⌋] + (h - ⌊h⌋) × (x[⌈h⌉] - x[⌊h⌋])`.
 
@@ -19,11 +19,9 @@ Valid `p` is in `[0, 100]`. `p = 0` returns the minimum; `p = 100` returns the m
 
 ```terraform
 /*
-Linear-interpolation percentile (Hyndman & Fan Type 7) — same definition as numpy.percentile, R's default, and Excel's PERCENTILE.INC.
+Linear-interpolation percentile (Hyndman & Fan Type 7): same definition as numpy.percentile, R's default, and Excel's PERCENTILE.INC.
 
-Use it to set thresholds based on observed distributions, e.g. "scale instance
-count to handle the p95 of last week's request rate" without hand-rolling a
-sort + index in HCL.
+Use it to set thresholds based on observed distributions, e.g. "scale instance count to handle the p95 of last week's request rate" without hand-rolling a sort + index in HCL.
 */
 locals {
   request_rates = [120, 145, 132, 158, 199, 180, 175, 165, 162, 211]

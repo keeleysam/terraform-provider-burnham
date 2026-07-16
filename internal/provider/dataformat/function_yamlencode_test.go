@@ -517,7 +517,7 @@ func TestYAMLEncode_DedupeOff(t *testing.T) {
 		},
 	)
 
-	// Default (no dedupe option) — should NOT have anchors.
+	// Default (no dedupe option): should NOT have anchors.
 	result, err := runYAMLEncode(t, obj)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)

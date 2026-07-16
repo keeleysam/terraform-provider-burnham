@@ -7,17 +7,17 @@ var ieeeTestVectors = []struct {
 	digits [3]byte
 	dpd    uint16
 }{
-	{[3]byte{0, 0, 5}, 0b0000000101}, // "005" — all small
-	{[3]byte{0, 5, 5}, 0b0001010101}, // "055" — all small
-	{[3]byte{0, 7, 9}, 0b0001111001}, // "079" — c large
-	{[3]byte{0, 8, 0}, 0b0000001010}, // "080" — b large
-	{[3]byte{0, 9, 9}, 0b0001011111}, // "099" — b,c large
-	{[3]byte{5, 5, 5}, 0b1011010101}, // "555" — all small
-	{[3]byte{8, 0, 0}, 0b0000001100}, // "800" — a large
-	{[3]byte{8, 8, 0}, 0b0000001110}, // "880" — a,b large
-	{[3]byte{8, 0, 8}, 0b0000101110}, // "808" — a,c large
-	{[3]byte{8, 8, 8}, 0b0001101110}, // "888" — all large (canonical: high two bits = 0)
-	{[3]byte{9, 9, 9}, 0b0011111111}, // "999" — all large
+	{[3]byte{0, 0, 5}, 0b0000000101}, // "005", all small
+	{[3]byte{0, 5, 5}, 0b0001010101}, // "055", all small
+	{[3]byte{0, 7, 9}, 0b0001111001}, // "079", c large
+	{[3]byte{0, 8, 0}, 0b0000001010}, // "080", b large
+	{[3]byte{0, 9, 9}, 0b0001011111}, // "099", b,c large
+	{[3]byte{5, 5, 5}, 0b1011010101}, // "555", all small
+	{[3]byte{8, 0, 0}, 0b0000001100}, // "800", a large
+	{[3]byte{8, 8, 0}, 0b0000001110}, // "880", a,b large
+	{[3]byte{8, 0, 8}, 0b0000101110}, // "808", a,c large
+	{[3]byte{8, 8, 8}, 0b0001101110}, // "888", all large (canonical: high two bits = 0)
+	{[3]byte{9, 9, 9}, 0b0011111111}, // "999", all large
 }
 
 // Note on "888" / "999" / etc.: the all-large case has two don't-care bits in the IEEE encoding, so each all-large digit triple has 4 valid DPD aliases. Encode emits the canonical form with the don't-care bits set to 0; Decode accepts any of the aliases (verified separately by TestDecodeHandlesRedundantEncodings).
@@ -74,8 +74,7 @@ func TestEncodeProducesValidDPDRange(t *testing.T) {
 
 // TestDecodeHandlesRedundantEncodings: per IEEE 754-2008, several 10-bit patterns decode to digit triples that have a different canonical encoding (because the all-large case has 2 don't-care bits → 4 redundant aliases per all-large triple). Decode should still return the correct digit triple; only Encode is canonical.
 func TestDecodeHandlesRedundantEncodings(t *testing.T) {
-	// All four aliases of "999" — DPD's all-large case has two don't-care
-	// bits (p9, p8), giving 2² = 4 valid encodings of the same digit triple.
+	// All four aliases of "999": DPD's all-large case has two don't-care bits (p9, p8), giving 2² = 4 valid encodings of the same digit triple.
 	for hi := uint16(0); hi < 4; hi++ {
 		// p9 p8 free; p3 p2 p1 = 1 1 1; p7 = c = 1; p4 = f = 1; p0 = i = 1; p6 p5 = 1 1.
 		code := (hi << 8) | 0b00_1111_1111

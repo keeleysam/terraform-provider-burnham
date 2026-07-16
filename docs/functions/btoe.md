@@ -9,7 +9,7 @@ description: |-
 
 # function: btoe
 
-Encodes a binary key as a sequence of short English words per [RFC 1751](https://www.rfc-editor.org/rfc/rfc1751) ("A Convention for Human-Readable 128-bit Keys"). `btoe` is the RFC's own name for this direction — *bytes-to-english*; `etob` reverses it.
+Encodes a binary key as a sequence of short English words per [RFC 1751](https://www.rfc-editor.org/rfc/rfc1751) ("A Convention for Human-Readable 128-bit Keys"). `btoe` is the RFC's own name for this direction (*bytes-to-english*); `etob` reverses it.
 
 Each 64-bit block of the key becomes six words drawn from a fixed 2048-word dictionary, with two parity bits appended so `etob` can catch a transcription error on the way back. The classic use is reading a key or S/Key one-time password aloud, but it works as a general human-readable encoding for any key material.
 
@@ -23,7 +23,7 @@ btoe("EB33F77EE73D4053")
 ## Example Usage
 
 ```terraform
-// btoe — RFC 1751 "bytes to english": render a key as human-readable words.
+// btoe (RFC 1751 "bytes to english"): render a key as human-readable words.
 // Each 64-bit block becomes six words; a 128-bit key yields twelve.
 output "key_words" {
   value = provider::burnham::btoe("CCAC2AED591056BE4F90FD441C534766")

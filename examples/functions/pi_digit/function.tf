@@ -1,4 +1,4 @@
-// pi_digit — RFC 3091 §2.1.2 UDP reply for π. Returns "<n>:<digit>".
+// pi_digit: RFC 3091 §2.1.2 UDP reply for π. Returns "<n>:<digit>".
 output "first_digit" {
   value = provider::burnham::pi_digit(1)
   // → "1:1"   (π = 3.[1]415…)

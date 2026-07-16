@@ -206,7 +206,7 @@ func TestPiDigit_AgreesWithPiDigits(t *testing.T) {
 			continue
 		}
 		// Compare the digit value.
-		// Single is "n:digit" — the digit is the last char.
+		// Single is "n:digit", so the digit is the last char.
 		got := single[len(single)-1]
 		want := bulk[len(bulk)-1]
 		if got != want {

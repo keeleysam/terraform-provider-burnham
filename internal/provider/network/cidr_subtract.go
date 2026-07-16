@@ -18,9 +18,8 @@ func (f *CIDRSubtractFunction) Metadata(_ context.Context, _ function.MetadataRe
 
 func (f *CIDRSubtractFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
-		Summary: "Subtract CIDRs from an input list",
-		MarkdownDescription: "Returns the set of CIDRs that remain after removing all addresses covered by " +
-			"the `exclude` list from the `input` list. The result is merged into the smallest equivalent set.",
+		Summary:             "Subtract CIDRs from an input list",
+		MarkdownDescription: "Returns the set of CIDRs that remain after removing all addresses covered by the `exclude` list from the `input` list. The result is merged into the smallest equivalent set.",
 		Parameters: []function.Parameter{
 			function.ListParameter{
 				Name:        "input",

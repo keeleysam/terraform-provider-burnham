@@ -15,13 +15,13 @@ This function is **deterministic**: the 74 random-ish bits (rand_a, rand_b) are 
 
 `timestamp` accepts any RFC 3339 / RFC 3339 Nano timestamp, e.g. `"2026-05-08T12:00:00Z"`. Sub-millisecond precision is truncated; the v7 spec only carries milliseconds.
 
-**Always pass a meaningful `entropy`.** The empty string is accepted but it makes the random bits a fixed function of the timestamp alone — every call sharing that timestamp returns the same UUID, defeating the point of the random fields. Use the resource name, a logical key, or any other per-call string to keep IDs distinct.
+**Always pass a meaningful `entropy`.** The empty string is accepted but it makes the random bits a fixed function of the timestamp alone: every call sharing that timestamp returns the same UUID, defeating the point of the random fields. Use the resource name, a logical key, or any other per-call string to keep IDs distinct.
 
 ## Example Usage
 
 ```terraform
 /*
-Deterministic time-ordered UUIDs (RFC 9562 §5.7). The 48-bit Unix-millisecond timestamp lives in the leading bytes, making v7 UUIDs lexicographically sortable by creation time — much better than v4 for database keys, log IDs, and ordered storage.
+Deterministic time-ordered UUIDs (RFC 9562 §5.7). The 48-bit Unix-millisecond timestamp lives in the leading bytes, making v7 UUIDs lexicographically sortable by creation time, much better than v4 for database keys, log IDs, and ordered storage.
 
 This implementation derives the 74 random-ish bits via HMAC-SHA-256 keyed by `entropy`, so a stable (timestamp, entropy) pair always returns the same UUID. Use a per-resource `entropy` to get unique-per-resource sortable IDs that don't churn the plan.
 */

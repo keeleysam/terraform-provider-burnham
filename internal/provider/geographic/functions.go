@@ -1,4 +1,4 @@
-// Package geographic provides geocoding provider-defined functions: geohash and Open Location Code (Plus codes) — encode/decode for both.
+// Package geographic provides geocoding provider-defined functions: geohash and Open Location Code (Plus codes), encode/decode for both.
 package geographic
 
 import "github.com/hashicorp/terraform-plugin-framework/function"

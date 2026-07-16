@@ -137,7 +137,7 @@ func bigFloatExactInt(i *big.Int) *big.Float {
 }
 
 func TestPiApproximateDigit_PastInt64(t *testing.T) {
-	// 10^30 — beyond int64 range (~9.2e18). Forces the math/big path.
+	// 10^30, beyond int64 range (~9.2e18). Forces the math/big path.
 	// (10^30 - 1) mod 6: 10^k mod 6 = 4 for all k >= 1, so 10^30 mod 6 = 4
 	// and (10^30 - 1) mod 6 = 3. digit = "142857"[3] = '8'.
 	ten30 := new(big.Int).Exp(big.NewInt(10), big.NewInt(30), nil)
@@ -152,8 +152,8 @@ func TestPiApproximateDigit_PastInt64(t *testing.T) {
 }
 
 func TestPiApproximateDigit_NearTerraformCeiling(t *testing.T) {
-	// 10^150 — pushes near Terraform's 512-bit number ceiling.
-	// (10^150 - 1) mod 6: same argument as above — every 10^k mod 6 = 4
+	// 10^150, pushes near Terraform's 512-bit number ceiling.
+	// (10^150 - 1) mod 6: same argument as above, every 10^k mod 6 = 4
 	// for k >= 1, so 10^150 - 1 mod 6 = 3. Expected digit: '8'.
 	ten150 := new(big.Int).Exp(big.NewInt(10), big.NewInt(150), nil)
 	got, err := runPiApproximateDigit(t, bigFloatExactInt(ten150))

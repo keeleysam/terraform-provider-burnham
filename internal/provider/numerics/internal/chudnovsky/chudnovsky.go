@@ -1,7 +1,7 @@
 /*
 Package chudnovsky computes π to arbitrary precision using the Chudnovsky brothers' series with binary splitting in pure integer arithmetic.
 
-This package is internal: it's used by sibling cmd/genpi to produce the DPD-packed pi_packed.bin shipped with terraform-burnham, and by the numerics package's cross-validation test. Production code does not import it — Burnham's runtime path serves digits from the embedded packed table, not from a runtime computation.
+This package is internal: it's used by sibling cmd/genpi to produce the DPD-packed pi_packed.bin shipped with terraform-burnham, and by the numerics package's cross-validation test. Production code does not import it: Burnham's runtime path serves digits from the embedded packed table, not from a runtime computation.
 
 References:
   - Chudnovsky, D. & Chudnovsky, G. (1988). Approximations and complex multiplication according to Ramanujan.
@@ -12,11 +12,11 @@ References:
 
 Why this is hand-rolled rather than imported.
 
-We evaluated github.com/ericlagergren/decimal — a maintained BSD-3 library (v3.3.1 tagged 2019, master last touched April 2024) whose Context.Pi method implements the same Chudnovsky binary-splitting algorithm coded above. Performance head-to-head was a tie at our 1M-digit target (~3 s, both ultimately bottoming out on math/big.Int.Mul, which is what their decimal.Big calls under the hood anyway). The deciding factor was memory: at 10M digits their implementation peaked at 3.5 GB allocated vs. 250 MB for this one — a 14× difference — driven by the per-call closure pattern in their Pi helpers (`var tmp Big; ... return &tmp`) and decimal.Big's per-instance Context overhead. The bloat is structural, not a one-line fix.
+We evaluated github.com/ericlagergren/decimal, a maintained BSD-3 library (v3.3.1 tagged 2019, master last touched April 2024) whose Context.Pi method implements the same Chudnovsky binary-splitting algorithm coded above. Performance head-to-head was a tie at our 1M-digit target (~3 s, both ultimately bottoming out on math/big.Int.Mul, which is what their decimal.Big calls under the hood anyway). The deciding factor was memory: at 10M digits their implementation peaked at 3.5 GB allocated vs. 250 MB for this one (a 14× difference), driven by the per-call closure pattern in their Pi helpers (`var tmp Big; ... return &tmp`) and decimal.Big's per-instance Context overhead. The bloat is structural, not a one-line fix.
 
-We don't actually hit that memory ceiling at our 1M cap, so the practical difference at our workload is negligible — but it tipped the choice to "100 lines we own" over "depend on a multi-thousand-line decimal arithmetic library to call the same Chudnovsky math we already have."
+We don't actually hit that memory ceiling at our 1M cap, so the practical difference at our workload is negligible, but it tipped the choice to "100 lines we own" over "depend on a multi-thousand-line decimal arithmetic library to call the same Chudnovsky math we already have."
 
-Follow-up worth doing eventually: contribute the memory fix upstream (rework the BinarySplit helpers to take pre-allocated state, drop per-call allocations from getPiA/P/Q). If that lands and tags a release, the calculus flips — we'd shed 100 lines of math we have to maintain in exchange for an upstream dep that does the same thing equally well. Until then, this stays.
+Follow-up worth doing eventually: contribute the memory fix upstream (rework the BinarySplit helpers to take pre-allocated state, drop per-call allocations from getPiA/P/Q). If that lands and tags a release, the calculus flips: we'd shed 100 lines of math we have to maintain in exchange for an upstream dep that does the same thing equally well. Until then, this stays.
 
 The series is
 

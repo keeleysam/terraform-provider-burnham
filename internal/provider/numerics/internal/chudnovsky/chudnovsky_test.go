@@ -43,7 +43,7 @@ func TestPiDigits_PrefixesAreConsistent(t *testing.T) {
 }
 
 func TestPiDigits_LeadingThreeIsStripped(t *testing.T) {
-	// The first character of the result must be the first digit *after* the decimal point — '1' (since π = 3.1415…). If we accidentally include the integer part, we'd see '3' here.
+	// The first character of the result must be the first digit *after* the decimal point, '1' (since π = 3.1415…). If we accidentally include the integer part, we'd see '3' here.
 	got := PiDigits(1)
 	if got != "1" {
 		t.Fatalf("PiDigits(1) = %q, want \"1\" (per RFC 3091's implied leading 3)", got)
@@ -51,8 +51,7 @@ func TestPiDigits_LeadingThreeIsStripped(t *testing.T) {
 }
 
 func TestPiDigits_FullReferenceMatches(t *testing.T) {
-	// Verify the first 100 digits also appear at the start of a longer
-	// computation — protects against off-by-one in the slicing.
+	// Verify the first 100 digits also appear at the start of a longer computation, which protects against off-by-one in the slicing.
 	long := PiDigits(200)
 	if !strings.HasPrefix(long, piFirst100Reference) {
 		t.Fatalf("first 100 digits of PiDigits(200) do not match reference\n got: %s\nwant prefix: %s", long[:100], piFirst100Reference)

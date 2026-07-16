@@ -11,7 +11,7 @@ description: |-
 
 Returns the first prefix of length `prefix_len` that is available within `pool` after removing all `used` CIDRs. Returns `null` if no prefix of that size is available.
 
-**Common uses:** IPAM-style subnet allocation — given a VPC CIDR as the pool and a list of already-allocated subnets as used, find the next free subnet to assign to a new workload. Useful in `locals` blocks to compute the next available AZ subnet without hardcoding offsets.
+**Common uses:** IPAM-style subnet allocation. Given a VPC CIDR as the pool and a list of already-allocated subnets as used, find the next free subnet to assign to a new workload. Useful in `locals` blocks to compute the next available AZ subnet without hardcoding offsets.
 
 ## Example Usage
 

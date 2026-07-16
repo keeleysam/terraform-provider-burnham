@@ -1,7 +1,7 @@
 /*
-Plus codes — Open Location Code (OLC).
+Plus codes: Open Location Code (OLC).
 
-Google's geohash competitor. Same idea — encode (lat, lon) as a short alphanumeric string — but with a different alphabet, decoding visually-distinct cell sizes (every 2 characters narrows the cell by ~20×), and explicit support for short codes anchored at a reference location. Increasingly used in places without street addresses; the United Nations and several national postal services have adopted it.
+Google's geohash competitor. Same idea, encode (lat, lon) as a short alphanumeric string, but with a different alphabet, decoding visually-distinct cell sizes (every 2 characters narrows the cell by ~20×), and explicit support for short codes anchored at a reference location. Increasingly used in places without street addresses; the United Nations and several national postal services have adopted it.
 
 `pluscode_encode` builds a full code (or a code of the requested length); `pluscode_decode` returns the centre point and bounding box.
 
@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	pluscodeDefaultLength = 10 // OLC default — ≈ 14 m × 14 m at the equator
+	pluscodeDefaultLength = 10 // OLC default: ≈ 14 m × 14 m at the equator
 	pluscodeMinLength     = 2
 	pluscodeMaxLength     = 15
 )

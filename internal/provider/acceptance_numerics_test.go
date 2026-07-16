@@ -180,7 +180,7 @@ func TestAcc_PiApproximateDigits_RejectsNegative(t *testing.T) {
 }
 
 func TestAcc_PiApproximateDigits_RejectsAboveCap(t *testing.T) {
-	// Regression: previously `pi_approximate_digits(MaxInt64)` would `make([]byte, MaxInt)` and OOM. Now capped at piApproximateMaxDigits (= ⌊π × 10⁶⌋ = 3,141,592) — same as `pi_digits`.
+	// Regression: previously `pi_approximate_digits(MaxInt64)` would `make([]byte, MaxInt)` and OOM. Now capped at piApproximateMaxDigits (= ⌊π × 10⁶⌋ = 3,141,592), same as `pi_digits`.
 	runErrorTest(t,
 		`output "test" { value = provider::burnham::pi_approximate_digits(3141593) }`,
 		regexp.MustCompile(`(?is)count\s+must\s+be\s+<=\s+3141592`),
@@ -312,7 +312,7 @@ func TestAcc_Percentile_OutOfRange(t *testing.T) {
 }
 
 func TestAcc_Percentile_RejectsNegative(t *testing.T) {
-	// Lock the lower bound — `p < 0` must error symmetrically with `p > 100`.
+	// Lock the lower bound: `p < 0` must error symmetrically with `p > 100`.
 	runErrorTest(t,
 		`output "test" { value = provider::burnham::percentile([1, 2, 3], -1) }`,
 		regexp.MustCompile(`(?is)p\s+must\s+be\s+in\s+\[0,\s*100\]`),

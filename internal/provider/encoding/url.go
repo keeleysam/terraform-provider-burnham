@@ -1,7 +1,7 @@
 /*
 URL percent-encoding / decoding.
 
-Core's `urlencode` only does `application/x-www-form-urlencoded` (space → `+`), which is wrong for path segments, and core has **no** URL decoder at all. `urlencode` here takes a `mode` option — `query` (the form encoding, default, byte-identical to core), `path` (RFC 3986 path segment, space → `%20`), or `component` (strict: only RFC 3986 unreserved characters survive). `urldecode` fills the missing core function and takes the same `mode`, because `+` is ambiguous — it means a space in a query string but a literal `+` in a path. So `query` decode turns `+` into a space, while `path`/`component` decode leave `+` literal; both always decode `%XX`.
+Core's `urlencode` only does `application/x-www-form-urlencoded` (space → `+`), which is wrong for path segments, and core has **no** URL decoder at all. `urlencode` here takes a `mode` option: `query` (the form encoding, default, byte-identical to core), `path` (RFC 3986 path segment, space → `%20`), or `component` (strict: only RFC 3986 unreserved characters survive). `urldecode` fills the missing core function and takes the same `mode`, because `+` is ambiguous: it means a space in a query string but a literal `+` in a path. So `query` decode turns `+` into a space, while `path`/`component` decode leave `+` literal; both always decode `%XX`.
 */
 
 package encoding
@@ -92,7 +92,7 @@ func urlModeOption(opts []types.Dynamic) (string, *function.FuncError) {
 	return mode, nil
 }
 
-const urlModeDescription = "An optional object. Key: `mode` — one of `\"query\"` (default; `application/x-www-form-urlencoded`, space ↔ `+`), `\"path\"` (RFC 3986 path segment, space ↔ `%20`, `+` literal), or `\"component\"` (strict: only unreserved characters unescaped)."
+const urlModeDescription = "An optional object. Key: `mode`, one of `\"query\"` (default; `application/x-www-form-urlencoded`, space ↔ `+`), `\"path\"` (RFC 3986 path segment, space ↔ `%20`, `+` literal), or `\"component\"` (strict: only unreserved characters unescaped)."
 
 // ─── urlencode ──────────────────────────────────────────────────
 
@@ -109,7 +109,7 @@ func (f *URLEncodeFunction) Metadata(_ context.Context, _ function.MetadataReque
 func (f *URLEncodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Percent-encode a string for a URL, with a mode option",
-		MarkdownDescription: "Percent-encodes a string for use in a URL. With no options it uses `mode = \"query\"` — `application/x-www-form-urlencoded`, encoding a space as `+` — which is byte-identical to Terraform's built-in `urlencode`. The optional `mode` selects where the value is going:\n\n- `\"query\"` (default) — form encoding; space → `+`. For `a=b&c=d` query strings.\n- `\"path\"` — [RFC 3986](https://www.rfc-editor.org/rfc/rfc3986) path segment; space → `%20`, `/` escaped, `+` left literal. For building path components.\n- `\"component\"` — strict; everything except the unreserved set `A-Za-z0-9-_.~` is escaped, space → `%20`. For a value that must be safe in *any* URL position.\n\nCore's `urlencode` only does the `query` form, whose space → `+` is wrong inside a path — `path`/`component` fix that.\n\n```\nurlencode(\"a b/c\")                      → \"a+b%2Fc\"\nurlencode(\"a b/c\", { mode = \"path\" })   → \"a%20b%2Fc\"\n```",
+		MarkdownDescription: "Percent-encodes a string for use in a URL. With no options it uses `mode = \"query\"` (`application/x-www-form-urlencoded`, encoding a space as `+`), which is byte-identical to Terraform's built-in `urlencode`. The optional `mode` selects where the value is going:\n\n- `\"query\"` (default): form encoding; space → `+`. For `a=b&c=d` query strings.\n- `\"path\"`: [RFC 3986](https://www.rfc-editor.org/rfc/rfc3986) path segment; space → `%20`, `/` escaped, `+` left literal. For building path components.\n- `\"component\"`: strict; everything except the unreserved set `A-Za-z0-9-_.~` is escaped, space → `%20`. For a value that must be safe in *any* URL position.\n\nCore's `urlencode` only does the `query` form, whose space → `+` is wrong inside a path; `path`/`component` fix that.\n\n```\nurlencode(\"a b/c\")                      → \"a+b%2Fc\"\nurlencode(\"a b/c\", { mode = \"path\" })   → \"a%20b%2Fc\"\n```",
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "input", Description: "The string to percent-encode."},
 		},
@@ -152,7 +152,7 @@ func (f *URLDecodeFunction) Metadata(_ context.Context, _ function.MetadataReque
 func (f *URLDecodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Percent-decode a URL-encoded string, with a mode option",
-		MarkdownDescription: "Decodes a percent-encoded string — the function Terraform core is missing entirely. Both directions of `%XX` are decoded in every mode; the `mode` only controls how `+` is treated, because `+` is ambiguous (a space in a query string, a literal `+` in a path):\n\n- `\"query\"` (default) — form semantics; `+` → space (and `%2B` → `+`). The inverse of `urlencode`'s default.\n- `\"path\"` / `\"component\"` — `+` is left literal; only `%XX` is decoded.\n\nThe result is a byte string; for input that decodes to non-UTF-8 bytes you will usually feed it into another function rather than printing it.\n\n```\nurldecode(\"a+b%2Fc\")                      → \"a b/c\"\nurldecode(\"1+1\", { mode = \"path\" })       → \"1+1\"\n```",
+		MarkdownDescription: "Decodes a percent-encoded string, the function Terraform core is missing entirely. Both directions of `%XX` are decoded in every mode; the `mode` only controls how `+` is treated, because `+` is ambiguous (a space in a query string, a literal `+` in a path):\n\n- `\"query\"` (default): form semantics; `+` → space (and `%2B` → `+`). The inverse of `urlencode`'s default.\n- `\"path\"` / `\"component\"`: `+` is left literal; only `%XX` is decoded.\n\nThe result is a byte string; for input that decodes to non-UTF-8 bytes you will usually feed it into another function rather than printing it.\n\n```\nurldecode(\"a+b%2Fc\")                      → \"a b/c\"\nurldecode(\"1+1\", { mode = \"path\" })       → \"1+1\"\n```",
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "input", Description: "The percent-encoded string to decode."},
 		},

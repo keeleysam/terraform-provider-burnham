@@ -1,4 +1,4 @@
-// JMESPath query — extract fields from a nested structure without long try() chains.
+// JMESPath query: extract fields from a nested structure without long try() chains.
 output "active_users" {
   value = provider::burnham::jmespath_query(
     {

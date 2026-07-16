@@ -9,7 +9,7 @@ description: |-
 
 # function: plistdecode
 
-Parses an [Apple property list](https://developer.apple.com/documentation/foundation/archives_and_serialization/property_lists) string into a Terraform value. Auto-detects XML, binary, OpenStep, and GNUStep formats. For binary plists, pass the output of `filebase64()` — base64-encoded input is detected automatically.
+Parses an [Apple property list](https://developer.apple.com/documentation/foundation/archives_and_serialization/property_lists) string into a Terraform value. Auto-detects XML, binary, OpenStep, and GNUStep formats. For binary plists, pass the output of `filebase64()`; base64-encoded input is detected automatically.
 
 `<date>` elements decode as tagged objects of the form `{ __plist_type = "date", value = "<RFC 3339 string>" }`; `<data>` elements as `{ __plist_type = "data", value = "<base64>" }`; whole-number `<real>` elements as `{ __plist_type = "real", value = "..." }` (to distinguish from `<integer>`). All three round-trip cleanly back through `plistencode`.
 

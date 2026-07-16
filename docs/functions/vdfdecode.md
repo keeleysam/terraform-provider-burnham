@@ -9,7 +9,7 @@ description: |-
 
 # function: vdfdecode
 
-Parses a [Valve Data Format (VDF)](https://developer.valvesoftware.com/wiki/KeyValues) string into a Terraform object. VDF is a nested key-value format used by Steam and the Source engine — the only types are strings and nested objects, so all leaf values come back as strings.
+Parses a [Valve Data Format (VDF)](https://developer.valvesoftware.com/wiki/KeyValues) string into a Terraform object. VDF is a nested key-value format used by Steam and the Source engine; the only types are strings and nested objects, so all leaf values come back as strings.
 
 `//` comments are stripped during parsing.
 

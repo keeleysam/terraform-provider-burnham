@@ -30,7 +30,7 @@ func (f *HuJSONDecodeFunction) Metadata(_ context.Context, _ function.MetadataRe
 func (f *HuJSONDecodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Parse a HuJSON (JWCC) string into a Terraform value",
-		MarkdownDescription: "Parses a HuJSON ([JSON With Commas and Comments / JWCC](https://nigeltao.github.io/blog/2021/json-with-commas-comments.html)) string into a Terraform value. Standard JSON is also accepted — HuJSON is a strict superset.\n\nComments (`//` line and `/* */` block) are stripped during parsing; trailing commas are tolerated. Object keys become object members, arrays become tuples, and numbers preserve precision via `json.Number`.\n\n**Common uses:** parsing [Tailscale ACL policies](https://tailscale.com/kb/1018/acls), VS Code-style configuration files (`tsconfig.json`, `.vscode/settings.json`), or any human-edited JSON variant that allows comments.",
+		MarkdownDescription: "Parses a HuJSON ([JSON With Commas and Comments / JWCC](https://nigeltao.github.io/blog/2021/json-with-commas-comments.html)) string into a Terraform value. Standard JSON is also accepted, since HuJSON is a strict superset.\n\nComments (`//` line and `/* */` block) are stripped during parsing; trailing commas are tolerated. Object keys become object members, arrays become tuples, and numbers preserve precision via `json.Number`.\n\n**Common uses:** parsing [Tailscale ACL policies](https://tailscale.com/kb/1018/acls), VS Code-style configuration files (`tsconfig.json`, `.vscode/settings.json`), or any human-edited JSON variant that allows comments.",
 		Parameters: []function.Parameter{
 			function.StringParameter{
 				Name:        "input",
@@ -102,7 +102,7 @@ func (f *HuJSONEncodeFunction) Definition(_ context.Context, _ function.Definiti
 		},
 		VariadicParameter: function.DynamicParameter{
 			Name:        "options",
-			Description: "An optional options object. Supported keys: \"indent\" (string) — indentation string, default \"\\t\"; \"compact\" (bool) — when true, use hujson.Format's \"fit on one line if it can\" packing instead of the default always-expanded layout; \"escape_html\" (bool, default false) — when true, escape \"<\", \">\" and \"&\" to \\u003c / \\u003e / \\u0026; \"comments\" (object) — a mirrored structure where string values become comments placed before the matching key. Pass at most one.",
+			Description: "An optional options object. Supported keys: \"indent\" (string): indentation string, default \"\\t\"; \"compact\" (bool): when true, use hujson.Format's \"fit on one line if it can\" packing instead of the default always-expanded layout; \"escape_html\" (bool, default false): when true, escape \"<\", \">\" and \"&\" to \\u003c / \\u003e / \\u0026; \"comments\" (object): a mirrored structure where string values become comments placed before the matching key. Pass at most one.",
 		},
 		Return: function.StringReturn{},
 	}

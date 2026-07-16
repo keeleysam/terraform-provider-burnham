@@ -51,7 +51,7 @@ func TestCBORDecode_ByteStringBecomesBase64String(t *testing.T) {
 }
 
 func TestCBORDecode_DatetimeBecomesRFC3339String(t *testing.T) {
-	// Encode with tag-0 RFC 3339 strings — the default encoder writes time.Time as a bare Unix-epoch float (no tag), which is meaningfully different from a tagged datetime. We're testing decode of tagged datetimes specifically, so the test setup needs to actually emit one.
+	// Encode with tag-0 RFC 3339 strings: the default encoder writes time.Time as a bare Unix-epoch float (no tag), which is meaningfully different from a tagged datetime. We're testing decode of tagged datetimes specifically, so the test setup needs to actually emit one.
 	ts := time.Date(2026, 1, 15, 10, 30, 0, 0, time.UTC)
 	em, _ := cbor.EncOptions{
 		Time:    cbor.TimeRFC3339,
@@ -79,7 +79,7 @@ func TestCBORDecode_DatetimeBecomesRFC3339String(t *testing.T) {
 }
 
 func TestCBORDecode_BignumBecomesNumber(t *testing.T) {
-	// Tag-2 (positive bignum): 2^65 = 36893488147419103232 — too big for uint64. Without explicit handling, fxamacker/cbor decodes this to big.Int which goToTerraformValue can't process. We unwrap to json.Number for full-precision Terraform numbers.
+	// Tag-2 (positive bignum): 2^65 = 36893488147419103232, too big for uint64. Without explicit handling, fxamacker/cbor decodes this to big.Int which goToTerraformValue can't process. We unwrap to json.Number for full-precision Terraform numbers.
 	em, _ := cbor.EncOptions{}.EncMode()
 	huge := new(big.Int).Lsh(big.NewInt(1), 65)
 	raw, err := em.Marshal(huge)

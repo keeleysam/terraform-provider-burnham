@@ -7,9 +7,7 @@ import (
 	okta "github.com/keeleysam/okta-expression-parser"
 )
 
-// Decode parses an Okta EL string and returns the surface-notation data tree
-// that oelencode consumes, so oelencode(oeldecode(x)) round-trips to the
-// canonical form of x.
+// Decode parses an Okta EL string and returns the surface-notation data tree that oelencode consumes, so oelencode(oeldecode(x)) round-trips to the canonical form of x.
 func Decode(s string) (any, error) {
 	if err := checkNestingDepth(s); err != nil {
 		return nil, err
@@ -21,10 +19,7 @@ func Decode(s string) (any, error) {
 	return decodeNode(n), nil
 }
 
-// decodeNode converts one parser AST node into the surface notation. Anything
-// without a dedicated surface form (currently only a dotted path that embeds a
-// member-of method hop) falls back to a { raw = "<canonical>" } escape, which
-// oelencode re-parses, so every node still round-trips.
+// decodeNode converts one parser AST node into the surface notation. Anything without a dedicated surface form (currently only a dotted path that embeds a member-of method hop) falls back to a { raw = "<canonical>" } escape, which oelencode re-parses, so every node still round-trips.
 func decodeNode(n okta.Node) any {
 	switch v := n.(type) {
 	case okta.Literal:
@@ -78,9 +73,7 @@ func decodeList(nodes []okta.Node) []any {
 	return out
 }
 
-// decodePath renders a pure dotted path as { ident = "..." }. A path that
-// carries a member-of method hop has no direct surface form, so it falls back
-// to raw.
+// decodePath renders a pure dotted path as { ident = "..." }. A path that carries a member-of method hop has no direct surface form, so it falls back to raw.
 func decodePath(p okta.PathExpr) any {
 	var b strings.Builder
 	if p.RootUser {
@@ -99,8 +92,7 @@ func decodePath(p okta.PathExpr) any {
 	return m("ident", b.String())
 }
 
-// decodeMap renders a MapLit as { map = [ { key = ..., value = ... } ] }. A
-// non-string key (unusual) falls back to raw for the whole map.
+// decodeMap renders a MapLit as { map = [ { key = ..., value = ... } ] }. A non-string key (unusual) falls back to raw for the whole map.
 func decodeMap(ml okta.MapLit) any {
 	entries := make([]any, 0, len(ml.Entries))
 	for _, e := range ml.Entries {
@@ -117,8 +109,7 @@ func decodeMap(ml okta.MapLit) any {
 	return m("map", entries)
 }
 
-// withArgs adds an "args" list to a call spec when arg is non-nil, flattening a
-// CommaList into multiple args.
+// withArgs adds an "args" list to a call spec when arg is non-nil, flattening a CommaList into multiple args.
 func withArgs(spec map[string]any, arg okta.Node) map[string]any {
 	if arg == nil {
 		return spec

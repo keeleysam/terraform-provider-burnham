@@ -9,7 +9,7 @@ description: |-
 
 # function: mod_floor
 
-Returns the **floor modulo** of `a` by `b`: `a − b·⌊a/b⌋`. The result has the sign of `b`, never the sign of `a` — so for `b > 0` the result is always in `[0, b)`, exactly the "wrap a possibly-negative index into the array length" behaviour Python's `%` operator gives you.
+Returns the **floor modulo** of `a` by `b`: `a − b·⌊a/b⌋`. The result has the sign of `b`, never the sign of `a`, so for `b > 0` the result is always in `[0, b)`, exactly the "wrap a possibly-negative index into the array length" behaviour Python's `%` operator gives you.
 
 This is *not* the same as Terraform's built-in `%` operator. The built-in follows Go's truncated-modulo convention, which keeps the sign of the dividend: `-7 % 3 = -1` (Terraform/Go) vs `mod_floor(-7, 3) = 2` (this function). Both are valid "modulo" definitions; this one is the one that makes `mod_floor(i, n)` a safe array-wrapping idiom for any integer `i`.
 
@@ -21,7 +21,7 @@ Errors when `b == 0` (division by zero is undefined regardless of which modulo f
 /*
 Floor-modulo: result has the sign of the divisor. Built-in `%` follows Go's truncated-modulo (sign of dividend), which is the standard footgun for negative inputs.
 
-Use this when you want a "wrap into [0, b)" idiom that is safe for any integer i — e.g. picking the i-th element of a list when i may be negative.
+Use this when you want a "wrap into [0, b)" idiom that is safe for any integer i, e.g. picking the i-th element of a list when i may be negative.
 */
 output "positive_positive" {
   value = provider::burnham::mod_floor(7, 3)

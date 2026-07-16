@@ -21,7 +21,7 @@ func TestPiPacked_FileSize(t *testing.T) {
 }
 
 func TestPiPacked_AllTriplesDecodeToValidDigits(t *testing.T) {
-	// Iterate every full triple in the packed table and assert each decodes to digits in [0, 9]. A nibble out of range would mean dpd.Decode has a bug; in practice this also catches "the file got truncated and we're reading past valid data into garbage". Partial last triple is skipped — its trailing positions are encoder-padding zeros, not real digits.
+	// Iterate every full triple in the packed table and assert each decodes to digits in [0, 9]. A nibble out of range would mean dpd.Decode has a bug; in practice this also catches "the file got truncated and we're reading past valid data into garbage". Partial last triple is skipped: its trailing positions are encoder-padding zeros, not real digits.
 	fullTriples := int64(piEmbeddedDigitCount / 3)
 	for t0 := int64(0); t0 < fullTriples; t0++ {
 		d0, d1, d2 := dpd.Decode(readDPDTriple(t0))

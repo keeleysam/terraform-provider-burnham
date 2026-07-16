@@ -1,4 +1,4 @@
-// JSON Patch (RFC 6902) — apply an ordered list of add/remove/replace/move/copy/test ops.
+// JSON Patch (RFC 6902): apply an ordered list of add/remove/replace/move/copy/test ops.
 output "patched" {
   value = provider::burnham::json_patch(
     { name = "web", replicas = 2, env = { LOG_LEVEL = "info", DEBUG = "true" } },

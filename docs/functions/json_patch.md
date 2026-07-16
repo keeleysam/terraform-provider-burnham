@@ -9,7 +9,7 @@ description: |-
 
 # function: json_patch
 
-Applies an [RFC 6902](https://www.rfc-editor.org/rfc/rfc6902) JSON Patch document to a Terraform value and returns the patched result. The patch is a tuple of operation objects — each with an `op` (`"add"`, `"remove"`, `"replace"`, `"move"`, `"copy"`, or `"test"`), a `path` (an [RFC 6901](https://www.rfc-editor.org/rfc/rfc6901) JSON Pointer), and operation-specific fields (`value`, `from`).
+Applies an [RFC 6902](https://www.rfc-editor.org/rfc/rfc6902) JSON Patch document to a Terraform value and returns the patched result. The patch is a tuple of operation objects, each with an `op` (`"add"`, `"remove"`, `"replace"`, `"move"`, `"copy"`, or `"test"`), a `path` (an [RFC 6901](https://www.rfc-editor.org/rfc/rfc6901) JSON Pointer), and operation-specific fields (`value`, `from`).
 
 Operations are applied in order. If any operation fails (including a failed `test`), the function returns an error and no partial state is produced.
 
@@ -18,7 +18,7 @@ Backed by [evanphx/json-patch](https://github.com/evanphx/json-patch).
 ## Example Usage
 
 ```terraform
-// JSON Patch (RFC 6902) — apply an ordered list of add/remove/replace/move/copy/test ops.
+// JSON Patch (RFC 6902): apply an ordered list of add/remove/replace/move/copy/test ops.
 output "patched" {
   value = provider::burnham::json_patch(
     { name = "web", replicas = 2, env = { LOG_LEVEL = "info", DEBUG = "true" } },

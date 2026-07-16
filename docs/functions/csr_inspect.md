@@ -11,11 +11,11 @@ description: |-
 
 Parses the first `CERTIFICATE REQUEST` block in `pem` and returns a fixed-shape object:
 
-- `subject` — RFC 4514 distinguished-name string from the CSR
-- `signature_algorithm`, `public_key_algorithm` — `SHA256-RSA`, `Ed25519`, etc.
-- `dns_names`, `email_addresses`, `ip_addresses`, `uris` — Subject Alternative Names by category, taken from the CSR's requested-extensions attribute
+- `subject`: RFC 4514 distinguished-name string from the CSR
+- `signature_algorithm`, `public_key_algorithm`: `SHA256-RSA`, `Ed25519`, etc.
+- `dns_names`, `email_addresses`, `ip_addresses`, `uris`: Subject Alternative Names by category, taken from the CSR's requested-extensions attribute
 
-Fields that don't exist on a CSR (serial number, validity window, key usage, BasicConstraints) are not on this object — those are set by the issuing CA when the request is approved.
+Fields that don't exist on a CSR (serial number, validity window, key usage, BasicConstraints) are not on this object; those are set by the issuing CA when the request is approved.
 
 **This function reads structure, not trust.** It does **not** verify the CSR's self-signature. Treat the result as the *requested* attributes; the issuing CA decides what actually ends up on the certificate.
 

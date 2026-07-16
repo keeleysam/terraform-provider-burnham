@@ -188,7 +188,7 @@ func (f *KDLEncodeFunction) Definition(_ context.Context, _ function.DefinitionR
 		},
 		VariadicParameter: function.DynamicParameter{
 			Name:        "options",
-			Description: "An optional options object. Supported keys: \"version\" (string) — \"v2\" (default) or \"v1\". Pass at most one.",
+			Description: "An optional options object. Supported keys: \"version\" (string), either \"v2\" (default) or \"v1\". Pass at most one.",
 		},
 		Return: function.StringReturn{},
 	}

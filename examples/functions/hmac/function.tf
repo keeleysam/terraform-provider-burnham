@@ -1,4 +1,4 @@
-// HMAC (RFC 2104) — keyed message authentication code, hex-encoded. Useful at the seam where Terraform-rendered values feed a service that expects a signed request body.
+// HMAC (RFC 2104): a keyed message authentication code, hex-encoded. Useful at the seam where Terraform-rendered values feed a service that expects a signed request body.
 output "webhook_signature" {
   value = provider::burnham::hmac("sha256", "shared-secret", "payload-bytes")
 }

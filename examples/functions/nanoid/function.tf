@@ -1,5 +1,5 @@
 /*
-Deterministic Nano ID — short, URL-safe identifiers derived from a seed. Same seed → same ID. Default is 21 characters from the URL-safe alphabet `_-0-9A-Za-z`, matching upstream nanoid.
+Deterministic Nano ID: short, URL-safe identifiers derived from a seed. Same seed → same ID. Default is 21 characters from the URL-safe alphabet `_-0-9A-Za-z`, matching upstream nanoid.
 
 Use a per-resource seed when you want unique-per-resource IDs that stay stable across plans.
 */

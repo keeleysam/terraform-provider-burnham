@@ -11,8 +11,8 @@ description: |-
 
 Parses `code` and returns:
 
-- `latitude` / `longitude` — the centre of the cell, in degrees.
-- `lat_min` / `lat_max` / `lon_min` / `lon_max` — the cell's bounding box (the points the code *might* have been encoded from).
+- `latitude` / `longitude`: the centre of the cell, in degrees.
+- `lat_min` / `lat_max` / `lon_min` / `lon_max`: the cell's bounding box (the points the code *might* have been encoded from).
 
 `code` is case-insensitive but must use the standard geohash alphabet `0-9 b-z` minus `a i l o`. Errors on any other character.
 

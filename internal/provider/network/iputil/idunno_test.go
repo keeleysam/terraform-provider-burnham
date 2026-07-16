@@ -8,9 +8,9 @@ import (
 )
 
 // TestIDunnoEncodeRFC5Example locks the RFC 8771 §5 worked-example vector:
-// "198.51.100.164" must produce exactly the four codepoints the RFC names —
+// "198.51.100.164" must produce exactly the four codepoints the RFC names:
 // U+0063 LATIN SMALL LETTER C, U+000C FORM FEED, U+006C LATIN SMALL LETTER L,
-// U+04A4 CYRILLIC CAPITAL LIGATURE EN GHE — using layout 7+7+7+11. Any
+// U+04A4 CYRILLIC CAPITAL LIGATURE EN GHE, using layout 7+7+7+11. Any
 // change to the encoder's layout-priority order that breaks this vector is a
 // breaking change to the RFC's only published worked example, so this test is
 // the one to be loudest about a regression.

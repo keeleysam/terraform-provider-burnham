@@ -3,7 +3,7 @@ Command genpi computes π to a fixed number of digits and writes the DPD-packed 
 
 Invoked by `go generate ./...`; not part of the production binary.
 
-Layout: IEEE 754-2008 Densely Packed Decimal — three decimal digits in ten bits. The packed bits are written MSB-first, big-endian. So 3,141,592 digits produce ⌈⌈3,141,592 / 3⌉ × 10 / 8⌉ = 1,308,998 bytes.
+Layout: IEEE 754-2008 Densely Packed Decimal, three decimal digits in ten bits. The packed bits are written MSB-first, big-endian. So 3,141,592 digits produce ⌈⌈3,141,592 / 3⌉ × 10 / 8⌉ = 1,308,998 bytes.
 
 That's a saving of ~256 KB vs. 4-bit BCD (which would be 1,570,796 bytes at 4 bits/digit). DPD's density (3.33 bits/digit) is within 0.3% of the information-theoretic floor (log₂10 ≈ 3.322 bits/digit). See internal/dpd for the encoding details.
 
@@ -24,7 +24,7 @@ import (
 
 // digitCount is the number of decimal digits of π to embed. Must match piEmbeddedDigitCount in the numerics package.
 //
-// 3,141,592 = ⌊π × 10⁶⌋ — we ship π digits of π. Floored, not rounded: rounding would mean computing one digit of π beyond the cap, and that digit is by definition not in our table, so floor is the only honest choice (cf. RFC 3091's stern warning about returning incorrect digits).
+// 3,141,592 = ⌊π × 10⁶⌋: we ship π digits of π. Floored, not rounded: rounding would mean computing one digit of π beyond the cap, and that digit is by definition not in our table, so floor is the only honest choice (cf. RFC 3091's stern warning about returning incorrect digits).
 const digitCount = 3_141_592
 
 func main() {
@@ -74,7 +74,7 @@ func dpdPack(digits string) []byte {
 
 // writeBits writes the low 10 bits of `value` into `out` starting at the given bit offset, MSB-first within each byte.
 //
-// Specialized to width=10 and the triple-aligned offset pattern: bitOffset is always t*10 for some integer t, so bitInByte ∈ {0, 2, 4, 6} (never 7). That guarantees the 10-bit code fits within two consecutive bytes — we never need to write a third. The same invariant powers readDPDTriple's matching simplification on the runtime side.
+// Specialized to width=10 and the triple-aligned offset pattern: bitOffset is always t*10 for some integer t, so bitInByte ∈ {0, 2, 4, 6} (never 7). That guarantees the 10-bit code fits within two consecutive bytes, so we never need to write a third. The same invariant powers readDPDTriple's matching simplification on the runtime side.
 func writeBits(out []byte, bitOffset int, value uint16) {
 	byteOffset := bitOffset / 8
 	bitInByte := bitOffset % 8 // ∈ {0, 2, 4, 6}

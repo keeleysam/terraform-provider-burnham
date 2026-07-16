@@ -6,7 +6,7 @@ import (
 )
 
 /*
-Large-input sanity checks: a ~3 MiB payload exercises buffer and window handling that small fixtures miss. Both decompress in-process — zopfli output through the Go standard library's compress/gzip reader (an RFC 1952 decoder entirely independent of the Zopfli encoder), brotli output through andybalholm's reader — and must reproduce the input exactly.
+Large-input sanity checks: a ~3 MiB payload exercises buffer and window handling that small fixtures miss. Both decompress in-process: zopfli output through the Go standard library's compress/gzip reader (an RFC 1952 decoder entirely independent of the Zopfli encoder), brotli output through andybalholm's reader; each must reproduce the input exactly.
 */
 
 func TestZopfliGzip_LargeInput(t *testing.T) {

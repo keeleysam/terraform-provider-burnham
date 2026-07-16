@@ -11,7 +11,7 @@ description: |-
 
 Encodes a Terraform object as a sequence of HCL attribute statements (`key = value` lines), one per object member, in alphabetical key order. Nested objects render as HCL object literals (`{ ... }`); lists render as bracketed sequences; primitives render as their natural HCL representation.
 
-This is **not** the same as `provider::terraform::encode_tfvars` — that built-in is `.tfvars`-specific. Use `hclencode` for emitting general-purpose HCL config files.
+This is **not** the same as `provider::terraform::encode_tfvars`, which is `.tfvars`-specific. Use `hclencode` for emitting general-purpose HCL config files.
 
 Output is formatted with `hclwrite.Format`, matching Terraform's canonical formatting.
 

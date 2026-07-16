@@ -1,5 +1,5 @@
 /*
-Render a QR code as Unicode-block ASCII art. Useful for embedding scannable codes in cloud-init MOTDs, login banners, or PDF source — anywhere a text representation beats an image asset.
+Render a QR code as Unicode-block ASCII art. Useful for embedding scannable codes in cloud-init MOTDs, login banners, or PDF source: anywhere a text representation beats an image asset.
 
 Each terminal row encodes two QR module rows via the half-block characters ▀ ▄ █, so the output is roughly half as tall as a one-cell-per-module renderer.
 */

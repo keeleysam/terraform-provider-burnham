@@ -101,7 +101,7 @@ func TestDeterministicECDSASignerProducesValidSignatures(t *testing.T) {
 		t.Fatal("explicit-opts and inferred-opts paths produced different signatures")
 	}
 
-	// Other hash sizes — confirm dispatch picks the right hash and the resulting signature still verifies.
+	// Other hash sizes: confirm dispatch picks the right hash and the resulting signature still verifies.
 	digest384 := sha512.Sum384([]byte("message to sign"))
 	sig384, err := signer.Sign(nil, digest384[:], crypto.SHA384)
 	if err != nil {
@@ -424,13 +424,13 @@ func TestPKCS7SignRFC5652Compliance(t *testing.T) {
 		t.Fatalf("RFC 5652 §5.2: eContentType must be id-data (1.2.840.113549.1.7.1), got %v", sdParsed.EncapContentInfo.EContentType)
 	}
 
-	// signedAttrs absent — context-tag [0]. The struct decodes it as a possibly-empty asn1.RawValue.
+	// signedAttrs absent, context-tag [0]. The struct decodes it as a possibly-empty asn1.RawValue.
 	if len(sdParsed.SignerInfos[0].SignedAttrs.Bytes) != 0 {
 		t.Fatalf("RFC 5652 §5.3: signedAttrs should be absent for the NoAttributes shape; got %d bytes", len(sdParsed.SignerInfos[0].SignedAttrs.Bytes))
 	}
 }
 
-// Minimal ASN.1 shapes for RFC 5652 compliance assertions — we don't need to model every CHOICE arm, only the fields we assert against. Field tags follow RFC 5652 §4 ContentInfo / §5.1 SignedData / §5.2 EncapsulatedContentInfo / §5.3 SignerInfo.
+// Minimal ASN.1 shapes for RFC 5652 compliance assertions: we don't need to model every CHOICE arm, only the fields we assert against. Field tags follow RFC 5652 §4 ContentInfo / §5.1 SignedData / §5.2 EncapsulatedContentInfo / §5.3 SignerInfo.
 type contentInfo struct {
 	ContentType asn1.ObjectIdentifier
 	Content     asn1.RawValue `asn1:"explicit,tag:0"`
@@ -477,7 +477,7 @@ type validityOuter struct {
 	NotAfter  asn1.RawValue
 }
 
-// TestPKCS7SignKeyCertMismatchRejected catches the case where caller passes a key + a cert whose pubkey doesn't match — previously this silently produced an unverifiable CMS.
+// TestPKCS7SignKeyCertMismatchRejected catches the case where caller passes a key + a cert whose pubkey doesn't match; previously this silently produced an unverifiable CMS.
 func TestPKCS7SignKeyCertMismatchRejected(t *testing.T) {
 	keyA, err := ecdsaP256KeyFromSeed([]byte("key A"))
 	if err != nil {
@@ -521,7 +521,7 @@ func TestPKCS7SignKeyCertMismatchRejected(t *testing.T) {
 	}
 }
 
-// TestPKCS7SignExternalIdentity exercises the "real key/cert" mode — generating a key with crypto/rand (i.e. NOT through ecdsa_p256_key_from_seed), building a cert via stdlib, then signing through the same code path that the public Run() exercises.
+// TestPKCS7SignExternalIdentity exercises the "real key/cert" mode: generating a key with crypto/rand (i.e. NOT through ecdsa_p256_key_from_seed), building a cert via stdlib, then signing through the same code path that the public Run() exercises.
 func TestPKCS7SignExternalIdentity(t *testing.T) {
 	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
@@ -536,7 +536,7 @@ func TestPKCS7SignExternalIdentity(t *testing.T) {
 		BasicConstraintsValid: true,
 		SignatureAlgorithm:    x509.ECDSAWithSHA256,
 	}
-	// Sign the external cert with the stdlib's random-k path (this is what a real CA-issued identity would have anyway). Determinism of the cert isn't required here — only the CMS layer needs deterministic-k.
+	// Sign the external cert with the stdlib's random-k path (this is what a real CA-issued identity would have anyway). Determinism of the cert isn't required here; only the CMS layer needs deterministic-k.
 	certDER, err := x509.CreateCertificate(rand.Reader, template, template, &key.PublicKey, key)
 	if err != nil {
 		t.Fatalf("create cert: %v", err)
@@ -667,14 +667,14 @@ func TestEd25519KeyFromSeedGoldenSeed(t *testing.T) {
 	if err != nil {
 		t.Fatalf("derive: %v", err)
 	}
-	// `seed` is the 32-byte material handed to `ed25519.NewKeyFromSeed` — it's the first half of the 64-byte ed25519.PrivateKey. Public key derives from it deterministically per RFC 8032 §5.1.5.
+	// `seed` is the 32-byte material handed to `ed25519.NewKeyFromSeed`; it's the first half of the 64-byte ed25519.PrivateKey. Public key derives from it deterministically per RFC 8032 §5.1.5.
 	const wantSeed = "608ad1e53f24ce7b6fbcdbf1e04c6a5e80f91d61fcfb3332f19eb587ab2213f1"
 	if got := hex.EncodeToString(key.Seed()); got != wantSeed {
 		t.Fatalf("seed drift: got %s want %s", got, wantSeed)
 	}
 }
 
-// TestX509SelfSignDeterminism_Ed25519 confirms cert determinism with the Ed25519 path (no rfc6979 wrapper involved — relies on Ed25519's natural determinism per RFC 8032).
+// TestX509SelfSignDeterminism_Ed25519 confirms cert determinism with the Ed25519 path (no rfc6979 wrapper involved, relies on Ed25519's natural determinism per RFC 8032).
 func TestX509SelfSignDeterminism_Ed25519(t *testing.T) {
 	key, err := ed25519KeyFromSeed([]byte("ed25519 cert det seed"))
 	if err != nil {
@@ -787,7 +787,7 @@ func TestPKCS7SignEndToEnd_Ed25519(t *testing.T) {
 	}
 }
 
-// TestPKCS7SignKeyTypesDiverge confirms that the same payload signed with an ECDSA P-256 identity vs an Ed25519 identity produces different DER bytes (they have different algorithm identifiers and different signature sizes — the sizes alone make the DER lengths differ, but this guards against any weird path collapse where the dispatch on key type accidentally short-circuits).
+// TestPKCS7SignKeyTypesDiverge confirms that the same payload signed with an ECDSA P-256 identity vs an Ed25519 identity produces different DER bytes (they have different algorithm identifiers and different signature sizes (the sizes alone make the DER lengths differ), but this guards against any weird path collapse where the dispatch on key type accidentally short-circuits).
 func TestPKCS7SignKeyTypesDiverge(t *testing.T) {
 	payload := []byte("divergence test")
 	ecdsaKey, err := ecdsaP256KeyFromSeed([]byte("seed"))

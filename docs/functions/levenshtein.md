@@ -9,9 +9,9 @@ description: |-
 
 # function: levenshtein
 
-Returns the [Levenshtein distance](https://en.wikipedia.org/wiki/Levenshtein_distance) between `a` and `b` — the minimum number of single-character insertions, deletions, or substitutions needed to turn one string into the other.
+Returns the [Levenshtein distance](https://en.wikipedia.org/wiki/Levenshtein_distance) between `a` and `b`: the minimum number of single-character insertions, deletions, or substitutions needed to turn one string into the other.
 
-Distance is computed over Unicode codepoints, not bytes — so `levenshtein("café", "cafe")` is `1` regardless of byte length. If your inputs may be in different normalization forms (NFC vs NFD), run `unicode_normalize(s, "NFC")` first.
+Distance is computed over Unicode codepoints, not bytes, so `levenshtein("café", "cafe")` is `1` regardless of byte length. If your inputs may be in different normalization forms (NFC vs NFD), run `unicode_normalize(s, "NFC")` first.
 
 Classic uses: "did-you-mean" suggestions in dynamic config selection (`closest_match` over a list), spotting typos in resource names, deduplicating near-identical entries.
 

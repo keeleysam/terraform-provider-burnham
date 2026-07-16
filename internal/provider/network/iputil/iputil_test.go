@@ -944,17 +944,17 @@ func TestIPAddIPv6Carry(t *testing.T) {
 func TestIPSubtractIPv6Borrow(t *testing.T) {
 	// MaxInt64 = 0x7fffffffffffffff.
 	// "::7fff:ffff:ffff:ffff" has lo = MaxInt64, hi = 0.
-	// Subtracting "::" (lo=0) gives diff = MaxInt64 exactly — should succeed.
+	// Subtracting "::" (lo=0) gives diff = MaxInt64 exactly, should succeed.
 	got, err := IPSubtract("::7fff:ffff:ffff:ffff", "::")
 	fatalOnErr(t, err)
 	if got != int64(^uint64(0)>>1) {
 		t.Errorf("got %d, want MaxInt64", got)
 	}
 	// "::8000:0:0:0" has lo = MaxInt64+1 = 0x8000000000000000.
-	// diff = MaxInt64+1 > MaxInt64 — should error.
+	// diff = MaxInt64+1 > MaxInt64, should error.
 	_, err = IPSubtract("::8000:0:0:0", "::")
 	wantErr(t, err)
-	// High bits differ — always errors.
+	// High bits differ, always errors.
 	_, err = IPSubtract("fd00::1", "2001:db8::1")
 	wantErr(t, err)
 }

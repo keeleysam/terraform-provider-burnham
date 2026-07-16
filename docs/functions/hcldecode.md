@@ -9,16 +9,16 @@ description: |-
 
 # function: hcldecode
 
-Parses an arbitrary [HCL2](https://github.com/hashicorp/hcl) document — a sequence of `key = value` attribute statements — and returns it as a Terraform object. Values are evaluated as static literals: numbers, strings, booleans, lists/tuples, and objects/maps work; references to variables, data sources, or function calls do **not** (there is no eval context).
+Parses an arbitrary [HCL2](https://github.com/hashicorp/hcl) document (a sequence of `key = value` attribute statements) and returns it as a Terraform object. Values are evaluated as static literals: numbers, strings, booleans, lists/tuples, and objects/maps work; references to variables, data sources, or function calls do **not** (there is no eval context).
 
-Block syntax (`block_type "label" { ... }`) is **not** supported. Inputs containing top-level blocks are rejected with an error rather than silently dropped — use `hcldecode` only for attribute-only documents. For `.tfvars` files (which are themselves attribute-only HCL), `hcldecode` works fine; the built-in `provider::terraform::decode_tfvars` is an alternative tuned for that specific case.
+Block syntax (`block_type "label" { ... }`) is **not** supported. Inputs containing top-level blocks are rejected with an error rather than silently dropped; use `hcldecode` only for attribute-only documents. For `.tfvars` files (which are themselves attribute-only HCL), `hcldecode` works fine; the built-in `provider::terraform::decode_tfvars` is an alternative tuned for that specific case.
 
 **Common uses:** parsing simple HCL configs vendored alongside Terraform modules, reading attribute-only config files, or round-tripping HCL fragments emitted by other tooling.
 
 ## Example Usage
 
 ```terraform
-// Parse an arbitrary HCL document into a value. Static literals only — references and function calls have no eval context. Block syntax is not supported.
+// Parse an arbitrary HCL document into a value. Static literals only: references and function calls have no eval context. Block syntax is not supported.
 output "config" {
   value = provider::burnham::hcldecode("name = \"web\"\nreplicas = 3\ntags = [\"prod\", \"east\"]")
 }

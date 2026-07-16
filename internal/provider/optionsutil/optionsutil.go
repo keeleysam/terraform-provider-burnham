@@ -23,7 +23,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
-// SingleOptionsObject pulls the (zero-or-one) options object out of a `VariadicParameter` slice and returns its attribute map. Returns `(nil, nil)` when the caller passed no options — the caller should fall through to its defaults. `hint` is a snippet shown in the error when the caller passes something that isn't an object literal: typically a worked example like `"{ size = 10 }"`.
+// SingleOptionsObject pulls the (zero-or-one) options object out of a `VariadicParameter` slice and returns its attribute map. Returns `(nil, nil)` when the caller passed no options, and the caller should fall through to its defaults. `hint` is a snippet shown in the error when the caller passes something that isn't an object literal: typically a worked example like `"{ size = 10 }"`.
 func SingleOptionsObject(opts []types.Dynamic, hint string) (map[string]attr.Value, *function.FuncError) {
 	if len(opts) == 0 {
 		return nil, nil
@@ -38,7 +38,7 @@ func SingleOptionsObject(opts []types.Dynamic, hint string) (map[string]attr.Val
 	return obj.Attributes(), nil
 }
 
-// NumberAttrToInt converts a Terraform Number attribute (carries a `*big.Float` internally) into a Go int. Errors when the value is null/unknown, non-integral, or out of int range. Lossy conversions never happen — Terraform numbers preserve the integer-ness of their input.
+// NumberAttrToInt converts a Terraform Number attribute (carries a `*big.Float` internally) into a Go int. Errors when the value is null/unknown, non-integral, or out of int range. Lossy conversions never happen: Terraform numbers preserve the integer-ness of their input.
 func NumberAttrToInt(v attr.Value) (int, error) {
 	num, ok := v.(basetypes.NumberValue)
 	if !ok {

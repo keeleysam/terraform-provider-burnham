@@ -54,7 +54,7 @@ func (f *RegDwordFunction) Metadata(_ context.Context, _ function.MetadataReques
 func (f *RegDwordFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Create a REG_DWORD registry value",
-		MarkdownDescription: "Returns a tagged object representing a `REG_DWORD` (32-bit unsigned integer) registry value, for use inside a `regencode` payload.\n\nPass the value as a decimal integer between `0` and `4294967295`. HCL doesn't accept `0x...` literals; convert to decimal manually or use `parseint(\"01020304\", 16)`.\n\n**Common uses:** typed registry values in Group Policy / endpoint config — feature flags, integer thresholds, and status fields that must be `REG_DWORD` rather than `REG_SZ`.",
+		MarkdownDescription: "Returns a tagged object representing a `REG_DWORD` (32-bit unsigned integer) registry value, for use inside a `regencode` payload.\n\nPass the value as a decimal integer between `0` and `4294967295`. HCL doesn't accept `0x...` literals; convert to decimal manually or use `parseint(\"01020304\", 16)`.\n\n**Common uses:** typed registry values in Group Policy / endpoint config, such as feature flags, integer thresholds, and status fields that must be `REG_DWORD` rather than `REG_SZ`.",
 		Parameters:          []function.Parameter{function.NumberParameter{Name: "value", Description: "A 32-bit unsigned integer (0–4294967295)."}},
 		Return:              function.DynamicReturn{},
 	}
@@ -91,7 +91,7 @@ func (f *RegQwordFunction) Metadata(_ context.Context, _ function.MetadataReques
 func (f *RegQwordFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Create a REG_QWORD registry value",
-		MarkdownDescription: "Returns a tagged object representing a `REG_QWORD` (64-bit unsigned integer) registry value, for use inside a `regencode` payload.\n\nPass the value as a decimal integer between `0` and `18446744073709551615`. HCL's number type (a 512-bit big.Float) carries the full range exactly. HCL doesn't accept `0x...` literals; convert to decimal manually or use `parseint(\"...\", 16)`.\n\n**Common uses:** large numeric values in registry-driven config — file size limits, byte offsets, or any integer that exceeds `REG_DWORD`'s 32-bit range.",
+		MarkdownDescription: "Returns a tagged object representing a `REG_QWORD` (64-bit unsigned integer) registry value, for use inside a `regencode` payload.\n\nPass the value as a decimal integer between `0` and `18446744073709551615`. HCL's number type (a 512-bit big.Float) carries the full range exactly. HCL doesn't accept `0x...` literals; convert to decimal manually or use `parseint(\"...\", 16)`.\n\n**Common uses:** large numeric values in registry-driven config, such as file size limits, byte offsets, or any integer that exceeds `REG_DWORD`'s 32-bit range.",
 		Parameters:          []function.Parameter{function.NumberParameter{Name: "value", Description: "A 64-bit unsigned integer (0–18446744073709551615)."}},
 		Return:              function.DynamicReturn{},
 	}
@@ -128,7 +128,7 @@ func (f *RegBinaryFunction) Metadata(_ context.Context, _ function.MetadataReque
 func (f *RegBinaryFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Create a REG_BINARY registry value",
-		MarkdownDescription: "Returns a tagged object representing a `REG_BINARY` registry value, for use inside a `regencode` payload. The input is a hex-encoded string (no separators, no `0x` prefix).\n\n**Common uses:** binary blobs in Group Policy and app preferences — certificate hashes, packed structures, or pre-computed configuration payloads consumed by Windows components.",
+		MarkdownDescription: "Returns a tagged object representing a `REG_BINARY` registry value, for use inside a `regencode` payload. The input is a hex-encoded string (no separators, no `0x` prefix).\n\n**Common uses:** binary blobs in Group Policy and app preferences, such as certificate hashes, packed structures, or pre-computed configuration payloads consumed by Windows components.",
 		Parameters:          []function.Parameter{function.StringParameter{Name: "hex", Description: "Hex-encoded binary data (e.g. \"48656c6c6f\")."}},
 		Return:              function.DynamicReturn{},
 	}
@@ -169,7 +169,7 @@ func (f *RegMultiFunction) Metadata(_ context.Context, _ function.MetadataReques
 func (f *RegMultiFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Create a REG_MULTI_SZ registry value",
-		MarkdownDescription: "Returns a tagged object representing a `REG_MULTI_SZ` (null-separated list of strings) registry value, for use inside a `regencode` payload.\n\n**Common uses:** registry values that are inherently lists — search paths, allowlist/denylist entries, or any field where the consuming Windows component expects multi-string semantics rather than a single delimited string.",
+		MarkdownDescription: "Returns a tagged object representing a `REG_MULTI_SZ` (null-separated list of strings) registry value, for use inside a `regencode` payload.\n\n**Common uses:** registry values that are inherently lists, such as search paths, allowlist/denylist entries, or any field where the consuming Windows component expects multi-string semantics rather than a single delimited string.",
 		Parameters: []function.Parameter{
 			function.DynamicParameter{Name: "strings", Description: "A list of strings."},
 		},

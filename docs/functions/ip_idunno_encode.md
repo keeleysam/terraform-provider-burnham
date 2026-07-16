@@ -11,7 +11,7 @@ description: |-
 
 Encodes an IPv4 or IPv6 address into the Internationalized Deliberately Unreadable Network Notation per [RFC 8771](https://www.rfc-editor.org/rfc/rfc8771.html) (April 1, 2020). Output is a UTF-8 string of Unicode codepoints whose UTF-8 byte lengths carry the address bits per RFC §3 Table 1 (1-byte sequence = 7 bits, 2-byte = 11 bits, 3-byte = 16 bits, 4-byte = 21 bits).
 
-The encoder is deterministic for a given input and reaches at least the **Minimum Confusion Level** of §4.1 (≥ 1 multi-octet UTF-8 sequence AND ≥ 1 IDNA2008-DISALLOWED character). RFC §5's worked example — `198.51.100.164` → `c\u000Cl\u04A4` (U+0063, U+000C, U+006C, U+04A4) — round-trips through this encoder exactly.
+The encoder is deterministic for a given input and reaches at least the **Minimum Confusion Level** of §4.1 (≥ 1 multi-octet UTF-8 sequence AND ≥ 1 IDNA2008-DISALLOWED character). RFC §5's worked example (`198.51.100.164` → `c\u000Cl\u04A4`, i.e. U+0063, U+000C, U+006C, U+04A4) round-trips through this encoder exactly.
 
 Dual-stack: §3.1 specifies the bitstring length as "32 bits for IPv4; 128 bits for IPv6" and the rest of the spec operates on raw bits, so the same encoder handles both families.
 
@@ -29,15 +29,15 @@ Pair with [`ip_idunno_decode`](#function-ip_idunno_decode) to reverse the transf
 
 ```terraform
 /*
-Encode an IP address as RFC 8771 I-DUNNO — the Internationalized Deliberately Unreadable Network Notation.
+Encode an IP address as RFC 8771 I-DUNNO, the Internationalized Deliberately Unreadable Network Notation.
 
 The encoding packs the address bits (32 for IPv4, 128 for IPv6) into a sequence of Unicode codepoints whose UTF-8 byte lengths carry the bits per RFC §3 Table 1. The result satisfies the §4.1 Minimum Confusion Level: at least one multi-octet UTF-8 sequence and at least one IDNA2008-DISALLOWED character.
 
-The function is deterministic for a given input. RFC §5's worked example — `198.51.100.164` → U+0063, U+000C, U+006C, U+04A4 — round-trips through this encoder exactly.
+The function is deterministic for a given input. RFC §5's worked example (`198.51.100.164` → U+0063, U+000C, U+006C, U+04A4) round-trips through this encoder exactly.
 
 Dual-stack: works on both IPv4 and IPv6. The bit-packing operates on the raw network-byte-order bitstring, so address family is just a length difference.
 
-Pair with `ip_idunno_decode` to recover the original address. RFC §3.2 says deforming "is intentionally omitted" because "humans SHOULD NOT attempt the process" — the machines DO know how to do it.
+Pair with `ip_idunno_decode` to recover the original address. RFC §3.2 says deforming "is intentionally omitted" because "humans SHOULD NOT attempt the process", but the machines DO know how to do it.
 */
 
 output "rfc_8771_example" {

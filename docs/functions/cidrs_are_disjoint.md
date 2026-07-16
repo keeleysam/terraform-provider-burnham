@@ -11,7 +11,7 @@ description: |-
 
 Returns `true` if every CIDR in the list is non-overlapping with every other. Unlike `cidrs_overlap_any`, which compares two separate lists, this checks a single list against itself.
 
-**Common uses:** validating a `list(string)` variable of subnet CIDRs to ensure no two subnets overlap before creating them — catches mistakes like including both a summary prefix and a more-specific one in the same list.
+**Common uses:** validating a `list(string)` variable of subnet CIDRs to ensure no two subnets overlap before creating them. This catches mistakes like including both a summary prefix and a more-specific one in the same list.
 
 ## Example Usage
 

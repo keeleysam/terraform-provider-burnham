@@ -11,14 +11,14 @@ description: |-
 
 Returns `s` re-encoded under the named [Unicode Normalization Form](https://unicode.org/reports/tr15/), one of:
 
-- `"NFC"` — Canonical Composition (the most common server-side form)
-- `"NFD"` — Canonical Decomposition
-- `"NFKC"` — Compatibility Composition (collapses ligatures and width variants)
-- `"NFKD"` — Compatibility Decomposition
+- `"NFC"`: Canonical Composition (the most common server-side form)
+- `"NFD"`: Canonical Decomposition
+- `"NFKC"`: Compatibility Composition (collapses ligatures and width variants)
+- `"NFKD"`: Compatibility Decomposition
 
 This fixes "looks the same, doesn't compare equal" bugs caused by NFC vs NFD differences (browsers, macOS, and rich-text editors often hand you NFD; most server-side data is NFC). For most use cases the right call is `unicode_normalize(s, "NFC")`.
 
-**Caveat for `"NFD"` and `"NFKD"`**: Terraform's value-handling layer (cty) re-normalizes every string to NFC at expression boundaries, so a decomposed result is silently re-composed to NFC the moment it flows into another HCL expression — including `output` blocks. NFC-producing forms (`"NFC"` and `"NFKC"`) round-trip correctly; the decomposed forms are useful only for downstream consumers that ingest the *exact* function return value before Terraform sees it (e.g. when feeding into another Burnham function within the same expression, or when the byte representation is captured before cty touches it).
+**Caveat for `"NFD"` and `"NFKD"`**: Terraform's value-handling layer (cty) re-normalizes every string to NFC at expression boundaries, so a decomposed result is silently re-composed to NFC the moment it flows into another HCL expression, including `output` blocks. NFC-producing forms (`"NFC"` and `"NFKC"`) round-trip correctly; the decomposed forms are useful only for downstream consumers that ingest the *exact* function return value before Terraform sees it (e.g. when feeding into another Burnham function within the same expression, or when the byte representation is captured before cty touches it).
 
 Backed by [`golang.org/x/text/unicode/norm`](https://pkg.go.dev/golang.org/x/text/unicode/norm), the canonical Go implementation.
 
@@ -30,7 +30,7 @@ Normalise a string to one of the four Unicode normalization forms.
 
 The most common need: `NFC`-normalise input that may have come from a browser, macOS, or a rich-text editor (which often hand you NFD-encoded `é` as `e` + combining acute) so equality comparisons and downstream APIs see consistent bytes.
 
-Caveat: Terraform's value-handling layer (cty) re-normalizes string values to NFC at HCL expression boundaries. NFD and NFKD outputs are silently re-composed to NFC before another HCL expression sees them — those forms are only useful when the function output is consumed before Terraform serialises it.
+Caveat: Terraform's value-handling layer (cty) re-normalizes string values to NFC at HCL expression boundaries. NFD and NFKD outputs are silently re-composed to NFC before another HCL expression sees them, so those forms are only useful when the function output is consumed before Terraform serialises it.
 */
 output "ligature_flattened" {
   value = provider::burnham::unicode_normalize("ﬁne", "NFKC")

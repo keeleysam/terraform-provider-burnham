@@ -51,7 +51,7 @@ func TestAcc_RegEncode_Basic(t *testing.T) {
 // ─── regdword / regqword range checks ──────────────────────────────
 
 func TestAcc_RegDword_AcceptsUpperBound(t *testing.T) {
-	// 2^32 - 1 = 4294967295 — the documented maximum.
+	// 2^32 - 1 = 4294967295, the documented maximum.
 	runOutputTest(t,
 		`output "test" { value = provider::burnham::regdword(4294967295) }`,
 		statecheck.ExpectKnownOutputValue("test", knownvalue.NotNull()),
@@ -82,7 +82,7 @@ func TestAcc_RegDword_RejectsFractional(t *testing.T) {
 }
 
 func TestAcc_RegQword_AcceptsUpperBound(t *testing.T) {
-	// 2^64 - 1 = 18446744073709551615 — Terraform's number type carries the value precisely.
+	// 2^64 - 1 = 18446744073709551615: Terraform's number type carries the value precisely.
 	runOutputTest(t,
 		`output "test" { value = provider::burnham::regqword(18446744073709551615) }`,
 		statecheck.ExpectKnownOutputValue("test", knownvalue.NotNull()),

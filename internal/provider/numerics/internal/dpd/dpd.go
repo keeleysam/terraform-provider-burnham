@@ -1,9 +1,9 @@
 /*
 Package dpd implements Densely Packed Decimal encoding and decoding per IEEE 754-2008 §3.5.2.
 
-DPD packs three decimal digits (each 0-9) into a 10-bit code, achieving 3.33 bits per digit — within 0.3% of the information-theoretic limit (log₂10 ≈ 3.322 bits/digit). It's the encoding used by the IEEE decimal32 / decimal64 / decimal128 floating-point formats.
+DPD packs three decimal digits (each 0-9) into a 10-bit code, achieving 3.33 bits per digit, within 0.3% of the information-theoretic limit (log₂10 ≈ 3.322 bits/digit). It's the encoding used by the IEEE decimal32 / decimal64 / decimal128 floating-point formats.
 
-The encoding is a specific bit permutation chosen so a small lookup table (or a handful of boolean operations) round-trips between BCD and DPD. For our use — packing a fixed table of digits of π — we use the boolean-equation form: no tables, no init, just a switch over the 8 cases of "which of the three digits are large (≥ 8)".
+The encoding is a specific bit permutation chosen so a small lookup table (or a handful of boolean operations) round-trips between BCD and DPD. For our use (packing a fixed table of digits of π) we use the boolean-equation form: no tables, no init, just a switch over the 8 cases of "which of the three digits are large (≥ 8)".
 
 References:
   - IEEE 754-2008 (and 754-2019) §3.5.2 "Decimal interchange format encodings"
@@ -20,7 +20,7 @@ Naming convention used below follows Wikipedia's table:
 
   The 10-bit DPD output is named bit-by-bit as p9 p8 p7 p6 p5 p4 p3 p2 p1 p0.
 
-  The low bit of each digit (a0, b0, c0) always passes through unchanged — to DPD positions p7, p4, p0.
+  The low bit of each digit (a0, b0, c0) always passes through unchanged, to DPD positions p7, p4, p0.
 
 The 8 encoding cases dispatched on (a3, b3, c3):
 
@@ -31,7 +31,7 @@ The 8 encoding cases dispatched on (a3, b3, c3):
   (1,1,0)  a, b large         p9..p0 = g h c 0 0 f 1 1 1 i
   (1,0,1)  a, c large         p9..p0 = d e c 0 1 f 1 1 1 i
   (0,1,1)  b, c large         p9..p0 = a b c 1 0 f 1 1 1 i
-  (1,1,1)  all large          p9..p0 = . . c 1 1 f 1 1 1 i  (we emit 0 for "."  — those are don't-cares)
+  (1,1,1)  all large          p9..p0 = . . c 1 1 f 1 1 1 i  (we emit 0 for ".", those are don't-cares)
 
 Decoding inverts the encoding by examining p3 (and, when p3=1, p2 p1 to distinguish the four "all big" / "two big" cases; when p3 p2 p1 = 1 1 1, also p6 p5 to pick among the four "many large" sub-cases).
 
@@ -133,7 +133,7 @@ func Decode(dpd uint16) (d0, d1, d2 byte) {
 	i := p0 // d2's low bit, always.
 
 	if p3 == 0 {
-		// All small: d0 = 0 a b c, d1 = 0 d e f, d2 = 0 g h i — where a b c = p9 p8 p7, d e f = p6 p5 p4, g h i = p2 p1 p0.
+		// All small: d0 = 0 a b c, d1 = 0 d e f, d2 = 0 g h i, where a b c = p9 p8 p7, d e f = p6 p5 p4, g h i = p2 p1 p0.
 		d0 = (p9 << 2) | (p8 << 1) | c
 		d1 = (p6 << 2) | (p5 << 1) | f
 		d2 = (p2 << 2) | (p1 << 1) | i
@@ -160,7 +160,7 @@ func Decode(dpd uint16) (d0, d1, d2 byte) {
 		d2 = (p9 << 2) | (p8 << 1) | i
 		return
 
-	case 0b11: // p3 p2 p1 = 1 1 1 — sub-dispatch on p6 p5
+	case 0b11: // p3 p2 p1 = 1 1 1, sub-dispatch on p6 p5
 		switch (p6 << 1) | p5 {
 		case 0b00: // a,b large: d0 = 1 0 0 c; d1 = 1 0 0 f; d2 small (g h i at p9 p8 p0)
 			d0 = 0b1000 | c

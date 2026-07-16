@@ -1,11 +1,11 @@
 /*
-Deterministic Nano ID — short, URL-friendly identifiers derived from a seed string.
+Deterministic Nano ID: short, URL-friendly identifiers derived from a seed string.
 
 The upstream [nanoid](https://github.com/ai/nanoid) algorithm draws bytes from a CSPRNG and uses rejection sampling against the chosen alphabet. That is non-deterministic by design and so unsuitable for plan-time HCL: a Terraform plan that produces a different ID on each refresh churns state forever.
 
 This implementation keeps the shape (configurable alphabet, configurable size, default 21-character `_-0-9A-Za-z` alphabet) but replaces the randomness with HMAC-SHA-256 in counter mode keyed by the caller-supplied `seed`. Same seed → same ID, every plan, forever. Each call mixes a context label followed by the full alphabet string (`burnham/nanoid:<alphabet>`) into the HMAC input, so that asking for a different alphabet produces an unrelated byte stream. Size does not enter the HMAC: for a given seed and alphabet the byte stream is fixed, so a shorter output is a strict prefix of a longer one.
 
-Modulo bias: bytes 0–255 mapped via `b % len(alphabet)` are exactly uniform when `len(alphabet)` divides 256 evenly (e.g. 32, 64, 128). For odd-sized alphabets there's a tiny per-character bias proportional to `256 mod len(alphabet)`. This matters in the original CSPRNG-driven nanoid (where you want true uniform distribution); here, where the goal is just a stable derivation from a seed, the bias is harmless — the outputs are not used as cryptographic keys.
+Modulo bias: bytes 0–255 mapped via `b % len(alphabet)` are exactly uniform when `len(alphabet)` divides 256 evenly (e.g. 32, 64, 128). For odd-sized alphabets there's a tiny per-character bias proportional to `256 mod len(alphabet)`. This matters in the original CSPRNG-driven nanoid (where you want true uniform distribution); here, where the goal is just a stable derivation from a seed, the bias is harmless: the outputs are not used as cryptographic keys.
 */
 
 package identifiers
@@ -47,7 +47,7 @@ func (f *NanoidFunction) Metadata(_ context.Context, _ function.MetadataRequest,
 func (f *NanoidFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Deterministic Nano ID derived from a seed string",
-		MarkdownDescription: "Returns a Nano ID string derived deterministically from `seed` via HMAC-SHA-256 in counter mode. Same `seed` always returns the same ID — perfect for stable, plan-time identifiers that don't churn on re-apply.\n\nDefault alphabet is the 64-character URL-safe set `_-0-9A-Za-z` (matching the upstream [nanoid](https://github.com/ai/nanoid) reference); default `size` is 21 characters. Both can be overridden via the optional `options` object:\n\n- `alphabet` (string) — the alphabet to draw from. Must be non-empty and contain no duplicate runes. Any unicode is accepted; bytes are interpreted as a UTF-8 string and you get one alphabet *codepoint* per output position, so a 64-codepoint alphabet still yields a 21-character (=21-codepoint) ID even if some characters are multi-byte.\n- `size` (number) — output length in codepoints; must be in `[1, 1024]`.\n\n```\nnanoid(\"prod/api-gateway\")\n→ \"TUgaDb-aFSbMx3UFK6Spd\"   (deterministic)\n\nnanoid(\"prod/api-gateway\", { size = 10 })\nnanoid(\"prod/api-gateway\", { alphabet = \"0123456789\", size = 6 })\n```\n\nThis function is a derivation, not a CSPRNG — outputs leak nothing about the seed, but two callers seeded with the same secret will produce the same ID. Use it for naming, not for credentials.",
+		MarkdownDescription: "Returns a Nano ID string derived deterministically from `seed` via HMAC-SHA-256 in counter mode. Same `seed` always returns the same ID, perfect for stable, plan-time identifiers that don't churn on re-apply.\n\nDefault alphabet is the 64-character URL-safe set `_-0-9A-Za-z` (matching the upstream [nanoid](https://github.com/ai/nanoid) reference); default `size` is 21 characters. Both can be overridden via the optional `options` object:\n\n- `alphabet` (string): the alphabet to draw from. Must be non-empty and contain no duplicate runes. Any unicode is accepted; bytes are interpreted as a UTF-8 string and you get one alphabet *codepoint* per output position, so a 64-codepoint alphabet still yields a 21-character (=21-codepoint) ID even if some characters are multi-byte.\n- `size` (number): output length in codepoints; must be in `[1, 1024]`.\n\n```\nnanoid(\"prod/api-gateway\")\n→ \"TUgaDb-aFSbMx3UFK6Spd\"   (deterministic)\n\nnanoid(\"prod/api-gateway\", { size = 10 })\nnanoid(\"prod/api-gateway\", { alphabet = \"0123456789\", size = 6 })\n```\n\nThis function is a derivation, not a CSPRNG: outputs leak nothing about the seed, but two callers seeded with the same secret will produce the same ID. Use it for naming, not for credentials.",
 		Parameters: []function.Parameter{
 			function.StringParameter{
 				Name:        "seed",
@@ -103,7 +103,7 @@ func uniqueRunes(s string) bool {
 	return true
 }
 
-// hmacBlock returns HMAC-SHA-256(seed, label || counter_be) — 32 bytes.
+// hmacBlock returns HMAC-SHA-256(seed, label || counter_be): 32 bytes.
 func hmacBlock(seed, label []byte, counter uint64) []byte {
 	mac := hmac.New(sha256.New, seed)
 	mac.Write(label)

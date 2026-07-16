@@ -18,9 +18,8 @@ func (f *CIDRExpandFunction) Metadata(_ context.Context, _ function.MetadataRequ
 
 func (f *CIDRExpandFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
-		Summary: "Expand a CIDR into a list of individual IP addresses",
-		MarkdownDescription: "Returns every individual IP address within the given CIDR as a list of strings. " +
-			"Returns an error if the CIDR contains more than 65536 addresses to prevent accidental large expansions.",
+		Summary:             "Expand a CIDR into a list of individual IP addresses",
+		MarkdownDescription: "Returns every individual IP address within the given CIDR as a list of strings. Returns an error if the CIDR contains more than 65536 addresses to prevent accidental large expansions.",
 		Parameters: []function.Parameter{
 			function.StringParameter{
 				Name:        "cidr",

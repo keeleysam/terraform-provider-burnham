@@ -58,7 +58,7 @@ func BenchmarkApproximateDigitChar(b *testing.B) {
 	}
 }
 
-// BenchmarkApproximateFirstNDigits measures bulk 22/7 generation. Pure modulo-based loop — no I/O, no big.Int arithmetic.
+// BenchmarkApproximateFirstNDigits measures bulk 22/7 generation. Pure modulo-based loop: no I/O, no big.Int arithmetic.
 func BenchmarkApproximateFirstNDigits(b *testing.B) {
 	for _, n := range []int64{10, 100, 1_000, 10_000, 100_000, 1_000_000, 3_141_592} {
 		b.Run("count="+itoaB(n), func(b *testing.B) {

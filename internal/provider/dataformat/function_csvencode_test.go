@@ -203,7 +203,7 @@ func TestCSVEncode_NullValues(t *testing.T) {
 }
 
 func TestCSVEncode_MissingKeys(t *testing.T) {
-	// Rows with different keys — missing keys become empty cells.
+	// Rows with different keys: missing keys become empty cells.
 	rows := makeRowList(
 		makeRow(map[string]attr.Value{
 			"name": types.StringValue("alice"),
@@ -297,7 +297,7 @@ func TestCSVEncode_LossyRoundTrip(t *testing.T) {
 
 	// The output is valid CSV that csvdecode can parse, but all values
 	// will come back as strings: "42" not 42, "true" not true.
-	// This is expected — CSV has no type system.
+	// This is expected: CSV has no type system.
 	expected := "active,count,name\ntrue,42,alice\n"
 	if result != expected {
 		t.Errorf("expected:\n%s\ngot:\n%s", expected, result)

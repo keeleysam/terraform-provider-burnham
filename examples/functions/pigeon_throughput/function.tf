@@ -1,5 +1,5 @@
 /*
-RFC 1149 / RFC 2549 — IP-over-Avian-Carriers throughput calculator. Computes the spec-implied numbers (MTU, birds required, flight time, throughput, packet loss probability, QoS class) for a (distance, payload, altitude) flight plan.
+RFC 1149 / RFC 2549: IP-over-Avian-Carriers throughput calculator. Computes the spec-implied numbers (MTU, birds required, flight time, throughput, packet loss probability, QoS class) for a (distance, payload, altitude) flight plan.
 
 Outputs a fixed-shape object plus an `rfc_citations` list so callers can audit which clause each field came from.
 */

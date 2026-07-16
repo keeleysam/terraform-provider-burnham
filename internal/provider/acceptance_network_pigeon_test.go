@@ -28,7 +28,7 @@ func TestAcc_PigeonThroughput_MTUMatchesRFC(t *testing.T) {
 }
 
 func TestAcc_PigeonThroughput_BirdsRequiredFragments(t *testing.T) {
-	// 1024 bytes / 256 MTU = 4 birds. RFC 1149 §3 — one datagram per carrier.
+	// 1024 bytes / 256 MTU = 4 birds. RFC 1149 §3: one datagram per carrier.
 	runOutputTest(t,
 		`output "test" { value = provider::burnham::pigeon_throughput(10, 1024, 100).birds_required }`,
 		statecheck.ExpectKnownOutputValue("test", knownvalue.Int64Exact(4)),
@@ -59,7 +59,7 @@ func TestAcc_PigeonThroughput_FlightTimeFromCruiseSpeed(t *testing.T) {
 }
 
 func TestAcc_PigeonThroughput_LossCappedAt50Percent(t *testing.T) {
-	// 1% per 100 km, capped at 50%. 10000 km would otherwise be 100% — should be 0.5.
+	// 1% per 100 km, capped at 50%. 10000 km would otherwise be 100%, so should be 0.5.
 	runOutputTest(t,
 		`output "test" { value = provider::burnham::pigeon_throughput(10000, 256, 100).packet_loss_probability }`,
 		statecheck.ExpectKnownOutputValue("test", knownvalue.NumberExact(big.NewFloat(0.5))),

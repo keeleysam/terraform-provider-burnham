@@ -25,7 +25,7 @@ const (
 	plistTypeData = "data"
 	plistTypeReal = "real"
 
-	// convertMaxDepth caps the recursion depth in goToTerraformValueImpl / terraformValueToGo so an adversarial decoded payload (deeply nested CBOR / msgpack / VDF / KDL / plist / JSON-Patch) can't stack-OOM the Terraform process. 1024 is generous — a realistic config rarely nests past ~30 levels — and matches the order of magnitude of asn1MaxDepth's defensive sibling in the cryptography package.
+	// convertMaxDepth caps the recursion depth in goToTerraformValueImpl / terraformValueToGo so an adversarial decoded payload (deeply nested CBOR / msgpack / VDF / KDL / plist / JSON-Patch) can't stack-OOM the Terraform process. 1024 is generous (a realistic config rarely nests past ~30 levels) and matches the order of magnitude of asn1MaxDepth's defensive sibling in the cryptography package.
 	convertMaxDepth = 1024
 
 	// dataformatMaxInputBytes is an upper bound on the size of an inbound encoded payload (CBOR / msgpack / VDF / KDL / plist / etc.). 16 MiB is much larger than any realistic config blob a Terraform plan would carry, but small enough to bound memory in absolute terms when the underlying parser does not enforce its own limits (vmihailenco/msgpack v5, sblinch/kdl-go, andreoliwa/go-vdf).
@@ -98,7 +98,7 @@ func goToTerraformValue(v interface{}) (attr.Value, error) {
 	return goToTerraformValueImpl(v, false, 0)
 }
 
-// goToTerraformValuePlist is the plist-aware variant: time.Time, []byte, and whole-number float64 emit __plist_type-tagged objects so plistencode can later round-trip them back to <date>, <data>, and <real> elements respectively. Use goToTerraformValue everywhere else — for non-plist callers, the tagged objects would look like garbage map members in their HCL output.
+// goToTerraformValuePlist is the plist-aware variant: time.Time, []byte, and whole-number float64 emit __plist_type-tagged objects so plistencode can later round-trip them back to <date>, <data>, and <real> elements respectively. Use goToTerraformValue everywhere else: for non-plist callers, the tagged objects would look like garbage map members in their HCL output.
 func goToTerraformValuePlist(v interface{}) (attr.Value, error) {
 	return goToTerraformValueImpl(v, true, 0)
 }

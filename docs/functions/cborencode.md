@@ -9,7 +9,7 @@ description: |-
 
 # function: cborencode
 
-Encodes a Terraform value as [CBOR](https://www.rfc-editor.org/rfc/rfc8949) ([RFC 8949](https://www.rfc-editor.org/rfc/rfc8949)) and returns the result as a standard base64 string. Output uses CBOR's [Core Deterministic Encoding](https://www.rfc-editor.org/rfc/rfc8949#section-4.2.1): definite-length items, sorted map keys, and shortest-form integers — so the same input produces byte-identical output.
+Encodes a Terraform value as [CBOR](https://www.rfc-editor.org/rfc/rfc8949) ([RFC 8949](https://www.rfc-editor.org/rfc/rfc8949)) and returns the result as a standard base64 string. Output uses CBOR's [Core Deterministic Encoding](https://www.rfc-editor.org/rfc/rfc8949#section-4.2.1): definite-length items, sorted map keys, and shortest-form integers, so the same input produces byte-identical output.
 
 Whole-number floats are emitted as integers (matching the conventions of `jsonencode` here). Strings are encoded as CBOR text strings; the function does not synthesize byte strings or tagged values from HCL inputs.
 
@@ -20,7 +20,7 @@ Backed by [fxamacker/cbor](https://github.com/fxamacker/cbor).
 ## Example Usage
 
 ```terraform
-// Encode a value as CBOR (RFC 8949) — returns a base64 string. Output uses Core Deterministic Encoding so the same input produces byte-identical output.
+// Encode a value as CBOR (RFC 8949): returns a base64 string. Output uses Core Deterministic Encoding so the same input produces byte-identical output.
 output "blob" {
   value = provider::burnham::cborencode({ name = "alice", count = 3 })
   // → "omRuYW1lZWFsaWNlZWNvdW50Aw=="

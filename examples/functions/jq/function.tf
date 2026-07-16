@@ -1,4 +1,4 @@
-// jq — query and reshape a decoded structure with the full jq language.
+// jq: query and reshape a decoded structure with the full jq language.
 // The program is a stream, so the result is always a list (one element per value produced).
 output "prod_ids" {
   value = provider::burnham::jq(

@@ -291,7 +291,7 @@ func TestAcc_JSONPatch_EmptyPatchIsIdentity(t *testing.T) {
 }
 
 func TestAcc_JSONMergePatch_ScalarRootReplaces(t *testing.T) {
-	// RFC 7396 §1: when the patch is a non-object value, the result is the patch — wholesale replacement.
+	// RFC 7396 §1: when the patch is a non-object value, the result is the patch: wholesale replacement.
 	runOutputTest(t,
 		`output "test" {
 			value = provider::burnham::json_merge_patch({ a = 1 }, "replaced")

@@ -1,4 +1,4 @@
-// Package identifiers provides identifier-generation provider-defined functions: deterministic UUIDs (v5, v7, plus uuid_inspect), Nano ID, and petname. Every function is pure and seeded — same inputs always produce the same output, so plans don't churn on re-apply.
+// Package identifiers provides identifier-generation provider-defined functions: deterministic UUIDs (v5, v7, plus uuid_inspect), Nano ID, and petname. Every function is pure and seeded: same inputs always produce the same output, so plans don't churn on re-apply.
 package identifiers
 
 import "github.com/hashicorp/terraform-plugin-framework/function"

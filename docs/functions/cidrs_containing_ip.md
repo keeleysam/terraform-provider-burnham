@@ -11,7 +11,7 @@ description: |-
 
 Returns every CIDR from `cidrs` that contains `ip` as a list. Returns an empty list if none match. Multiple CIDRs may match when the list contains overlapping prefixes (e.g. a summary /8 and a more-specific /24 both match).
 
-**Common uses:** routing decisions — given an observed IP, find every VRF, VPC, or security zone it belongs to; determining which policy rules apply to a given address.
+**Common uses:** routing decisions, where given an observed IP you find every VRF, VPC, or security zone it belongs to; determining which policy rules apply to a given address.
 
 ## Example Usage
 

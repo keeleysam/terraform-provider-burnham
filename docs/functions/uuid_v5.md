@@ -9,9 +9,9 @@ description: |-
 
 # function: uuid_v5
 
-Returns a [version 5 UUID](https://www.rfc-editor.org/rfc/rfc9562#name-uuid-version-5) — SHA-1 hash of a namespace UUID concatenated with a name. **Deterministic**: same `(namespace, name)` always returns the same UUID, with no randomness involved. Ideal for stable, plan-time IDs derived from human-meaningful names.
+Returns a [version 5 UUID](https://www.rfc-editor.org/rfc/rfc9562#name-uuid-version-5): SHA-1 hash of a namespace UUID concatenated with a name. **Deterministic**: same `(namespace, name)` always returns the same UUID, with no randomness involved. Ideal for stable, plan-time IDs derived from human-meaningful names.
 
-`namespace` may be either one of the four predefined RFC 4122 short names — `"dns"`, `"url"`, `"oid"`, `"x500"` — or any well-formed UUID string. The short names map to the namespace UUIDs from [RFC 4122 Appendix C](https://www.rfc-editor.org/rfc/rfc4122#appendix-C).
+`namespace` may be either one of the four predefined RFC 4122 short names (`"dns"`, `"url"`, `"oid"`, `"x500"`) or any well-formed UUID string. The short names map to the namespace UUIDs from [RFC 4122 Appendix C](https://www.rfc-editor.org/rfc/rfc4122#appendix-C).
 
 ```
 uuid_v5("dns", "example.com")

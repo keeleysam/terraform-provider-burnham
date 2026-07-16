@@ -16,13 +16,13 @@ import (
 )
 
 /*
-The transform package only operates on JSON-shaped values: null, bool, string, number, list, object. No dates, no binary blobs, no plist-tagged objects — JMESPath, JSONPath, JSON Patch, and JSON Merge Patch are all defined against the JSON data model.
+The transform package only operates on JSON-shaped values: null, bool, string, number, list, object. No dates, no binary blobs, no plist-tagged objects: JMESPath, JSONPath, JSON Patch, and JSON Merge Patch are all defined against the JSON data model.
 
 The converter here is intentionally separate from internal/provider/dataformat/convert.go rather than shared. dataformat's converter has accumulated plist-aware behavior (it tags []byte and time.Time as `{"__plist_type": ...}` objects so plist round-trips preserve type), which is exactly what we DON'T want for query/patch operations defined against the JSON data model. Sharing would either pull plist semantics into transform or require option-flagging the shared code in two directions; the duplication is small and bounded, and behavior on overlapping inputs (the JSON value space) is verified by parallel unit tests in convert_test.go and dataformat/convert_test.go.
 */
 
 const (
-	// transformMaxDepth caps recursion in terraformToJSON / jsonToTerraform. JMESPath and JSONPath query engines have no internal depth bound; without this an adversarial input nested 10k+ levels would stack-OOM the goroutine. 1024 is generous — real configs rarely exceed 30.
+	// transformMaxDepth caps recursion in terraformToJSON / jsonToTerraform. JMESPath and JSONPath query engines have no internal depth bound; without this an adversarial input nested 10k+ levels would stack-OOM the goroutine. 1024 is generous: real configs rarely exceed 30.
 	transformMaxDepth = 1024
 	// transformMaxNodes caps the total node count traversed by terraformToJSON in a single call. JMESPath/JSONPath wildcards plus a million-element array can spend minutes searching at plan time. 1,000,000 is far above any realistic config; below that, query cost is bounded by the engine's internal complexity.
 	transformMaxNodes = 1_000_000

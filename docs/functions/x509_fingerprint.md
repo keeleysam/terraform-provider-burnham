@@ -9,7 +9,7 @@ description: |-
 
 # function: x509_fingerprint
 
-Returns the hex-encoded `algorithm` digest of the first `CERTIFICATE` block's DER bytes — the same value `openssl x509 -fingerprint -<algorithm>` produces, minus the colon separators between byte pairs.
+Returns the hex-encoded `algorithm` digest of the first `CERTIFICATE` block's DER bytes, the same value `openssl x509 -fingerprint -<algorithm>` produces, minus the colon separators between byte pairs.
 
 `algorithm` is one of `"sha1"`, `"sha256"`, `"sha384"`, `"sha512"`. (`sha224` is not commonly used for fingerprints and is omitted.) `sha256` is the standard choice in 2026; `sha1` is supported only for compatibility with older systems.
 

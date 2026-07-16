@@ -11,7 +11,7 @@ import (
 // ─── geohash_encode ─────────────────────────────────────────────────────
 
 func TestAcc_GeohashEncode_SanFranciscoCivicCenter(t *testing.T) {
-	// (37.7749, -122.4194) at precision 7 yields "9q8yyk8" — a stable, well-known reference value.
+	// (37.7749, -122.4194) at precision 7 yields "9q8yyk8", a stable, well-known reference value.
 	runOutputTest(t,
 		`output "test" { value = provider::burnham::geohash_encode(37.7749, -122.4194, 7) }`,
 		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("9q8yyk8")),
@@ -150,7 +150,7 @@ func TestAcc_PluscodeEncode_RejectsOddLengthBelow11(t *testing.T) {
 func TestAcc_PluscodeEncode_AcceptsLength11(t *testing.T) {
 	runOutputTest(t,
 		`output "test" { value = length(provider::burnham::pluscode_encode(0, 0, 11)) }`,
-		// Code is "AAAAAAAA+AAA" or similar — 11 base characters + 1 "+" = 12 total.
+		// Code is "AAAAAAAA+AAA" or similar: 11 base characters + 1 "+" = 12 total.
 		statecheck.ExpectKnownOutputValue("test", knownvalue.Int64Exact(12)),
 	)
 }

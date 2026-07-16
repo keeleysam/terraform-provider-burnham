@@ -9,7 +9,7 @@ description: |-
 
 # function: msgpackdecode
 
-Decodes [MessagePack](https://msgpack.org/) bytes — provided as a standard base64 string, since HCL strings are UTF-8 only — into a Terraform value.
+Decodes [MessagePack](https://msgpack.org/) bytes (provided as a standard base64 string, since HCL strings are UTF-8 only) into a Terraform value.
 
 MessagePack maps become objects, arrays become tuples, integers and floats become numbers. Binary blobs (msgpack `bin` format) are decoded to base64 strings. Extension types are not supported.
 

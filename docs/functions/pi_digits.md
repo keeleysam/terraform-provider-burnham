@@ -9,7 +9,7 @@ description: |-
 
 # function: pi_digits
 
-Returns the first `count` decimal digits of π *following* the decimal point as a single ASCII string. Models the [RFC 3091 §1](https://www.rfc-editor.org/rfc/rfc3091#section-1) TCP service, which always streams "starting with the most significant digit following the decimal point" — there is no seek operation in the protocol, so this function takes only `count`, not a starting position.
+Returns the first `count` decimal digits of π *following* the decimal point as a single ASCII string. Models the [RFC 3091 §1](https://www.rfc-editor.org/rfc/rfc3091#section-1) TCP service, which always streams "starting with the most significant digit following the decimal point". There is no seek operation in the protocol, so this function takes only `count`, not a starting position.
 
 Example:
 - `pi_digits(10)` → `"1415926535"` (the leading 3 is implied per RFC §Note and never emitted)
@@ -19,7 +19,7 @@ Example:
 ## Example Usage
 
 ```terraform
-// pi_digits — RFC 3091 §1 TCP service for π. Returns the first `count` digits following the decimal point. The leading 3 of π = 3.1415… is implied per RFC and never emitted.
+// pi_digits: RFC 3091 §1 TCP service for π. Returns the first `count` digits following the decimal point. The leading 3 of π = 3.1415… is implied per RFC and never emitted.
 output "first_ten_digits" {
   value = provider::burnham::pi_digits(10)
   // → "1415926535"

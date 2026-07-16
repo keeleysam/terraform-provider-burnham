@@ -1,7 +1,7 @@
 /*
 Base64 encode / decode (RFC 4648).
 
-Core's `base64encode`/`base64decode` only speak standard, padded base64. `base64encode` here takes an options object selecting any of the four RFC 4648 variants — standard or URL-safe (§5) alphabet, padded or raw — and otherwise matches core when called with no options. `base64decode` is deliberately lenient: it accepts either alphabet and tolerates missing padding (and ignores ASCII whitespace), so it is a friction-free superset of core's stricter decoder and round-trips anything `base64encode` produces regardless of options.
+Core's `base64encode`/`base64decode` only speak standard, padded base64. `base64encode` here takes an options object selecting any of the four RFC 4648 variants: standard or URL-safe (§5) alphabet, padded or raw. With no options it matches core. `base64decode` is deliberately lenient: it accepts either alphabet and tolerates missing padding (and ignores ASCII whitespace), so it is a friction-free superset of core's stricter decoder and round-trips anything `base64encode` produces regardless of options.
 */
 
 package encoding
@@ -81,7 +81,7 @@ func (f *Base64EncodeFunction) Metadata(_ context.Context, _ function.MetadataRe
 func (f *Base64EncodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Base64-encode bytes (RFC 4648), with options for URL-safe and padding",
-		MarkdownDescription: "Base64-encodes the input's bytes per [RFC 4648](https://www.rfc-editor.org/rfc/rfc4648). With no options it produces standard, padded base64 — identical to Terraform's built-in `base64encode`. The optional object selects the variant:\n\n- `url_safe` (bool, default `false`) — use the URL- and filename-safe alphabet (§5: `-` and `_` instead of `+` and `/`), as used by JWT/JOSE, OAuth PKCE, and webhooks.\n- `padding` (bool, default `true`) — emit `=` padding. Set `false` for the raw, unpadded form some APIs require.\n\nThe input is taken as raw bytes (the literal UTF-8 bytes of the string); to encode bytes held as hex, pass `hexdecode(var.x)`.\n\n```\nbase64encode(\"Hello\")                          → \"SGVsbG8=\"\nbase64encode(var.token, { url_safe = true, padding = false })\n```",
+		MarkdownDescription: "Base64-encodes the input's bytes per [RFC 4648](https://www.rfc-editor.org/rfc/rfc4648). With no options it produces standard, padded base64, identical to Terraform's built-in `base64encode`. The optional object selects the variant:\n\n- `url_safe` (bool, default `false`): use the URL- and filename-safe alphabet (§5: `-` and `_` instead of `+` and `/`), as used by JWT/JOSE, OAuth PKCE, and webhooks.\n- `padding` (bool, default `true`): emit `=` padding. Set `false` for the raw, unpadded form some APIs require.\n\nThe input is taken as raw bytes (the literal UTF-8 bytes of the string); to encode bytes held as hex, pass `hexdecode(var.x)`.\n\n```\nbase64encode(\"Hello\")                          → \"SGVsbG8=\"\nbase64encode(var.token, { url_safe = true, padding = false })\n```",
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "input", Description: "The bytes to encode, taken as the raw UTF-8 bytes of the string."},
 		},
@@ -127,7 +127,7 @@ func (f *Base64DecodeFunction) Metadata(_ context.Context, _ function.MetadataRe
 func (f *Base64DecodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Base64-decode (RFC 4648), accepting any variant",
-		MarkdownDescription: "Decodes base64 to its bytes, returned as a string of those raw bytes. Deliberately lenient: it accepts both the standard and the URL-safe (§5) alphabets, tolerates missing `=` padding, and ignores ASCII whitespace — so it is a friction-free superset of Terraform's built-in `base64decode` (which rejects URL-safe input) and round-trips anything `base64encode` produces regardless of its options.\n\nThe result is a byte string; for binary that isn't valid UTF-8 you will usually feed it into another function rather than printing it.\n\n```\nbase64decode(\"SGVsbG8\")   # unpadded, url-safe alphabet — both fine\n→ \"Hello\"\n```",
+		MarkdownDescription: "Decodes base64 to its bytes, returned as a string of those raw bytes. Deliberately lenient: it accepts both the standard and the URL-safe (§5) alphabets, tolerates missing `=` padding, and ignores ASCII whitespace, so it is a friction-free superset of Terraform's built-in `base64decode` (which rejects URL-safe input) and round-trips anything `base64encode` produces regardless of its options.\n\nThe result is a byte string; for binary that isn't valid UTF-8 you will usually feed it into another function rather than printing it.\n\n```\nbase64decode(\"SGVsbG8\")   # unpadded, url-safe alphabet, both fine\n→ \"Hello\"\n```",
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "input", Description: "Base64 in either alphabet, padded or not; ASCII whitespace ignored."},
 		},

@@ -11,7 +11,7 @@ description: |-
 
 Encodes the input's bytes as a lowercase hexadecimal string (two hex digits per byte).
 
-The input is taken as raw bytes — the literal UTF-8 bytes of the string HCL hands the function. To hex-encode bytes you already hold as base64, pass `base64decode(var.x)`.
+The input is taken as raw bytes, the literal UTF-8 bytes of the string HCL hands the function. To hex-encode bytes you already hold as base64, pass `base64decode(var.x)`.
 
 ```
 hexencode("Hi")
@@ -21,7 +21,7 @@ hexencode("Hi")
 ## Example Usage
 
 ```terraform
-// hexencode — bytes to lowercase hex.
+// hexencode: bytes to lowercase hex.
 output "hex" {
   value = provider::burnham::hexencode("Hi")
   // → "4869"

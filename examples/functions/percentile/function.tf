@@ -1,9 +1,7 @@
 /*
-Linear-interpolation percentile (Hyndman & Fan Type 7) — same definition as numpy.percentile, R's default, and Excel's PERCENTILE.INC.
+Linear-interpolation percentile (Hyndman & Fan Type 7): same definition as numpy.percentile, R's default, and Excel's PERCENTILE.INC.
 
-Use it to set thresholds based on observed distributions, e.g. "scale instance
-count to handle the p95 of last week's request rate" without hand-rolling a
-sort + index in HCL.
+Use it to set thresholds based on observed distributions, e.g. "scale instance count to handle the p95 of last week's request rate" without hand-rolling a sort + index in HCL.
 */
 locals {
   request_rates = [120, 145, 132, 158, 199, 180, 175, 165, 162, 211]

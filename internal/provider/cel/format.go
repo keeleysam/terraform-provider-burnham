@@ -60,13 +60,9 @@ func formatExpr(expr ast.Expr, si *ast.SourceInfo, opts ...FormatOption) (string
 
 	if !cfg.pretty {
 		/*
-		   Reparse the canonical seed before the final unparse so comprehension macros
-		   (map/exists/filter/optMap/…) are recognized. A directly-built encoder AST carries
-		   its macros as plain member calls, and cel-go's unparser conservatively parenthesizes
-		   any 2+ argument call under a unary operator, so it would emit -(l.map(x, c)) instead
-		   of -l.map(x, c). Reparsing first lets it emit precedence-minimal parentheses, which
-		   matches the pretty path below (that path already reparses) so the two canonical paths
-		   stay equivalent.
+		   Reparse the canonical seed before the final unparse so comprehension macros (map/exists/filter/optMap/…) are recognized.
+		   A directly-built encoder AST carries its macros as plain member calls, and cel-go's unparser conservatively parenthesizes any 2+ argument call under a unary operator, so it would emit -(l.map(x, c)) instead of -l.map(x, c).
+		   Reparsing first lets it emit precedence-minimal parentheses, which matches the pretty path below (that path already reparses) so the two canonical paths stay equivalent.
 		*/
 		seed, err := parser.Unparse(expr, si)
 		if err != nil {
@@ -114,10 +110,7 @@ func formatExpr(expr ast.Expr, si *ast.SourceInfo, opts ...FormatOption) (string
 	return b.String(), nil
 }
 
-// reparse parses a canonical CEL seed string under the lenient environment with macro-call
-// tracking enabled, returning the native AST. Both formatExpr paths use it so comprehension
-// macros are recognized (which is what yields precedence-minimal parentheses) before the
-// final unparse or celfmt pass.
+// reparse parses a canonical CEL seed string under the lenient environment with macro-call tracking enabled, returning the native AST. Both formatExpr paths use it so comprehension macros are recognized (which is what yields precedence-minimal parentheses) before the final unparse or celfmt pass.
 func reparse(seed string) (*ast.AST, error) {
 	env, err := newParseEnv(true)
 	if err != nil {

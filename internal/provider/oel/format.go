@@ -11,9 +11,7 @@ func IsValid(s string) bool {
 	return err == nil
 }
 
-// Format parses s and returns its canonical Okta EL serialization: normalized
-// spacing and quoting, precedence-derived parenthesization. It errors on
-// syntactically invalid input.
+// Format parses s and returns its canonical Okta EL serialization: normalized spacing and quoting, precedence-derived parenthesization. It errors on syntactically invalid input.
 func Format(s string) (string, error) {
 	if err := checkNestingDepth(s); err != nil {
 		return "", err

@@ -5,31 +5,31 @@
 </p>
 
 > *"Aim high in hope and work, remembering that a noble, logical diagram once recorded will never die."*
-> — Daniel Burnham
+> – Daniel Burnham
 
-In 1909, Daniel Burnham published the [Plan of Chicago](https://en.wikipedia.org/wiki/Burnham_Plan_of_Chicago) — a comprehensive blueprint that transformed a sprawling, chaotic city into something coherent and enduring. He believed that good planning wasn't just about what you build, but about making the plan itself clear, readable, and maintainable for generations to come.
+In 1909, Daniel Burnham published the [Plan of Chicago](https://en.wikipedia.org/wiki/Burnham_Plan_of_Chicago), a comprehensive blueprint that transformed a sprawling, chaotic city into something coherent and enduring. He believed that good planning wasn't just about what you build, but about making the plan itself clear, readable, and maintainable for generations to come.
 
 Terraform plans deserve the same treatment. But today, when your Terraform needs to work with structured data formats like property lists or human-edited JSON, do real arithmetic on IP address space, or apply environment overlays to a base manifest, you're stuck with workarounds. Shelling out to external tools, embedding raw strings, pasting opaque expressions that obscure what the plan is actually doing.
 
-Burnham fixes this. It's a pure function provider — no resources, no data sources, no API calls — that fills the operations Terraform's expression language can't handle cleanly on its own. Structured data formats and network arithmetic at the foundation; query and patch over decoded values; deterministic identifiers, text manipulation, certificate inspection, and geographic encoding alongside; and a small numerics library covering RFC 3091 and a handful of statistics helpers.
+Burnham fixes this. It's a pure function provider (no resources, no data sources, no API calls) that fills the operations Terraform's expression language can't handle cleanly on its own. Structured data formats and network arithmetic at the foundation; query and patch over decoded values; deterministic identifiers, text manipulation, certificate inspection, and geographic encoding alongside; and a small numerics library covering RFC 3091 and a handful of statistics helpers.
 
 Your configuration profiles, ACL policies, and structured documents become first-class citizens in your Terraform plans, not opaque blobs passed through `file()` and hoped for the best. Your network plans show set arithmetic on CIDRs in plain HCL instead of `templatefile()`-driven Python preprocessors. Your manifest overlays apply RFC 7396 merge patches in one expression rather than a chain of `merge()` and `try()` calls. Your TLS certificates surface their expiry, SANs, and fingerprints as structured fields instead of opaque base64 blobs.
 
-The result is Terraform code that reads like a blueprint — clear, logical, and built to last.
+The result is Terraform code that reads like a blueprint: clear, logical, and built to last.
 
 Burnham is organized into eleven families of functions:
 
 - **[Expression Language Functions](#expression-language-functions)**: build, validate, format, decode, and evaluate expression- and policy-language strings from HCL data. [CEL](https://cel.dev) (Common Expression Language) for GCP IAM / Access Context Manager, Kubernetes, and any other CEL sink; [Okta Expression Language](https://developer.okta.com/docs/reference/okta-expression-language/) for Okta group rules, profile mappings, and policy conditions; [Cedar](https://www.cedarpolicy.com) for Amazon Verified Permissions authorization policies; and [PromQL](https://prometheus.io/docs/prometheus/latest/querying/basics/) for Prometheus alerting and recording rules.
-- **[Structured Data Functions](#structured-data-functions)** — encode/decode for JSON (pretty), HuJSON, plist, INI, CSV, YAML, .reg, VDF, KDL, NDJSON, MessagePack, CBOR, dotenv, Java .properties, Apple .strings, and general HCL.
-- **[Compression Functions](#compression-functions)** — `base64zopfli` (RFC 1952 gzip via Zopfli, a tighter drop-in for `base64gzip`) and `base64brotli` (RFC 7932 Brotli).
-- **[Encoding Functions](#encoding-functions)** — byte codecs that fill core gaps: hex (`hexencode`/`hexdecode`), base64 and base32 with alphabet/padding options and lenient decoders, and `urlencode` (with `query`/`path`/`component` modes) / `urldecode` (the decoder core lacks).
-- **[Networking Functions](#networking-functions)** — CIDR set operations, queries, IP arithmetic, NAT64 (RFC 6052), NPTv6 (RFC 6296), IPAM helpers, and a faithful RFC 1149 / RFC 2549 (IP over Avian Carriers) throughput calculator.
-- **[Query and Patch Functions](#query-and-patch-functions)** — jq, JMESPath, JSONPath (RFC 9535), JSON Patch (RFC 6902), and JSON Merge Patch (RFC 7396) over decoded structures.
-- **[Numerics Functions](#numerics-functions)** — RFC 3091 (Pi Digit Generation Protocol), statistics, and small math helpers.
-- **[Identifiers Functions](#identifiers-functions)** — deterministic UUIDs (v5, v7), Nano ID, and petname.
-- **[Text Functions](#text-functions)** — Unicode normalization, transliterating slugify, Levenshtein distance, word-wrap, dedent, cowsay, ASCII QR.
-- **[Cryptography Functions](#cryptography-functions)** — HMAC (RFC 2104), HKDF (RFC 5869), PEM block decoding, X.509 / CSR inspection and fingerprinting, generic ASN.1 BER/DER decoding, deterministic ECDSA P-256 + Ed25519 key derivation, deterministic X.509 self-signing (RFC 5280) and CMS/PKCS#7 signing (RFC 5652) — ECDSA via RFC 6979 deterministic `k`, Ed25519 via naturally-deterministic PureEdDSA (RFC 8032 / RFC 8419) — and RFC 1751 human-readable key encoding (`btoe` / `etob`).
-- **[Geographic Functions](#geographic-functions)** — geohash and Open Location Code (Plus codes), encode and decode.
+- **[Structured Data Functions](#structured-data-functions)**: encode/decode for JSON (pretty), HuJSON, plist, INI, CSV, YAML, .reg, VDF, KDL, NDJSON, MessagePack, CBOR, dotenv, Java .properties, Apple .strings, and general HCL.
+- **[Compression Functions](#compression-functions)**: `base64zopfli` (RFC 1952 gzip via Zopfli, a tighter drop-in for `base64gzip`) and `base64brotli` (RFC 7932 Brotli).
+- **[Encoding Functions](#encoding-functions)**: byte codecs that fill core gaps: hex (`hexencode`/`hexdecode`), base64 and base32 with alphabet/padding options and lenient decoders, and `urlencode` (with `query`/`path`/`component` modes) / `urldecode` (the decoder core lacks).
+- **[Networking Functions](#networking-functions)**: CIDR set operations, queries, IP arithmetic, NAT64 (RFC 6052), NPTv6 (RFC 6296), IPAM helpers, and a faithful RFC 1149 / RFC 2549 (IP over Avian Carriers) throughput calculator.
+- **[Query and Patch Functions](#query-and-patch-functions)**: jq, JMESPath, JSONPath (RFC 9535), JSON Patch (RFC 6902), and JSON Merge Patch (RFC 7396) over decoded structures.
+- **[Numerics Functions](#numerics-functions)**: RFC 3091 (Pi Digit Generation Protocol), statistics, and small math helpers.
+- **[Identifiers Functions](#identifiers-functions)**: deterministic UUIDs (v5, v7), Nano ID, and petname.
+- **[Text Functions](#text-functions)**: Unicode normalization, transliterating slugify, Levenshtein distance, word-wrap, dedent, cowsay, ASCII QR.
+- **[Cryptography Functions](#cryptography-functions)**: HMAC (RFC 2104), HKDF (RFC 5869), PEM block decoding, X.509 / CSR inspection and fingerprinting, generic ASN.1 BER/DER decoding, deterministic ECDSA P-256 + Ed25519 key derivation, deterministic X.509 self-signing (RFC 5280) and CMS/PKCS#7 signing (RFC 5652), with ECDSA signing via RFC 6979 deterministic `k` and Ed25519 via naturally-deterministic PureEdDSA (RFC 8032 / RFC 8419), plus RFC 1751 human-readable key encoding (`btoe` / `etob`).
+- **[Geographic Functions](#geographic-functions)**: geohash and Open Location Code (Plus codes), encode and decode.
 
 ## Expression Language Functions
 
@@ -114,48 +114,48 @@ The encode / validate / format / decode functions are syntax-only and dialect-ne
 
 ### Tagged-value helpers (consumed inside `regencode` / `plistencode`)
 
-`REG_*` and `<plist>` documents carry typed values that aren't directly representable in HCL — `REG_DWORD` is a 32-bit unsigned integer, `<data>` is base64-wrapped binary, and so on. These constructor functions return tagged objects that the matching encoder picks up and emits with the correct type tag. Use them inline inside the encoder's input map; they're meaningless outside that context.
+`REG_*` and `<plist>` documents carry typed values that aren't directly representable in HCL: `REG_DWORD` is a 32-bit unsigned integer, `<data>` is base64-wrapped binary, and so on. These constructor functions return tagged objects that the matching encoder picks up and emits with the correct type tag. Use them inline inside the encoder's input map; they're meaningless outside that context.
 
 | Function | Returns | Used by |
 |---|---|---|
-| `plistdata(b64)` | tagged `data` | `plistencode` — emits as `<data>...</data>` |
-| `plistdate(rfc3339)` | tagged `date` | `plistencode` — emits as `<date>...</date>` |
-| `plistreal(number)` | tagged `real` | `plistencode` — emits as `<real>...</real>` (whole-number floats would otherwise round-trip as `<integer>`) |
-| `regbinary(hex)` | tagged `REG_BINARY` | `regencode` — input is a hex string |
-| `regdword(uint32)` | tagged `REG_DWORD` | `regencode` — accepts `[0, 4294967295]` |
-| `regexpandsz(string)` | tagged `REG_EXPAND_SZ` | `regencode` — Windows expands `%VAR%` references at lookup |
-| `regmulti(list(string))` | tagged `REG_MULTI_SZ` | `regencode` — null-separated list of strings |
-| `regqword(uint64)` | tagged `REG_QWORD` | `regencode` — accepts `[0, 18446744073709551615]` |
+| `plistdata(b64)` | tagged `data` | `plistencode`: emits as `<data>...</data>` |
+| `plistdate(rfc3339)` | tagged `date` | `plistencode`: emits as `<date>...</date>` |
+| `plistreal(number)` | tagged `real` | `plistencode`: emits as `<real>...</real>` (whole-number floats would otherwise round-trip as `<integer>`) |
+| `regbinary(hex)` | tagged `REG_BINARY` | `regencode`: input is a hex string |
+| `regdword(uint32)` | tagged `REG_DWORD` | `regencode`: accepts `[0, 4294967295]` |
+| `regexpandsz(string)` | tagged `REG_EXPAND_SZ` | `regencode`: Windows expands `%VAR%` references at lookup |
+| `regmulti(list(string))` | tagged `REG_MULTI_SZ` | `regencode`: null-separated list of strings |
+| `regqword(uint64)` | tagged `REG_QWORD` | `regencode`: accepts `[0, 18446744073709551615]` |
 
-Per-function documentation — including parameters, options, and return values — lives under [`docs/functions/`](docs/functions/) and on [registry.terraform.io](https://registry.terraform.io/providers/keeleysam/burnham/latest/docs). The pages there are auto-generated from the function metadata in source, so they always match the latest published version.
+Per-function documentation (including parameters, options, and return values) lives under [`docs/functions/`](docs/functions/) and on [registry.terraform.io](https://registry.terraform.io/providers/keeleysam/burnham/latest/docs). The pages there are auto-generated from the function metadata in source, so they always match the latest published version.
 
 ## Compression Functions
 
-Compress a string and base64-encode the result, for payloads like EC2 `user_data` that bump against size limits. Terraform's built-in `base64gzip` is the standards baseline; these are opt-in alternatives that trade a little plan-time CPU (or a consumer-side decompressor) for smaller output. Both are pure and **deterministic** — identical input and options always produce byte-identical output, so plans never churn.
+Compress a string and base64-encode the result, for payloads like EC2 `user_data` that bump against size limits. Terraform's built-in `base64gzip` is the standards baseline; these are opt-in alternatives that trade a little plan-time CPU (or a consumer-side decompressor) for smaller output. Both are pure and **deterministic**: identical input and options always produce byte-identical output, so plans never churn.
 
 | Function | Format | Decompresses with | Notes |
 |--------|--------|--------|-------|
-| `base64zopfli` | gzip ([RFC 1952](https://www.rfc-editor.org/rfc/rfc1952) / [RFC 1951](https://www.rfc-editor.org/rfc/rfc1951)) | `gunzip`, `zcat`, any gzip decoder | Drop-in replacement for `base64gzip` using [Zopfli](https://github.com/google/zopfli)'s iterative DEFLATE encoder — a few percent smaller, consumer side unchanged. Header pinned to `MTIME=0` / `XFL=2` / `OS=255`. Optional `{ iterations }` (default 15). |
+| `base64zopfli` | gzip ([RFC 1952](https://www.rfc-editor.org/rfc/rfc1952) / [RFC 1951](https://www.rfc-editor.org/rfc/rfc1951)) | `gunzip`, `zcat`, any gzip decoder | Drop-in replacement for `base64gzip` using [Zopfli](https://github.com/google/zopfli)'s iterative DEFLATE encoder: a few percent smaller, consumer side unchanged. Header pinned to `MTIME=0` / `XFL=2` / `OS=255`. Optional `{ iterations }` (default 15). |
 | `base64brotli` | Brotli ([RFC 7932](https://www.rfc-editor.org/rfc/rfc7932)) | `brotli -d`, browser `Content-Encoding: br` | ~8–10% smaller than `base64gzip` on text, but requires a brotli decompressor on the consuming side. Optional `{ quality, lgwin }` (defaults 11 / 22). |
 
-Both are pure Go (`CGO_ENABLED=0`), via [`foobaz/go-zopfli`](https://github.com/foobaz/go-zopfli) and [`andybalholm/brotli`](https://github.com/andybalholm/brotli). The RFC 7932 §10 encoder `mode` hint isn't exposed on `base64brotli` — the pure-Go encoder doesn't apply it (`text` and `generic` are byte-identical, `font` is unreachable), so it would be a no-op rather than an honest knob.
+Both are pure Go (`CGO_ENABLED=0`), via [`foobaz/go-zopfli`](https://github.com/foobaz/go-zopfli) and [`andybalholm/brotli`](https://github.com/andybalholm/brotli). The RFC 7932 §10 encoder `mode` hint isn't exposed on `base64brotli`: the pure-Go encoder doesn't apply it (`text` and `generic` are byte-identical, `font` is unreachable), so it would be a no-op rather than an honest knob.
 
 ## Encoding Functions
 
 Byte codecs that fill gaps in Terraform core. Core ships no hex decoder, no base32 codec, and no URL decoder, and its `base64encode` / `urlencode` lack options. Inputs are taken as raw bytes (the literal UTF-8 bytes of the string); decoders return a byte string, usually fed into another function rather than printed. The RFC 4648 codecs are pure and deterministic.
 
-Family rule: **encoders take options to pick an output; decoders take an option only when the input is ambiguous** — `base64decode` needs none (its alphabets are disjoint), `base32decode` needs the alphabet (standard and hex overlap), `urldecode` needs the mode (`+` means space in a query, literal in a path). Where a core function of the same name exists, calling burnham's with no options matches core.
+Family rule: **encoders take options to pick an output; decoders take an option only when the input is ambiguous**: `base64decode` needs none (its alphabets are disjoint), `base32decode` needs the alphabet (standard and hex overlap), `urldecode` needs the mode (`+` means space in a query, literal in a path). Where a core function of the same name exists, calling burnham's with no options matches core.
 
 | Function | Signature | Notes |
 |---|---|---|
 | `hexencode` | `(input string)` | Bytes → lowercase hex |
 | `hexdecode` | `(input string)` | Hex → bytes. Case-insensitive; ASCII whitespace ignored. Closes the gap that left `hmac` / `hkdf` unable to take a hex key directly |
 | `base64encode` | `(input string [, options object])` | No options = standard padded (identical to core `base64encode`). `{ url_safe }` uses the §5 URL-safe alphabet; `{ padding = false }` omits `=` |
-| `base64decode` | `(input string)` | Accepts either alphabet, padded or not, ASCII whitespace ignored — a superset of core `base64decode` |
+| `base64decode` | `(input string)` | Accepts either alphabet, padded or not, ASCII whitespace ignored: a superset of core `base64decode` |
 | `base32encode` | `(input string [, options object])` | RFC 4648 base32 (core has none). No options = standard padded; `{ hex_alphabet }` uses the `0–9A–V` alphabet (NSEC3); `{ padding = false }` for TOTP-style secrets |
-| `base32decode` | `(input string [, options object])` | Lenient: case-insensitive, padding optional, whitespace ignored. `{ hex_alphabet = true }` to decode the hex alphabet (can't be auto-detected — the alphabets overlap) |
+| `base32decode` | `(input string [, options object])` | Lenient: case-insensitive, padding optional, whitespace ignored. `{ hex_alphabet = true }` to decode the hex alphabet (can't be auto-detected, since the alphabets overlap) |
 | `urlencode` | `(input string [, options object])` | Percent-encode. No options = `query` mode (`application/x-www-form-urlencoded`, identical to core `urlencode`); `{ mode = "path" }` / `"component"` use RFC 3986 `%20` instead of `+` |
-| `urldecode` | `(input string [, options object])` | Percent-decode — **the function core lacks entirely**. `{ mode }` controls `+`: space in `query` (default), literal in `path` |
+| `urldecode` | `(input string [, options object])` | Percent-decode: **the function core lacks entirely**. `{ mode }` controls `+`: space in `query` (default), literal in `path` |
 
 Per-function documentation lives under [`docs/functions/`](docs/functions/) and on [registry.terraform.io](https://registry.terraform.io/providers/keeleysam/burnham/latest/docs).
 
@@ -163,7 +163,7 @@ Per-function documentation lives under [`docs/functions/`](docs/functions/) and 
 
 Pure functions for IP/CIDR work that HCL alone can't express: set arithmetic on address space, normalizing mixed IPv4/IPv6 inputs, NAT64 / NPTv6 translation, IPAM-style allocation, and one exhaustively faithful implementation of RFC 1149 / RFC 2549 (IP over Avian Carriers). All functions are pure (no network calls, no state) and evaluate at plan time. Uses [`go4.org/netipx`](https://pkg.go.dev/go4.org/netipx) for set operations, prefix aggregation, and range conversion.
 
-The **Backed by** column matters for understanding where bugs live. Functions backed by `netipx` or `net/netip` are thin parsing wrappers — if the logic is wrong, it's almost certainly in the upstream library, not here. Functions with custom or RFC-derived implementations are where this provider adds real logic of its own.
+The **Backed by** column matters for understanding where bugs live. Functions backed by `netipx` or `net/netip` are thin parsing wrappers: if the logic is wrong, it's almost certainly in the upstream library, not here. Functions with custom or RFC-derived implementations are where this provider adds real logic of its own.
 
 ### Standard CIDR / IP / NAT64 / NPTv6
 
@@ -204,17 +204,17 @@ The **Backed by** column matters for understanding where bugs live. Functions ba
 | `nptv6_translate` | `(ipv6 string, from_prefix string, to_prefix string)` | `string` | custom (RFC 6296 checksum-neutral) |
 | `range_to_cidrs` | `(first_ip string, last_ip string)` | `list(string)` | netipx `IPRange.Prefixes()` |
 
-### RFC 1149 / RFC 2549 — IP over Avian Carriers
+### RFC 1149 / RFC 2549: IP over Avian Carriers
 
-[RFC 1149](https://www.rfc-editor.org/rfc/rfc1149) ("A Standard for the Transmission of IP Datagrams on Avian Carriers", 1990) and [RFC 2549](https://www.rfc-editor.org/rfc/rfc2549) ("IP over Avian Carriers with Quality of Service", 1999) specify the frame format, MTU, and QoS framework for transmitting IP datagrams via homing pigeon. The implementation is faithful to the metrics the RFCs imply — chosen constants, citation-mapped output fields, and the verbatim §3 frame-format string — in the same spirit as `pi_digit` is faithful to RFC 3091 over in [Numerics](#numerics-functions).
+[RFC 1149](https://www.rfc-editor.org/rfc/rfc1149) ("A Standard for the Transmission of IP Datagrams on Avian Carriers", 1990) and [RFC 2549](https://www.rfc-editor.org/rfc/rfc2549) ("IP over Avian Carriers with Quality of Service", 1999) specify the frame format, MTU, and QoS framework for transmitting IP datagrams via homing pigeon. The implementation is faithful to the metrics the RFCs imply (chosen constants, citation-mapped output fields, and the verbatim §3 frame-format string), in the same spirit as `pi_digit` is faithful to RFC 3091 over in [Numerics](#numerics-functions).
 
 | Function | Signature | Returns | Backed by |
 |---|---|---|---|
 | `pigeon_throughput` | `(distance_km number, payload_bytes number, altitude_m number)` | `object` | custom (RFC 1149 §3 + RFC 2549 §§3, 6). Output object: `mtu_bytes`, `birds_required`, `per_bird_payload_bytes`, `cruise_speed_kmh`, `flight_time_seconds`, `throughput_bps`, `packet_loss_probability`, `effective_throughput_bps`, `qos_class`, `frame_format`, `rfc_citations`. |
 
-### RFC 8771 — I-DUNNO
+### RFC 8771: I-DUNNO
 
-[RFC 8771](https://www.rfc-editor.org/rfc/rfc8771) ("The Internationalized Deliberately Unreadable Network Notation (I-DUNNO)", 2020) packs an IP address's bits into Unicode codepoints whose UTF-8 byte lengths carry the bits per §3 Table 1 (1/2/3/4-byte = 7/11/16/21 bits), with §4 mandating at least one multi-octet sequence and one IDNA2008-DISALLOWED character. The §5 worked example — `198.51.100.164` → U+0063, U+000C, U+006C, U+04A4 — round-trips through this encoder exactly. Decoder is the spec's intentionally-omitted §3.2 ("the machines will know how to do it").
+[RFC 8771](https://www.rfc-editor.org/rfc/rfc8771) ("The Internationalized Deliberately Unreadable Network Notation (I-DUNNO)", 2020) packs an IP address's bits into Unicode codepoints whose UTF-8 byte lengths carry the bits per §3 Table 1 (1/2/3/4-byte = 7/11/16/21 bits), with §4 mandating at least one multi-octet sequence and one IDNA2008-DISALLOWED character. The §5 worked example (`198.51.100.164` → U+0063, U+000C, U+006C, U+04A4) round-trips through this encoder exactly. Decoder is the spec's intentionally-omitted §3.2 ("the machines will know how to do it").
 
 | Function | Signature | Returns | Backed by |
 |---|---|---|---|
@@ -230,7 +230,7 @@ Pure functions for querying and patching decoded structures, so that manifest ov
 | Function | Signature | Returns | Backed by |
 |---|---|---|---|
 | `jmespath_query` | `(value dynamic, expression string)` | `dynamic` | [jmespath-community/go-jmespath](https://github.com/jmespath-community/go-jmespath) |
-| `jq` | `(value dynamic, program string [, options object])` | `dynamic` (list) | [itchyny/gojq](https://github.com/itchyny/gojq) — pure-Go jq. Stream → list; `vars` bindings. `now`/`localtime` work but are non-deterministic; `env`/`$ENV` are empty (no host env), `input`/`inputs` error |
+| `jq` | `(value dynamic, program string [, options object])` | `dynamic` (list) | [itchyny/gojq](https://github.com/itchyny/gojq): pure-Go jq. Stream → list; `vars` bindings. `now`/`localtime` work but are non-deterministic; `env`/`$ENV` are empty (no host env), `input`/`inputs` error |
 | `json_merge_patch` | `(value dynamic, patch dynamic)` | `dynamic` | [evanphx/json-patch](https://github.com/evanphx/json-patch), [RFC 7396](https://www.rfc-editor.org/rfc/rfc7396) |
 | `json_patch` | `(value dynamic, patch list(object))` | `dynamic` | [evanphx/json-patch](https://github.com/evanphx/json-patch), [RFC 6902](https://www.rfc-editor.org/rfc/rfc6902) |
 | `jsonpath_query` | `(value dynamic, expression string)` | `dynamic` (list) | [theory/jsonpath](https://github.com/theory/jsonpath), conformant with [RFC 9535](https://www.rfc-editor.org/rfc/rfc9535.html) |
@@ -239,9 +239,9 @@ Per-function documentation lives under [`docs/functions/`](docs/functions/) and 
 
 ## Numerics Functions
 
-Pure mathematical / standards-based functions that don't fit the other families. All deterministic, all evaluating at plan time. Two clusters today: an exhaustively faithful implementation of [RFC 3091](https://www.rfc-editor.org/rfc/rfc3091) — the *Pi Digit Generation Protocol* — and a small set of statistics and math helpers that fill gaps in Terraform's built-ins.
+Pure mathematical / standards-based functions that don't fit the other families. All deterministic, all evaluating at plan time. Two clusters today: an exhaustively faithful implementation of [RFC 3091](https://www.rfc-editor.org/rfc/rfc3091) (the *Pi Digit Generation Protocol*) and a small set of statistics and math helpers that fill gaps in Terraform's built-ins.
 
-### RFC 3091 — Pi Digit Generation Protocol
+### RFC 3091: Pi Digit Generation Protocol
 
 | Function | Signature | Returns | Backed by |
 |---|---|---|---|
@@ -252,7 +252,7 @@ Pure mathematical / standards-based functions that don't fit the other families.
 
 ### Statistics
 
-Operate on `list(number)`. Empty input is always an error — a statistic of zero observations is undefined. Variance and standard deviation use the **population** formulas (divide by N, matching numpy's default); for sample statistics multiply variance by `N / (N − 1)` explicitly. Percentile uses the linear-interpolation method (Hyndman & Fan Type 7 — the default in numpy, R, and Excel `PERCENTILE.INC`).
+Operate on `list(number)`. Empty input is always an error: a statistic of zero observations is undefined. Variance and standard deviation use the **population** formulas (divide by N, matching numpy's default); for sample statistics multiply variance by `N / (N − 1)` explicitly. Percentile uses the linear-interpolation method (Hyndman & Fan Type 7, the default in numpy, R, and Excel `PERCENTILE.INC`).
 
 | Function | Signature | Returns | Backed by |
 |---|---|---|---|
@@ -288,15 +288,15 @@ Per-function documentation lives under [`docs/functions/`](docs/functions/) and 
 
 ## Text Functions
 
-Pure functions for string manipulation and small text-rendering tasks. Carefully scoped to *not* duplicate Terraform core (which has `lower`, `upper`, `replace`, etc.) or [`northwood-labs/corefunc`](https://registry.terraform.io/providers/northwood-labs/corefunc/latest) (which owns case-conversion). Text-rendering is included here too — `cowsay` and `qr_ascii` produce text artefacts and feel at home next to text manipulation.
+Pure functions for string manipulation and small text-rendering tasks. Carefully scoped to *not* duplicate Terraform core (which has `lower`, `upper`, `replace`, etc.) or [`northwood-labs/corefunc`](https://registry.terraform.io/providers/northwood-labs/corefunc/latest) (which owns case-conversion). Text-rendering is included here too: `cowsay` and `qr_ascii` produce text artefacts and feel at home next to text manipulation.
 
 | Function | Signature | Returns | Backed by |
 |---|---|---|---|
 | `cowsay` | `(message string [, options object])` | `string` | self-contained; no external `cowsay` binary involved |
-| `dedent` | `(s string)` | `string` | `textwrap.dedent` — strips the common leading whitespace from every line (the inverse of core `indent`) |
+| `dedent` | `(s string)` | `string` | `textwrap.dedent`: strips the common leading whitespace from every line (the inverse of core `indent`) |
 | `levenshtein` | `(a string, b string)` | `number` | classic two-row DP, codepoint-aware |
 | `qr_ascii` | `(payload string [, options object])` | `string` | [`rsc.io/qr`](https://pkg.go.dev/rsc.io/qr) + half-block Unicode rendering |
-| `slugify` | `(s string [, options object])` | `string` | [`gosimple/slug`](https://github.com/gosimple/slug) — Unicode → ASCII transliteration |
+| `slugify` | `(s string [, options object])` | `string` | [`gosimple/slug`](https://github.com/gosimple/slug): Unicode → ASCII transliteration |
 | `unicode_normalize` | `(s string, form string)` | `string` | [`golang.org/x/text/unicode/norm`](https://pkg.go.dev/golang.org/x/text/unicode/norm); UAX #15 |
 | `wrap` | `(s string, width number)` | `string` | [`mitchellh/go-wordwrap`](https://github.com/mitchellh/go-wordwrap) |
 
@@ -304,7 +304,7 @@ Per-function documentation lives under [`docs/functions/`](docs/functions/) and 
 
 ## Cryptography Functions
 
-Pure functions for keyed hashing, key derivation, certificate / CSR / ASN.1 inspection, and the four primitives needed to *construct* certs and CMS/PKCS#7 signatures deterministically. The inspection wins are `x509_inspect` and `csr_inspect`: cert metadata becomes first-class HCL instead of a thing you regex out of a `tls_*.crt`. `hmac` and `hkdf` close the symmetric-crypto gap — webhook signing and per-tenant key derivation no longer need an `external` data source. The signing chain (`{ecdsa_p256,ed25519}_key_from_seed` + `x509_self_sign` + `pkcs7_sign`) closes the asymmetric one: derive a stable signing identity from any seed, build a self-signed cert, and emit a byte-stable CMS SignedData — all without random state, suitable for Terraform-driven workflows where plan output must match apply output.
+Pure functions for keyed hashing, key derivation, certificate / CSR / ASN.1 inspection, and the four primitives needed to *construct* certs and CMS/PKCS#7 signatures deterministically. The inspection wins are `x509_inspect` and `csr_inspect`: cert metadata becomes first-class HCL instead of a thing you regex out of a `tls_*.crt`. `hmac` and `hkdf` close the symmetric-crypto gap: webhook signing and per-tenant key derivation no longer need an `external` data source. The signing chain (`{ecdsa_p256,ed25519}_key_from_seed` + `x509_self_sign` + `pkcs7_sign`) closes the asymmetric one: derive a stable signing identity from any seed, build a self-signed cert, and emit a byte-stable CMS SignedData, all without random state, suitable for Terraform-driven workflows where plan output must match apply output.
 
 | Function | Signature | Returns | Backed by |
 |---|---|---|---|
@@ -322,17 +322,17 @@ Pure functions for keyed hashing, key derivation, certificate / CSR / ASN.1 insp
 | `x509_inspect` | `(pem string)` | object | stdlib `crypto/x509` (`ParseCertificate`) |
 | `x509_self_sign` | `(private_key_pem string, common_name string, serial string, not_before string, not_after string)` | `string` (PEM) | stdlib `crypto/x509.CreateCertificate` + [`nspcc-dev/rfc6979`](https://github.com/nspcc-dev/rfc6979), RFC 5280 + RFC 6979 (ECDSA) / RFC 8410 (Ed25519) |
 
-`hmac` and `hkdf` accept inputs as raw bytes (the framework hands the function a UTF-8 string verbatim). HCL string literals only support `\uNNNN` escape sequences for non-ASCII bytes, and those are emitted as their UTF-8 encoding rather than as raw byte values — so RFC test vectors that exercise high-byte inputs aren't directly representable in HCL. ASCII-only inputs round-trip cleanly; for arbitrary-byte inputs, base64-encode and `base64decode(...)` first.
+`hmac` and `hkdf` accept inputs as raw bytes (the framework hands the function a UTF-8 string verbatim). HCL string literals only support `\uNNNN` escape sequences for non-ASCII bytes, and those are emitted as their UTF-8 encoding rather than as raw byte values, so RFC test vectors that exercise high-byte inputs aren't directly representable in HCL. ASCII-only inputs round-trip cleanly; for arbitrary-byte inputs, base64-encode and `base64decode(...)` first.
 
-`x509_self_sign` and `pkcs7_sign` both accept ECDSA P-256 and Ed25519 keys and dispatch the right signing algorithm on the key type. ECDSA P-256 signs deterministically via [RFC 6979](https://www.rfc-editor.org/rfc/rfc6979) `k` derivation; Ed25519 is naturally deterministic by spec ([RFC 8032 §5.1.6](https://www.rfc-editor.org/rfc/rfc8032#section-5.1.6)) and signs as PureEdDSA per [RFC 8419](https://www.rfc-editor.org/rfc/rfc8419) (no pre-hash, SignerInfo `digestAlgorithm` set to `id-sha512` per §3). `pkcs7_sign` produces the "no signed attributes" CMS shape; it deliberately is *not* a general-purpose CMS-with-signed-attrs builder — `signingTime` would otherwise reintroduce non-determinism. RSA is intentionally out of scope; add it if a use case appears.
+`x509_self_sign` and `pkcs7_sign` both accept ECDSA P-256 and Ed25519 keys and dispatch the right signing algorithm on the key type. ECDSA P-256 signs deterministically via [RFC 6979](https://www.rfc-editor.org/rfc/rfc6979) `k` derivation; Ed25519 is naturally deterministic by spec ([RFC 8032 §5.1.6](https://www.rfc-editor.org/rfc/rfc8032#section-5.1.6)) and signs as PureEdDSA per [RFC 8419](https://www.rfc-editor.org/rfc/rfc8419) (no pre-hash, SignerInfo `digestAlgorithm` set to `id-sha512` per §3). `pkcs7_sign` produces the "no signed attributes" CMS shape; it deliberately is *not* a general-purpose CMS-with-signed-attrs builder, since `signingTime` would otherwise reintroduce non-determinism. RSA is intentionally out of scope; add it if a use case appears.
 
-**macOS configuration-profile signing** uses ECDSA P-256: Apple's installer rejects Ed25519-signed `.mobileconfig` files at the keychain-import layer as of macOS 26.5. For everything else (OpenSSL `cms`, container signing, internal tooling) Ed25519 is the better default — shorter keys, simpler signatures, deterministic by spec.
+**macOS configuration-profile signing** uses ECDSA P-256: Apple's installer rejects Ed25519-signed `.mobileconfig` files at the keychain-import layer as of macOS 26.5. For everything else (OpenSSL `cms`, container signing, internal tooling) Ed25519 is the better default: shorter keys, simpler signatures, deterministic by spec.
 
 Per-function documentation lives under [`docs/functions/`](docs/functions/) and on [registry.terraform.io](https://registry.terraform.io/providers/keeleysam/burnham/latest/docs).
 
 ## Geographic Functions
 
-Pure functions for geocoding — turning `(latitude, longitude)` pairs into short alphanumeric strings and back. Geohash and Open Location Code (Plus codes) are the two formats actually used in production: the former for spatial indexing in datastores, the latter for human-shareable location strings.
+Pure functions for geocoding: turning `(latitude, longitude)` pairs into short alphanumeric strings and back. Geohash and Open Location Code (Plus codes) are the two formats actually used in production: the former for spatial indexing in datastores, the latter for human-shareable location strings.
 
 | Function | Signature | Returns | Backed by |
 |---|---|---|---|
@@ -357,7 +357,7 @@ terraform {
 }
 ```
 
-No provider configuration is needed — Burnham is a pure function provider with no resources, data sources, or remote API calls.
+No provider configuration is needed. Burnham is a pure function provider with no resources, data sources, or remote API calls.
 
 ## Examples
 
@@ -365,7 +365,7 @@ A short tour. See [`examples/functions/`](examples/functions/) for a working sni
 
 ### Pretty-printed JSON
 
-Terraform's built-in `jsonencode` produces a single line. Burnham's gives you human-editable output and configurable indentation, and it leaves `<`, `>` and `&` as literal characters rather than escaping them to `<` / `>` / `&` — pass `{ escape_html = true }` if you need the escaped form (e.g. embedding JSON in an HTML `<script>`).
+Terraform's built-in `jsonencode` produces a single line. Burnham's gives you human-editable output and configurable indentation, and it leaves `<`, `>` and `&` as literal characters rather than escaping them to `<` / `>` / `&`. Pass `{ escape_html = true }` if you need the escaped form (e.g. embedding JSON in an HTML `<script>`).
 
 ```hcl
 locals {
@@ -407,7 +407,7 @@ output "wifi_profile" {
 
 ### Dual-stack CIDR merge
 
-`cidr_merge` accepts a mixed IPv4/IPv6 list and returns merged ranges in both families — useful when you've collected blocks from multiple sources and want a single canonical, non-overlapping list to feed into a security group, route table, or firewall allowlist.
+`cidr_merge` accepts a mixed IPv4/IPv6 list and returns merged ranges in both families, useful when you've collected blocks from multiple sources and want a single canonical, non-overlapping list to feed into a security group, route table, or firewall allowlist.
 
 ```hcl
 locals {
@@ -446,9 +446,9 @@ go build ./...
 
 The test suite has two layers:
 
-**Unit tests** test internal Go functions directly — the type conversion engine, tagged object handling, edge cases, and error paths. They're fast and don't require Terraform.
+**Unit tests** test internal Go functions directly: the type conversion engine, tagged object handling, edge cases, and error paths. They're fast and don't require Terraform.
 
-**Acceptance tests** (`TestAcc_*`) run each provider function through the real Terraform plugin protocol using `terraform-plugin-testing`. They validate that functions work end-to-end as Terraform would call them — argument parsing, type coercion, dynamic returns, and error reporting. These require a `terraform` binary on your PATH (>= 1.8).
+**Acceptance tests** (`TestAcc_*`) run each provider function through the real Terraform plugin protocol using `terraform-plugin-testing`. They validate that functions work end-to-end as Terraform would call them: argument parsing, type coercion, dynamic returns, and error reporting. These require a `terraform` binary on your PATH (>= 1.8).
 
 ```sh
 # Run everything (unit + acceptance)
@@ -483,7 +483,7 @@ provider_installation {
 }
 ```
 
-Then either run `terraform console` from anywhere (no config required — type `provider::burnham::cidr_merge(...)` interactively), or `terraform plan` against any of the per-function modules in `examples/functions/<name>/`. No `terraform init` needed with dev overrides.
+Then either run `terraform console` from anywhere (no config required, just type `provider::burnham::cidr_merge(...)` interactively), or `terraform plan` against any of the per-function modules in `examples/functions/<name>/`. No `terraform init` needed with dev overrides.
 
 ## License
 

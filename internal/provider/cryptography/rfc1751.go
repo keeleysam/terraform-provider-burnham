@@ -1,5 +1,5 @@
 /*
-RFC 1751 — A Convention for Human-Readable 128-bit Keys (S/Key).
+RFC 1751: A Convention for Human-Readable 128-bit Keys (S/Key).
 
 `btoe` (bytes-to-english) and `etob` (english-to-bytes) carry the RFC's own
 function names. They encode a binary key as a sequence of short English words
@@ -9,9 +9,7 @@ decode. The classic use is reading a key or one-time password aloud, but it is a
 general byte↔words codec in the same human-readable-bytes spirit as a fingerprint
 word list.
 
-This is a faithful port of the reference C in the RFC's appendix — the bit
-`extract`/`insert` helpers, the 2-bit parity, and the `standard()` input
-normalization — verified against the three worked examples in the RFC body.
+This is a faithful port of the reference C in the RFC's appendix (the bit `extract`/`insert` helpers, the 2-bit parity, and the `standard()` input normalization), verified against the three worked examples in the RFC body.
 */
 
 package cryptography
@@ -71,7 +69,7 @@ func rfc1751Insert(s []byte, x, start, length int) {
 }
 
 // rfc1751Parity returns the low two bits of the sum of the 32 two-bit groups in
-// the first 64 bits of s — the parity quantity the RFC appends as bits 64-65.
+// the first 64 bits of s: the parity quantity the RFC appends as bits 64-65.
 func rfc1751Parity(s []byte) uint {
 	var p uint
 	for i := 0; i < 64; i += 2 {
@@ -171,7 +169,7 @@ func (f *BtoeFunction) Metadata(_ context.Context, _ function.MetadataRequest, r
 func (f *BtoeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Encode a key as RFC 1751 English words (bytes-to-english)",
-		MarkdownDescription: "Encodes a binary key as a sequence of short English words per [RFC 1751](https://www.rfc-editor.org/rfc/rfc1751) (\"A Convention for Human-Readable 128-bit Keys\"). `btoe` is the RFC's own name for this direction — *bytes-to-english*; `etob` reverses it.\n\nEach 64-bit block of the key becomes six words drawn from a fixed 2048-word dictionary, with two parity bits appended so `etob` can catch a transcription error on the way back. The classic use is reading a key or S/Key one-time password aloud, but it works as a general human-readable encoding for any key material.\n\nThe input is a hex string whose decoded length is a **non-zero multiple of 8 bytes** (64-bit blocks); whitespace in the hex is ignored, so `\"EB33 F77E E73D 4053\"` is accepted. A 128-bit key yields 12 words.\n\n```\nbtoe(\"EB33F77EE73D4053\")\n→ \"TIDE ITCH SLOW REIN RULE MOT\"\n```",
+		MarkdownDescription: "Encodes a binary key as a sequence of short English words per [RFC 1751](https://www.rfc-editor.org/rfc/rfc1751) (\"A Convention for Human-Readable 128-bit Keys\"). `btoe` is the RFC's own name for this direction (*bytes-to-english*); `etob` reverses it.\n\nEach 64-bit block of the key becomes six words drawn from a fixed 2048-word dictionary, with two parity bits appended so `etob` can catch a transcription error on the way back. The classic use is reading a key or S/Key one-time password aloud, but it works as a general human-readable encoding for any key material.\n\nThe input is a hex string whose decoded length is a **non-zero multiple of 8 bytes** (64-bit blocks); whitespace in the hex is ignored, so `\"EB33 F77E E73D 4053\"` is accepted. A 128-bit key yields 12 words.\n\n```\nbtoe(\"EB33F77EE73D4053\")\n→ \"TIDE ITCH SLOW REIN RULE MOT\"\n```",
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "hex", Description: "The key as a hex string; decoded length must be a non-zero multiple of 8 bytes. Whitespace is ignored."},
 		},
@@ -213,7 +211,7 @@ func (f *EtobFunction) Metadata(_ context.Context, _ function.MetadataRequest, r
 func (f *EtobFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Decode RFC 1751 English words back to a key (english-to-bytes)",
-		MarkdownDescription: "Decodes a sequence of [RFC 1751](https://www.rfc-editor.org/rfc/rfc1751) English words back into the original key, returning lowercase hex. `etob` is the RFC's own name for this direction — *english-to-bytes*; `btoe` produces the words.\n\nThe input is a phrase whose word count is a **non-zero multiple of six** (each six words decode to one 64-bit block). Words are matched case-insensitively and the RFC's `standard()` normalization is applied (`1`→`L`, `0`→`O`, `5`→`S`), so dictation/OCR slips are tolerated. The two parity bits embedded by `btoe` are verified; a phrase that fails the parity check (a likely transcription error) is rejected, as is any word not in the dictionary.\n\n```\netob(\"TIDE ITCH SLOW REIN RULE MOT\")\n→ \"eb33f77ee73d4053\"\n```",
+		MarkdownDescription: "Decodes a sequence of [RFC 1751](https://www.rfc-editor.org/rfc/rfc1751) English words back into the original key, returning lowercase hex. `etob` is the RFC's own name for this direction (*english-to-bytes*); `btoe` produces the words.\n\nThe input is a phrase whose word count is a **non-zero multiple of six** (each six words decode to one 64-bit block). Words are matched case-insensitively and the RFC's `standard()` normalization is applied (`1`→`L`, `0`→`O`, `5`→`S`), so dictation/OCR slips are tolerated. The two parity bits embedded by `btoe` are verified; a phrase that fails the parity check (a likely transcription error) is rejected, as is any word not in the dictionary.\n\n```\netob(\"TIDE ITCH SLOW REIN RULE MOT\")\n→ \"eb33f77ee73d4053\"\n```",
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "words", Description: "An RFC 1751 word phrase; word count must be a non-zero multiple of 6."},
 		},

@@ -9,15 +9,15 @@ description: |-
 
 # function: base64zopfli
 
-Compresses `input` with [Zopfli](https://github.com/google/zopfli)'s iterative DEFLATE encoder and returns the result as a base64-encoded gzip member. A drop-in replacement for Terraform's built-in `base64gzip`: the output is an ordinary [RFC 1952](https://www.rfc-editor.org/rfc/rfc1952) gzip stream that decompresses with any `gunzip` / `zcat` / `compress/gzip` decoder — consumers cannot tell it came from Zopfli rather than `gzip -9`, and nothing on the decompression side has to change.
+Compresses `input` with [Zopfli](https://github.com/google/zopfli)'s iterative DEFLATE encoder and returns the result as a base64-encoded gzip member. A drop-in replacement for Terraform's built-in `base64gzip`: the output is an ordinary [RFC 1952](https://www.rfc-editor.org/rfc/rfc1952) gzip stream that decompresses with any `gunzip` / `zcat` / `compress/gzip` decoder; consumers cannot tell it came from Zopfli rather than `gzip -9`, and nothing on the decompression side has to change.
 
-Zopfli spends much more CPU than zlib searching for a smaller encoding of the same data (typically ~2–5% smaller than `gzip -9` on text). The win is free at the wire — it just makes the plan-time compression slower.
+Zopfli spends much more CPU than zlib searching for a smaller encoding of the same data (typically ~2–5% smaller than `gzip -9` on text). The win is free at the wire: it just makes the plan-time compression slower.
 
 The gzip header is fixed for deterministic, portable output: `MTIME=0` (never "current time", which would churn every plan), `XFL=2`, `OS=255` (unknown), no optional flags. Same `input` and options always produce byte-identical output.
 
 The optional `options` object accepts:
 
-- `iterations` (number) — Zopfli optimization passes; default `15`, range `[1, 100000]`. Higher is smaller with diminishing returns past ~100. Always valid DEFLATE regardless of value.
+- `iterations` (number): Zopfli optimization passes; default `15`, range `[1, 100000]`. Higher is smaller with diminishing returns past ~100. Always valid DEFLATE regardless of value.
 
 ```
 boot_scripts_blob = provider::burnham::base64zopfli(jsonencode(scripts))
@@ -28,12 +28,12 @@ boot_scripts_blob = provider::burnham::base64zopfli(jsonencode(scripts), { itera
 
 ```terraform
 /*
-base64zopfli — a tighter, drop-in replacement for the built-in base64gzip.
+base64zopfli: a tighter, drop-in replacement for the built-in base64gzip.
 
-Output is an ordinary RFC 1952 gzip member, so the consumer side decompresses with `gunzip` exactly as before — only the bytes are a few percent smaller. Same input always produces byte-identical output (MTIME is pinned to 0), so plans stay stable.
+Output is an ordinary RFC 1952 gzip member, so the consumer side decompresses with `gunzip` exactly as before, only the bytes are a few percent smaller. Same input always produces byte-identical output (MTIME is pinned to 0), so plans stay stable.
 */
 
-# Drop-in swap for base64gzip — nothing else in the pipeline changes.
+# Drop-in swap for base64gzip, nothing else in the pipeline changes.
 output "boot_scripts_blob" {
   value = provider::burnham::base64zopfli(jsonencode({ install = "...", configure = "..." }))
 }

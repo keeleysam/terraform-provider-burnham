@@ -9,12 +9,12 @@ description: |-
 
 # function: nanoid
 
-Returns a Nano ID string derived deterministically from `seed` via HMAC-SHA-256 in counter mode. Same `seed` always returns the same ID — perfect for stable, plan-time identifiers that don't churn on re-apply.
+Returns a Nano ID string derived deterministically from `seed` via HMAC-SHA-256 in counter mode. Same `seed` always returns the same ID, perfect for stable, plan-time identifiers that don't churn on re-apply.
 
 Default alphabet is the 64-character URL-safe set `_-0-9A-Za-z` (matching the upstream [nanoid](https://github.com/ai/nanoid) reference); default `size` is 21 characters. Both can be overridden via the optional `options` object:
 
-- `alphabet` (string) — the alphabet to draw from. Must be non-empty and contain no duplicate runes. Any unicode is accepted; bytes are interpreted as a UTF-8 string and you get one alphabet *codepoint* per output position, so a 64-codepoint alphabet still yields a 21-character (=21-codepoint) ID even if some characters are multi-byte.
-- `size` (number) — output length in codepoints; must be in `[1, 1024]`.
+- `alphabet` (string): the alphabet to draw from. Must be non-empty and contain no duplicate runes. Any unicode is accepted; bytes are interpreted as a UTF-8 string and you get one alphabet *codepoint* per output position, so a 64-codepoint alphabet still yields a 21-character (=21-codepoint) ID even if some characters are multi-byte.
+- `size` (number): output length in codepoints; must be in `[1, 1024]`.
 
 ```
 nanoid("prod/api-gateway")
@@ -24,13 +24,13 @@ nanoid("prod/api-gateway", { size = 10 })
 nanoid("prod/api-gateway", { alphabet = "0123456789", size = 6 })
 ```
 
-This function is a derivation, not a CSPRNG — outputs leak nothing about the seed, but two callers seeded with the same secret will produce the same ID. Use it for naming, not for credentials.
+This function is a derivation, not a CSPRNG: outputs leak nothing about the seed, but two callers seeded with the same secret will produce the same ID. Use it for naming, not for credentials.
 
 ## Example Usage
 
 ```terraform
 /*
-Deterministic Nano ID — short, URL-safe identifiers derived from a seed. Same seed → same ID. Default is 21 characters from the URL-safe alphabet `_-0-9A-Za-z`, matching upstream nanoid.
+Deterministic Nano ID: short, URL-safe identifiers derived from a seed. Same seed → same ID. Default is 21 characters from the URL-safe alphabet `_-0-9A-Za-z`, matching upstream nanoid.
 
 Use a per-resource seed when you want unique-per-resource IDs that stay stable across plans.
 */

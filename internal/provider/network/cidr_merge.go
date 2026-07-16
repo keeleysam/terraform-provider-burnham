@@ -18,9 +18,8 @@ func (f *CIDRMergeFunction) Metadata(_ context.Context, _ function.MetadataReque
 
 func (f *CIDRMergeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
-		Summary: "Aggregate CIDRs into the smallest possible list",
-		MarkdownDescription: "Merges a list of CIDR strings into the smallest equivalent set by removing " +
-			"redundant prefixes and combining sibling pairs into supernets. Supports both IPv4 and IPv6.",
+		Summary:             "Aggregate CIDRs into the smallest possible list",
+		MarkdownDescription: "Merges a list of CIDR strings into the smallest equivalent set by removing redundant prefixes and combining sibling pairs into supernets. Supports both IPv4 and IPv6.",
 		Parameters: []function.Parameter{
 			function.ListParameter{
 				Name:        "cidrs",

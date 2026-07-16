@@ -111,7 +111,7 @@ func TestRunJQ_RuntimeError(t *testing.T) {
 }
 
 func TestRunJQ_NowIsAllowed(t *testing.T) {
-	// now is permitted (nondeterministic — documented). Assert on its type so
+	// now is permitted (nondeterministic, documented). Assert on its type so
 	// the test itself stays deterministic.
 	got, err := runJQ(context.Background(), nil, "now | type", nil)
 	if err != nil {

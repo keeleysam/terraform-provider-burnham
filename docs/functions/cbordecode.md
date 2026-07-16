@@ -9,7 +9,7 @@ description: |-
 
 # function: cbordecode
 
-Decodes [CBOR](https://www.rfc-editor.org/rfc/rfc8949) ([RFC 8949](https://www.rfc-editor.org/rfc/rfc8949)) bytes — provided as a standard base64 string, since HCL strings are UTF-8 only — into a Terraform value.
+Decodes [CBOR](https://www.rfc-editor.org/rfc/rfc8949) ([RFC 8949](https://www.rfc-editor.org/rfc/rfc8949)) bytes (provided as a standard base64 string, since HCL strings are UTF-8 only) into a Terraform value.
 
 Type mapping: CBOR maps with string keys become objects (maps with non-string keys are an error); arrays become tuples; integers and floats become numbers; byte strings become standard base64 strings; tag-0/tag-1 datetimes become [RFC 3339](https://www.rfc-editor.org/rfc/rfc3339) strings; bignum tags (2/3) become full-precision numbers (Terraform's number type uses arbitrary-precision big floats).
 

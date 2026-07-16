@@ -1,5 +1,5 @@
 /*
-RFC 8771 — Internationalized Deliberately Unreadable Network Notation (I-DUNNO).
+RFC 8771: Internationalized Deliberately Unreadable Network Notation (I-DUNNO).
 
   - Bit-packing per §3 Table 1:
       1-byte UTF-8 sequence carries  7 bits
@@ -15,7 +15,7 @@ RFC 8771 — Internationalized Deliberately Unreadable Network Notation (I-DUNNO
     per IDNA2008 (RFC 5892).
 
 §3.2 says deforming "is intentionally omitted" because "humans SHOULD NOT
-attempt the process." The machines DO know how to do it — we walk codepoints
+attempt the process." The machines DO know how to do it: we walk codepoints
 left-to-right, infer each codepoint's UTF-8 length from its numeric value,
 take that many of the codepoint's low-order bits, concatenate, and lop off
 the trailing padding. Length disambiguates IPv4 (32–52 bits total) from
@@ -60,7 +60,7 @@ var idunnoIPv4Layouts = [][]int{
 	{7, 7, 7, 7, 11}, // 39 bits, 7 pad. Works when last nibble != 0 (gives padding room).
 	{7, 7, 7, 16},    // 37 bits, 5 pad. Works when bits[21:32] ≥ 0x40.
 	{7, 7, 7, 21},    // 42 bits, 10 pad. Final chunk needs value in [0x10000, 0x10FFFF].
-	{7, 7, 7, 7, 16}, // 44 bits, 12 pad. UNIVERSAL FALLBACK — always works.
+	{7, 7, 7, 7, 16}, // 44 bits, 12 pad. UNIVERSAL FALLBACK, always works.
 }
 
 // idunnoIPv6Layouts is the priority list for 128-bit IPv6 addresses. Layouts
@@ -82,7 +82,7 @@ var idunnoIPv6Layouts = [][]int{
 	{16, 16, 16, 16, 16, 16, 16, 16, 11},                       // 139 bits, 11 pad
 	{16, 16, 16, 16, 16, 16, 16, 16, 16},                       // 144 bits, 16 pad
 	{7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 11}, // 137 bits, 9 pad (long-prefix for sparse addresses)
-	{7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 16}, // 142 bits, 14 pad — UNIVERSAL FALLBACK
+	{7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 16}, // 142 bits, 14 pad, UNIVERSAL FALLBACK
 }
 
 // IDunnoEncode produces the I-DUNNO representation of an IPv4 or IPv6 address
@@ -260,9 +260,9 @@ func idunnoSatisfiesMinCL(cps []rune) bool {
 
 // idunnoDisallowedIDNA2008 reports whether the codepoint is DISALLOWED under
 // IDNA2008 (RFC 5892) for our purposes. IDNA2008's PVALID set is roughly
-// "letters + marks + digits + hyphen". Everything outside that set — symbols,
+// "letters + marks + digits + hyphen". Everything outside that set (symbols,
 // punctuation, controls, format characters, private-use, uppercase letters
-// that get MAPPED to lowercase — is treated as DISALLOWED here. This is a
+// that get MAPPED to lowercase) is treated as DISALLOWED here. This is a
 // conservative-toward-DISALLOWED classifier: codepoints that IDNA2008 considers
 // MAPPED (e.g. ASCII uppercase) are counted as DISALLOWED for §4.1's "at least
 // one DISALLOWED character" check, which is faithful to the spirit of the RFC

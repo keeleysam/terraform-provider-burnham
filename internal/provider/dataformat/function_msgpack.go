@@ -35,7 +35,7 @@ func (f *MsgpackDecodeFunction) Metadata(_ context.Context, _ function.MetadataR
 func (f *MsgpackDecodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Decode a base64-encoded MessagePack blob into a value",
-		MarkdownDescription: "Decodes [MessagePack](https://msgpack.org/) bytes — provided as a standard base64 string, since HCL strings are UTF-8 only — into a Terraform value.\n\nMessagePack maps become objects, arrays become tuples, integers and floats become numbers. Binary blobs (msgpack `bin` format) are decoded to base64 strings. Extension types are not supported.\n\n**Common uses:** consuming msgpack-encoded payloads from caches (Redis, etcd), inspecting `kubectl get --raw` output, or round-tripping fixtures.",
+		MarkdownDescription: "Decodes [MessagePack](https://msgpack.org/) bytes (provided as a standard base64 string, since HCL strings are UTF-8 only) into a Terraform value.\n\nMessagePack maps become objects, arrays become tuples, integers and floats become numbers. Binary blobs (msgpack `bin` format) are decoded to base64 strings. Extension types are not supported.\n\n**Common uses:** consuming msgpack-encoded payloads from caches (Redis, etcd), inspecting `kubectl get --raw` output, or round-tripping fixtures.",
 		Parameters: []function.Parameter{
 			function.StringParameter{
 				Name:        "input",
@@ -115,7 +115,7 @@ func decodeMsgpackValue(d *msgpack.Decoder) (interface{}, error) {
 	return d.DecodeInterface()
 }
 
-// decodeMsgpackMapStringInterface forces map keys to strings — without this, msgpack/v5 returns map[interface{}]interface{} which goToTerraformValue can't handle.
+// decodeMsgpackMapStringInterface forces map keys to strings; without this, msgpack/v5 returns map[interface{}]interface{} which goToTerraformValue can't handle.
 func decodeMsgpackMapStringInterface(d *msgpack.Decoder) (interface{}, error) {
 	n, err := d.DecodeMapLen()
 	if err != nil {
@@ -184,7 +184,7 @@ func (f *MsgpackEncodeFunction) Run(ctx context.Context, req function.RunRequest
 
 	prepared := goValueForBinaryEncode(goVal)
 
-	// UseCompactInts emits the smallest fixint/int* form that fits the value, matching MessagePack's space-efficiency intent — without it, every integer becomes an 8-byte int64 regardless of magnitude, which is wasteful and produces different bytes for the same numeric value depending on Go's static type. SetSortMapKeys produces stable byte output regardless of input map iteration order, so users can compare or hash encoded payloads safely.
+	// UseCompactInts emits the smallest fixint/int* form that fits the value, matching MessagePack's space-efficiency intent. Without it, every integer becomes an 8-byte int64 regardless of magnitude, which is wasteful and produces different bytes for the same numeric value depending on Go's static type. SetSortMapKeys produces stable byte output regardless of input map iteration order, so users can compare or hash encoded payloads safely.
 	var buf bytes.Buffer
 	enc := msgpack.NewEncoder(&buf)
 	enc.UseCompactInts(true)

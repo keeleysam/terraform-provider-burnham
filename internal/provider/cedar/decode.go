@@ -8,14 +8,9 @@ import (
 	cedar "github.com/cedar-policy/cedar-go"
 )
 
-// Decode parses a single Cedar policy in the human-readable DSL syntax and
-// returns its EST (the Cedar JSON policy format) as a data tree, the inverse of
-// Encode. cedarencode(cedardecode(x)) round-trips to the canonical form of x.
+// Decode parses a single Cedar policy in the human-readable DSL syntax and returns its EST (the Cedar JSON policy format) as a data tree, the inverse of Encode. cedarencode(cedardecode(x)) round-trips to the canonical form of x.
 //
-// It handles exactly one policy statement (the shape of an AWS Verified
-// Permissions static policy); a document with several policies is a policy set
-// and is rejected here (use Format/IsValid/Evaluate for those). Templates
-// (?principal/?resource) are not static policies and fail to parse.
+// It handles exactly one policy statement (the shape of an AWS Verified Permissions static policy); a document with several policies is a policy set and is rejected here (use Format/IsValid/Evaluate for those). Templates (?principal/?resource) are not static policies and fail to parse.
 func Decode(policy string) (any, error) {
 	if err := checkNestingDepth(policy); err != nil {
 		return nil, err

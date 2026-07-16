@@ -443,7 +443,7 @@ func IPAdd(ipStr string, n int64) (string, error) {
 // IPSubtract returns the signed integer distance a - b (i.e. how many addresses
 // separate them). For IPv4 the result always fits in int64. For IPv6, returns
 // an error if the high 64 bits of the two addresses differ or if the low-64-bit
-// difference exceeds int64 range — in practice this only occurs when subtracting
+// difference exceeds int64 range. In practice this only occurs when subtracting
 // widely separated IPv6 addresses.
 func IPSubtract(aStr, bStr string) (int64, error) {
 	a, err := ParseAddr(aStr)
@@ -552,7 +552,7 @@ func CIDRUsableHostCount(cidrStr string) (int64, error) {
 // CIDRsAreDisjoint returns true if no two CIDRs in the list overlap each other.
 func CIDRsAreDisjoint(cidrStrs []string) (bool, error) {
 	// Build an IPSet from the list. If any prefixes overlap, the set will have
-	// fewer addresses than the naive sum — but the simplest check is: build each
+	// fewer addresses than the naive sum, but the simplest check is: build each
 	// prefix's set individually and test against the running union.
 	var union netipx.IPSetBuilder
 	for _, c := range cidrStrs {

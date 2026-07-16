@@ -1,5 +1,5 @@
 /*
-base64brotli — Brotli compression (RFC 7932) then base64.
+base64brotli: Brotli compression (RFC 7932) then base64.
 
 ~8–10% smaller than base64gzip on text-heavy payloads, at the cost of a brotli decompressor on the consuming side. Decompress with `base64 -d | brotli -d`. The encoder is deterministic, so plans stay stable.
 */

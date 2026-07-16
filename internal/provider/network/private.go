@@ -17,9 +17,8 @@ func (f *IPIsPrivateFunction) Metadata(_ context.Context, _ function.MetadataReq
 
 func (f *IPIsPrivateFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
-		Summary: "Check whether an IP address is in a private range",
-		MarkdownDescription: "Returns `true` if the IP address is within a private, loopback, " +
-			"link-local, or CGNAT range (RFC1918, RFC6598, RFC4193, loopback, link-local).",
+		Summary:             "Check whether an IP address is in a private range",
+		MarkdownDescription: "Returns `true` if the IP address is within a private, loopback, link-local, or CGNAT range (RFC1918, RFC6598, RFC4193, loopback, link-local).",
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "ip", Description: "The IP address to check."},
 		},
@@ -53,9 +52,8 @@ func (f *CIDRIsPrivateFunction) Metadata(_ context.Context, _ function.MetadataR
 
 func (f *CIDRIsPrivateFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
-		Summary: "Check whether a CIDR falls entirely within a private range",
-		MarkdownDescription: "Returns `true` if the entire CIDR is contained within a private, loopback, " +
-			"link-local, or CGNAT range (RFC1918, RFC6598, RFC4193, loopback, link-local).",
+		Summary:             "Check whether a CIDR falls entirely within a private range",
+		MarkdownDescription: "Returns `true` if the entire CIDR is contained within a private, loopback, link-local, or CGNAT range (RFC1918, RFC6598, RFC4193, loopback, link-local).",
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "cidr", Description: "The CIDR to check."},
 		},

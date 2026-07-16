@@ -6,7 +6,7 @@ Produces an RFC 5652 SignedData ContentInfo: `id-data` encapsulated content, no 
 Apple's configuration-profile installer accepts this exact shape on macOS, and Jamf passes signed profiles through unchanged.
 */
 
-// "Real identity" mode: caller-supplied key + cert (e.g. a CA-issued signer). Determinism still applies — same (data, key, cert) → same bytes.
+// "Real identity" mode: caller-supplied key + cert (e.g. a CA-issued signer). Determinism still applies: same (data, key, cert) → same bytes.
 output "signed_with_real_identity" {
   value = provider::burnham::pkcs7_sign(
     file("payload.bin"),
@@ -15,7 +15,7 @@ output "signed_with_real_identity" {
   )
 }
 
-// "Derive everything from the input" mode: identity is a function of the payload, so two callers with the same payload always produce the same signed bytes — useful for Terraform-driven workflows that need plan-to-apply stability without managing long-lived signing keys.
+// "Derive everything from the input" mode: identity is a function of the payload, so two callers with the same payload always produce the same signed bytes, useful for Terraform-driven workflows that need plan-to-apply stability without managing long-lived signing keys.
 locals {
   seed = sha512(file("payload.bin"))
   key  = provider::burnham::ecdsa_p256_key_from_seed(local.seed)

@@ -249,7 +249,7 @@ func TestAcc_Nanoid_AlphabetExactly256Codepoints(t *testing.T) {
 	// Regression: a 256-codepoint alphabet used to panic in the index calculation (`byte(256) → 0` made the modulus a divide-by-zero). Build a 256-rune alphabet from a contiguous unicode range and verify the function returns a same-length string of valid codepoints.
 	var alphabetBuilder strings.Builder
 	for r := rune(0x0100); r < rune(0x0100+256); r++ {
-		// Skip any rune that has special meaning in HCL string literals — none in this Latin-Extended-A through Latin-Extended-B sweep, but be explicit.
+		// Skip any rune that has special meaning in HCL string literals: none in this Latin-Extended-A through Latin-Extended-B sweep, but be explicit.
 		fmt.Fprintf(&alphabetBuilder, "\\u%04x", r)
 	}
 	alphabet := alphabetBuilder.String()

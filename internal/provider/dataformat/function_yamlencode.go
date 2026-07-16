@@ -306,7 +306,7 @@ func goToYAMLNode(v interface{}, opts yamlEncodeOpts, depth int) *yaml.Node {
 		return node
 
 	case orderedMap:
-		// From goValueForJSONEncode — preserve order.
+		// From goValueForJSONEncode: preserve order.
 		node := &yaml.Node{
 			Kind: yaml.MappingNode,
 			Tag:  "!!map",
@@ -348,7 +348,7 @@ func yamlStringNode(s string, opts yamlEncodeOpts) *yaml.Node {
 	case "single":
 		node.Style = yaml.SingleQuotedStyle
 	default:
-		// "auto" — yaml.v3 quotes only when needed.
+		// "auto": yaml.v3 quotes only when needed.
 	}
 
 	// Multi-line strings get special treatment (overrides quote_style).
@@ -434,7 +434,7 @@ func dedupeYAMLNodes(root *yaml.Node) {
 		if len(nodes) < 2 {
 			continue
 		}
-		// Skip scalar nodes — not worth anchoring individual strings/numbers.
+		// Skip scalar nodes: not worth anchoring individual strings/numbers.
 		if nodes[0].Kind == yaml.ScalarNode {
 			continue
 		}
@@ -498,7 +498,7 @@ func replaceWithAliases(node *yaml.Node, anchored map[string]string, hashes map[
 		anchorName, isAnchored := anchored[childHash]
 
 		if isAnchored && child.Anchor == "" {
-			// This is a duplicate — replace with alias.
+			// This is a duplicate: replace with alias.
 			// Find the anchored node to point to.
 			firstNode := hashes[childHash][0]
 			node.Content[i] = &yaml.Node{

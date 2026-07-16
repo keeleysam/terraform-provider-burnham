@@ -30,7 +30,7 @@ func TestAcc_CBORRoundtrip(t *testing.T) {
 }
 
 func TestAcc_CBOREncode_DeterministicEncoding(t *testing.T) {
-	// CBOR Core Deterministic Encoding sorts map keys lexicographically: { a, b } and { b, a } produce the same bytes. The base64 of a 2-element map { "a": 1, "b": 2 } in deterministic CBOR is "ompYWJqGCYY..." — assert it's stable across argument order.
+	// CBOR Core Deterministic Encoding sorts map keys lexicographically: { a, b } and { b, a } produce the same bytes. The base64 of a 2-element map { "a": 1, "b": 2 } in deterministic CBOR is "ompYWJqGCYY...". Assert it's stable across argument order.
 	runOutputTest(t,
 		`output "test" {
 			value = provider::burnham::cborencode({ a = 1, b = 2 }) == provider::burnham::cborencode({ b = 2, a = 1 })

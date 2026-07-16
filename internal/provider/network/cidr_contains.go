@@ -17,9 +17,8 @@ func (f *CIDRContainsFunction) Metadata(_ context.Context, _ function.MetadataRe
 
 func (f *CIDRContainsFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
-		Summary: "Check whether a CIDR fully contains another IP or CIDR",
-		MarkdownDescription: "Returns `true` if `cidr` fully contains `other`. " +
-			"`other` may be a bare IP address or a CIDR string.",
+		Summary:             "Check whether a CIDR fully contains another IP or CIDR",
+		MarkdownDescription: "Returns `true` if `cidr` fully contains `other`. `other` may be a bare IP address or a CIDR string.",
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "cidr", Description: "The outer CIDR."},
 			function.StringParameter{Name: "other", Description: "The IP or CIDR to test for containment."},

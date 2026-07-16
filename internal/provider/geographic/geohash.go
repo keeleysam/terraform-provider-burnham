@@ -1,11 +1,11 @@
 /*
-Geohash — interleaved-bits geocoding.
+Geohash: interleaved-bits geocoding.
 
 Geohash encodes a (lat, lon) pair into a base-32 string where each successive character refines the cell ten-fold (alternating between latitude and longitude). It's the de-facto format for spatial indexing in things like Elasticsearch, Redis, and Cassandra: short prefixes match nearby cells, so a `LIKE 'gbsuv%'` query gets you everything within ~5 km of a point.
 
 `geohash_encode` builds a hash at a chosen precision (number of base-32 characters); `geohash_decode` returns the centre point of the encoded cell plus the cell's bounding box, so callers can decide between centre-only and bbox semantics.
 
-Backed by [`github.com/mmcloughlin/geohash`](https://pkg.go.dev/github.com/mmcloughlin/geohash) — the standard Go implementation, used by everything from Caddy to Tile38.
+Backed by [`github.com/mmcloughlin/geohash`](https://pkg.go.dev/github.com/mmcloughlin/geohash), the standard Go implementation, used by everything from Caddy to Tile38.
 */
 
 package geographic
@@ -117,7 +117,7 @@ func (f *GeohashDecodeFunction) Metadata(_ context.Context, _ function.MetadataR
 func (f *GeohashDecodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Decode a geohash into the centre point and bounding box of its cell",
-		MarkdownDescription: "Parses `code` and returns:\n\n- `latitude` / `longitude` — the centre of the cell, in degrees.\n- `lat_min` / `lat_max` / `lon_min` / `lon_max` — the cell's bounding box (the points the code *might* have been encoded from).\n\n`code` is case-insensitive but must use the standard geohash alphabet `0-9 b-z` minus `a i l o`. Errors on any other character.\n\nFor the corner cell `zzz…z` the geometric upper edges are exactly `(90, 180)`, but the upstream encoder wraps those values; the decoder shrinks `lat_max` / `lon_max` for that cell to the nearest representable float strictly below the wrap threshold (~one ULP off the geometric edge) so round-tripping `lat_max` / `lon_max` back through `geohash_encode` lands on the same cell.",
+		MarkdownDescription: "Parses `code` and returns:\n\n- `latitude` / `longitude`: the centre of the cell, in degrees.\n- `lat_min` / `lat_max` / `lon_min` / `lon_max`: the cell's bounding box (the points the code *might* have been encoded from).\n\n`code` is case-insensitive but must use the standard geohash alphabet `0-9 b-z` minus `a i l o`. Errors on any other character.\n\nFor the corner cell `zzz…z` the geometric upper edges are exactly `(90, 180)`, but the upstream encoder wraps those values; the decoder shrinks `lat_max` / `lon_max` for that cell to the nearest representable float strictly below the wrap threshold (~one ULP off the geometric edge) so round-tripping `lat_max` / `lon_max` back through `geohash_encode` lands on the same cell.",
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "code", Description: "Geohash string to decode."},
 		},

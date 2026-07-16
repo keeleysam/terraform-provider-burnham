@@ -1,7 +1,7 @@
 /*
 PKCS #10 CSR inspection.
 
-Most of the certificate-management workflows that benefit from `x509_inspect` also need to look at CSRs at plan time — to assert that the CN matches a managed value, that the SANs cover the right names, that the signature algorithm is what the CA expects. This is the CSR analogue: same structured-output approach, parsing PKCS #10 (RFC 2986) certificate signing requests.
+Most of the certificate-management workflows that benefit from `x509_inspect` also need to look at CSRs at plan time: to assert that the CN matches a managed value, that the SANs cover the right names, that the signature algorithm is what the CA expects. This is the CSR analogue: same structured-output approach, parsing PKCS #10 (RFC 2986) certificate signing requests.
 */
 
 package cryptography
@@ -25,7 +25,7 @@ func (f *CSRInspectFunction) Metadata(_ context.Context, _ function.MetadataRequ
 	resp.Name = "csr_inspect"
 }
 
-// csrInspectAttrs is the fixed-shape object returned by csr_inspect. Note: CSRs do not carry a serial number, validity window, key usage, ExtKeyUsage, or BasicConstraints CA flag — those are set by the issuing CA when the request is approved. So the schema is a strict subset of x509_inspect's.
+// csrInspectAttrs is the fixed-shape object returned by csr_inspect. Note: CSRs do not carry a serial number, validity window, key usage, ExtKeyUsage, or BasicConstraints CA flag: those are set by the issuing CA when the request is approved. So the schema is a strict subset of x509_inspect's.
 var csrInspectAttrs = map[string]attr.Type{
 	"subject":              types.StringType,
 	"signature_algorithm":  types.StringType,
@@ -39,7 +39,7 @@ var csrInspectAttrs = map[string]attr.Type{
 func (f *CSRInspectFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Decode a PEM-encoded PKCS #10 certificate signing request into a structured object",
-		MarkdownDescription: "Parses the first `CERTIFICATE REQUEST` block in `pem` and returns a fixed-shape object:\n\n- `subject` — RFC 4514 distinguished-name string from the CSR\n- `signature_algorithm`, `public_key_algorithm` — `SHA256-RSA`, `Ed25519`, etc.\n- `dns_names`, `email_addresses`, `ip_addresses`, `uris` — Subject Alternative Names by category, taken from the CSR's requested-extensions attribute\n\nFields that don't exist on a CSR (serial number, validity window, key usage, BasicConstraints) are not on this object — those are set by the issuing CA when the request is approved.\n\n**This function reads structure, not trust.** It does **not** verify the CSR's self-signature. Treat the result as the *requested* attributes; the issuing CA decides what actually ends up on the certificate.\n\nErrors when the input contains no CERTIFICATE REQUEST block or the request fails to parse.",
+		MarkdownDescription: "Parses the first `CERTIFICATE REQUEST` block in `pem` and returns a fixed-shape object:\n\n- `subject`: RFC 4514 distinguished-name string from the CSR\n- `signature_algorithm`, `public_key_algorithm`: `SHA256-RSA`, `Ed25519`, etc.\n- `dns_names`, `email_addresses`, `ip_addresses`, `uris`: Subject Alternative Names by category, taken from the CSR's requested-extensions attribute\n\nFields that don't exist on a CSR (serial number, validity window, key usage, BasicConstraints) are not on this object; those are set by the issuing CA when the request is approved.\n\n**This function reads structure, not trust.** It does **not** verify the CSR's self-signature. Treat the result as the *requested* attributes; the issuing CA decides what actually ends up on the certificate.\n\nErrors when the input contains no CERTIFICATE REQUEST block or the request fails to parse.",
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "pem", Description: "PEM-encoded CSR (or a bundle containing one)."},
 		},

@@ -11,11 +11,11 @@ description: |-
 
 Walks `pem` and returns a list, one entry per PEM block, of:
 
-- `type` — the block label between `-----BEGIN ` / `-----END ` (e.g. `"CERTIFICATE"`, `"PRIVATE KEY"`, `"CERTIFICATE REQUEST"`).
-- `headers` — `map(string)` of any RFC 1421 / 7468 header lines (often empty for modern PEM).
-- `base64_body` — the body, kept base64-encoded so the bytes round-trip exactly through `base64decode`. The body is the standard base64 alphabet, no line breaks.
+- `type`: the block label between `-----BEGIN ` / `-----END ` (e.g. `"CERTIFICATE"`, `"PRIVATE KEY"`, `"CERTIFICATE REQUEST"`).
+- `headers`: `map(string)` of any RFC 1421 / 7468 header lines (often empty for modern PEM).
+- `base64_body`: the body, kept base64-encoded so the bytes round-trip exactly through `base64decode`. The body is the standard base64 alphabet, no line breaks.
 
-Returns an empty list when the input contains no PEM blocks. Garbage between blocks is silently skipped — same behaviour as `openssl` and most consumers.
+Returns an empty list when the input contains no PEM blocks. Garbage between blocks is silently skipped, the same behaviour as `openssl` and most consumers.
 
 ## Example Usage
 

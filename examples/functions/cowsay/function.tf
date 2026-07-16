@@ -1,4 +1,4 @@
-// Render a message inside the ASCII speech bubble of a cow. The classic Unix cowsay(1) layout, self-contained — no external `cowsay` binary involved.
+// Render a message inside the ASCII speech bubble of a cow. The classic Unix cowsay(1) layout, self-contained, no external `cowsay` binary involved.
 output "default" {
   value = provider::burnham::cowsay("Hello, world.")
 }

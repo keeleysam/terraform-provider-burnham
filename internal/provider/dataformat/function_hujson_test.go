@@ -499,7 +499,7 @@ func TestHuJSONEncode_CommentOnMissingKey(t *testing.T) {
 		},
 	)
 
-	// Should not error — missing keys are silently skipped.
+	// Should not error: missing keys are silently skipped.
 	result, err := runHuJSONEncode(t, obj, makeCommentsOpts(comments))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)

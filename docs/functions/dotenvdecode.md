@@ -11,7 +11,7 @@ description: |-
 
 Parses a [dotenv](https://github.com/joho/godotenv) (`.env`) file body into an object whose attributes are the file's keys, with all values as strings. Comments (`#`) are ignored. Both `KEY=value` and `export KEY=value` lines are accepted. Double-quoted values support `\n`, `\r`, `\t` and `${VAR}` interpolation against earlier keys; single-quoted values are taken literally.
 
-All values are returned as strings — dotenv has no type system. Cast on the Terraform side with `tonumber()` / `tobool()` if needed.
+All values are returned as strings, since dotenv has no type system. Cast on the Terraform side with `tonumber()` / `tobool()` if needed.
 
 Backed by [joho/godotenv](https://github.com/joho/godotenv), the canonical Go implementation.
 

@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
-// Test fixtures — a self-signed Ed25519 cert and matching CSR generated once with openssl, locked here so the tests don't depend on a usable openssl at test time. The cert is valid 2026-05-08 → 2036-05-05.
+// Test fixtures: a self-signed Ed25519 cert and matching CSR generated once with openssl, locked here so the tests don't depend on a usable openssl at test time. The cert is valid 2026-05-08 → 2036-05-05.
 const (
 	certHeredoc = "<<EOT\n" + testCertPEM + "EOT\n"
 	csrHeredoc  = "<<EOT\n" + testCSRPEM + "EOT\n"
@@ -44,7 +44,7 @@ Odr5Q/4/OQM+WhKq/ckVK43GHJ9YSbSnrBrbvHmKMsgvwSMt61Ljyi6fKro4XA0=
 `
 )
 
-// Test fixture for pkcs7_sign's "external identity" mode — a real ECDSA P-256 keypair generated once with `openssl ecparam -name prime256v1 -genkey | openssl pkcs8 -topk8 -nocrypt` and a self-signed cert for it. Locked here so acceptance tests don't shell out to openssl at test time. CN=burnham-test-p256, validity 2026 → 2036.
+// Test fixture for pkcs7_sign's "external identity" mode: a real ECDSA P-256 keypair generated once with `openssl ecparam -name prime256v1 -genkey | openssl pkcs8 -topk8 -nocrypt` and a self-signed cert for it. Locked here so acceptance tests don't shell out to openssl at test time. CN=burnham-test-p256, validity 2026 → 2036.
 const (
 	testECDSAP256KeyPEM = `-----BEGIN PRIVATE KEY-----
 MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQg7zF1t2VFJJWPOcHi
@@ -73,7 +73,7 @@ zj0EAwIDSAAwRQIgEhguARQtpGPMrwtGvn5ak8g7MhrYdG7xLbJm7wROeP0CIQCL
 
 func TestAcc_HMAC_SHA256RFCTestVector(t *testing.T) {
 	// RFC 4231 §4.2 Test Case 1: key = 0x0b * 20, data = "Hi There".
-	// HCL strings only support \uNNNN escapes (no \v / \xNN), so we spell the key as twenty `` escapes — each one yields a single 0x0b byte (UTF-8 of U+000B).
+	// HCL strings only support \uNNNN escapes (no \v / \xNN), so we spell the key as twenty `` escapes, each one yields a single 0x0b byte (UTF-8 of U+000B).
 	runOutputTest(t,
 		`output "test" { value = provider::burnham::hmac("sha256", "", "Hi There") }`,
 		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("b0344c61d8db38535ca8afceaf0bf12b881dc200c9833da726e9376c2e32cff7")),
@@ -382,7 +382,7 @@ func TestAcc_ASN1Decode_RejectsTruncated(t *testing.T) {
 }
 
 func TestAcc_ASN1Decode_AcceptsModerateDepth(t *testing.T) {
-	// 8 levels of SEQUENCE wrapping a NULL — well under the 64 depth cap. Verifies the outermost decode succeeds.
+	// 8 levels of SEQUENCE wrapping a NULL, well under the 64 depth cap. Verifies the outermost decode succeeds.
 	runOutputTest(t,
 		`output "test" { value = provider::burnham::asn1_decode("MBAwDjAMMAowCDAGMAQwAgUA").type }`,
 		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("SEQUENCE")),
@@ -390,7 +390,7 @@ func TestAcc_ASN1Decode_AcceptsModerateDepth(t *testing.T) {
 }
 
 func TestAcc_ASN1Decode_RejectsExcessiveDepth(t *testing.T) {
-	// 70 levels of SEQUENCE — exceeds asn1MaxDepth (64). Hand-built once and locked. Defends against adversarial deep input that would otherwise grow the goroutine stack until the Terraform process OOMs.
+	// 70 levels of SEQUENCE, which exceeds asn1MaxDepth (64). Hand-built once and locked. Defends against adversarial deep input that would otherwise grow the goroutine stack until the Terraform process OOMs.
 	runErrorTest(t,
 		`output "test" { value = provider::burnham::asn1_decode("MIGSMIGPMIGMMIGJMIGGMIGDMIGAMH4wfDB6MHgwdjB0MHIwcDBuMGwwajBoMGYwZDBiMGAwXjBcMFowWDBWMFQwUjBQME4wTDBKMEgwRjBEMEIwQDA+MDwwOjA4MDYwNDAyMDAwLjAsMCowKDAmMCQwIjAgMB4wHDAaMBgwFjAUMBIwEDAOMAwwCjAIMAYwBDACBQA=") }`,
 		regexp.MustCompile(`(?is)nesting\s+exceeds\s+maximum\s+supported\s+depth`),
@@ -408,7 +408,7 @@ func TestAcc_ASN1Decode_RejectsOversizedInput(t *testing.T) {
 // Primitive-tag coverage. Each fixture is a single-TLV DER that exercises one of decodePrimitive's per-tag branches; pre-computed via encoding/asn1 once and locked. Together they cover BIT STRING, OCTET STRING, UTF8String, PrintableString, BOOLEAN.
 
 func TestAcc_ASN1Decode_BitString(t *testing.T) {
-	// BIT STRING { 0x86 } — DER 03 02 00 86 → base64 "AwIAhg==". Decoded value is the hex of the data bytes (the leading unused-bits octet is stripped by encoding/asn1.BitString).
+	// BIT STRING { 0x86 }: DER 03 02 00 86 → base64 "AwIAhg==". Decoded value is the hex of the data bytes (the leading unused-bits octet is stripped by encoding/asn1.BitString).
 	runOutputTest(t,
 		`output "test" { value = provider::burnham::asn1_decode("AwIAhg==").value }`,
 		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("86")),
@@ -416,7 +416,7 @@ func TestAcc_ASN1Decode_BitString(t *testing.T) {
 }
 
 func TestAcc_ASN1Decode_OctetString(t *testing.T) {
-	// OCTET STRING "hello" — DER 04 05 68 65 6c 6c 6f → base64 "BAVoZWxsbw==". Value is hex of the bytes.
+	// OCTET STRING "hello": DER 04 05 68 65 6c 6c 6f → base64 "BAVoZWxsbw==". Value is hex of the bytes.
 	runOutputTest(t,
 		`output "test" { value = provider::burnham::asn1_decode("BAVoZWxsbw==").value }`,
 		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("68656c6c6f")),
@@ -424,7 +424,7 @@ func TestAcc_ASN1Decode_OctetString(t *testing.T) {
 }
 
 func TestAcc_ASN1Decode_UTF8String(t *testing.T) {
-	// UTF8String "hello" — DER 0c 05 68 65 6c 6c 6f → base64 "DAVoZWxsbw==". Value is the string itself.
+	// UTF8String "hello": DER 0c 05 68 65 6c 6c 6f → base64 "DAVoZWxsbw==". Value is the string itself.
 	runOutputTest(t,
 		`output "test" { value = provider::burnham::asn1_decode("DAVoZWxsbw==").value }`,
 		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("hello")),
@@ -432,7 +432,7 @@ func TestAcc_ASN1Decode_UTF8String(t *testing.T) {
 }
 
 func TestAcc_ASN1Decode_BooleanTrue(t *testing.T) {
-	// BOOLEAN true — DER 01 01 ff → base64 "AQH/".
+	// BOOLEAN true: DER 01 01 ff → base64 "AQH/".
 	runOutputTest(t,
 		`output "test" { value = provider::burnham::asn1_decode("AQH/").value }`,
 		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("true")),
@@ -440,7 +440,7 @@ func TestAcc_ASN1Decode_BooleanTrue(t *testing.T) {
 }
 
 func TestAcc_ASN1Decode_BooleanFalse(t *testing.T) {
-	// BOOLEAN false — DER 01 01 00 → base64 "AQEA".
+	// BOOLEAN false: DER 01 01 00 → base64 "AQEA".
 	runOutputTest(t,
 		`output "test" { value = provider::burnham::asn1_decode("AQEA").value }`,
 		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("false")),
@@ -448,7 +448,7 @@ func TestAcc_ASN1Decode_BooleanFalse(t *testing.T) {
 }
 
 func TestAcc_ASN1Decode_BMPStringDecodesUTF16(t *testing.T) {
-	// BMPString "Hi" — DER 1e 04 00 48 00 69 → base64 "HgQASABp". Regression: previously this returned the raw UCS-2BE bytes as a Go string (mojibake); now it decodes to UTF-8 via utf16.Decode so the value is a real string.
+	// BMPString "Hi": DER 1e 04 00 48 00 69 → base64 "HgQASABp". Regression: previously this returned the raw UCS-2BE bytes as a Go string (mojibake); now it decodes to UTF-8 via utf16.Decode so the value is a real string.
 	runOutputTest(t,
 		`output "test" { value = provider::burnham::asn1_decode("HgQASABp").value }`,
 		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("Hi")),
@@ -465,7 +465,7 @@ func TestAcc_ECDSAP256KeyFromSeed_ReturnsPKCS8PEM(t *testing.T) {
 }
 
 func TestAcc_ECDSAP256KeyFromSeed_DeterministicSameSeed(t *testing.T) {
-	// Two derivations from the same seed must produce the same PEM. Compares them inside a single plan — the function being non-deterministic would surface as a diff equal-check failure.
+	// Two derivations from the same seed must produce the same PEM. Compares them inside a single plan: the function being non-deterministic would surface as a diff equal-check failure.
 	runOutputTest(t,
 		`output "test" { value = provider::burnham::ecdsa_p256_key_from_seed("same-seed") == provider::burnham::ecdsa_p256_key_from_seed("same-seed") }`,
 		statecheck.ExpectKnownOutputValue("test", knownvalue.Bool(true)),
@@ -489,7 +489,7 @@ func TestAcc_ECDSAP256KeyFromSeed_RejectsEmptySeed(t *testing.T) {
 // ─── x509_self_sign ─────────────────────────────────────────────────────
 
 func TestAcc_X509SelfSign_ProducesParseableCert(t *testing.T) {
-	// Chain ecdsa_p256_key_from_seed → x509_self_sign → x509_inspect: confirms the cert burnham emits parses back through burnham's own inspector. CN round-trip is the smoking-gun field — if cert assembly broke, this would be empty or wrong.
+	// Chain ecdsa_p256_key_from_seed → x509_self_sign → x509_inspect: confirms the cert burnham emits parses back through burnham's own inspector. CN round-trip is the smoking-gun field: if cert assembly broke, this would be empty or wrong.
 	config := `
 locals {
   key  = provider::burnham::ecdsa_p256_key_from_seed("acc-test")
@@ -532,7 +532,7 @@ output "test" { value = provider::burnham::x509_self_sign(local.key, "", "serial
 }
 
 func TestAcc_X509SelfSign_Rejects65CharCommonName(t *testing.T) {
-	// 65 ASCII characters — one over the RFC 5280 §A.1 ub-common-name-length cap. Confirms the upper bound actually fires (the empty-string test above wouldn't catch a regression in the upper-bound branch).
+	// 65 ASCII characters, one over the RFC 5280 §A.1 ub-common-name-length cap. Confirms the upper bound actually fires (the empty-string test above wouldn't catch a regression in the upper-bound branch).
 	config := `
 locals {
   key = provider::burnham::ecdsa_p256_key_from_seed("seed")
@@ -544,7 +544,7 @@ output "test" { value = provider::burnham::x509_self_sign(local.key, local.cn, "
 }
 
 func TestAcc_X509SelfSign_AcceptsMultiByteCommonName(t *testing.T) {
-	// 64 CJK characters = 192 UTF-8 bytes. The RFC 5280 §A.1 ub-common-name-length cap is on *characters* (ASN.1 string elements / Unicode code points), not bytes — this CN is RFC-legal and our rune-counting check must accept it. A byte-counting regression would reject this with the "must be 1-64" message.
+	// 64 CJK characters = 192 UTF-8 bytes. The RFC 5280 §A.1 ub-common-name-length cap is on *characters* (ASN.1 string elements / Unicode code points), not bytes, so this CN is RFC-legal and our rune-counting check must accept it. A byte-counting regression would reject this with the "must be 1-64" message.
 	// 64 copies of U+4E00 (一, the simplest CJK character) spelled out as \u escapes so the literal stays editable.
 	const cn = "一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一"
 	config := `
@@ -562,9 +562,9 @@ output "test" { value = startswith(local.cert, "-----BEGIN CERTIFICATE-----") }
 func TestAcc_PKCS7Sign_ASN1DecodeNavigatesNestedHeterogeneous(t *testing.T) {
 	// End-to-end shape test for pkcs7_sign output: derive identity → self-sign cert → CMS-sign payload → decode via asn1_decode and assert structural fields at multiple levels of nesting.
 	//
-	// Subsumes the older "output is base64 DER" smoke check by demanding more: the asn1_decode children-as-tuple fix in this PR is the gate that lets us walk CMS SignedData (heterogeneous SET children — mix of SEQUENCE / OCTET STRING / [0]-tagged blobs at multiple levels). Just checking root `.type` would only prove the outer tag; this navigates two levels deeper to assert heterogeneous-children navigation actually works.
+	// Subsumes the older "output is base64 DER" smoke check by demanding more: the asn1_decode children-as-tuple fix in this PR is the gate that lets us walk CMS SignedData (heterogeneous SET children: mix of SEQUENCE / OCTET STRING / [0]-tagged blobs at multiple levels). Just checking root `.type` would only prove the outer tag; this navigates two levels deeper to assert heterogeneous-children navigation actually works.
 	//
-	// CMS ContentInfo SEQUENCE → children[1] is the [0]-EXPLICIT-tagged content (class "context"), which wraps the SignedData SEQUENCE. The wrapped SignedData's first child is the version INTEGER. So `children[1].children[0].children[0].value` is the SignedData version field — per RFC 5652 §5.1 that's "1" for id-data + IssuerAndSerialNumber + plain-cert configurations.
+	// CMS ContentInfo SEQUENCE → children[1] is the [0]-EXPLICIT-tagged content (class "context"), which wraps the SignedData SEQUENCE. The wrapped SignedData's first child is the version INTEGER. So `children[1].children[0].children[0].value` is the SignedData version field: per RFC 5652 §5.1 that's "1" for id-data + IssuerAndSerialNumber + plain-cert configurations.
 	config := `
 locals {
   key     = provider::burnham::ecdsa_p256_key_from_seed("nested-nav-test")
@@ -631,7 +631,7 @@ output "test" { value = provider::burnham::asn1_decode(local.signed).type }
 }
 
 func TestAcc_PKCS7Sign_ExternalIdentityIsDeterministic(t *testing.T) {
-	// Even with an externally-supplied identity (where the cert assembly happened outside Terraform with random k), the CMS layer must still produce identical bytes across runs given the same (data, key, cert) — that's the RFC 6979 wrapper doing its job at sign time.
+	// Even with an externally-supplied identity (where the cert assembly happened outside Terraform with random k), the CMS layer must still produce identical bytes across runs given the same (data, key, cert): that's the RFC 6979 wrapper doing its job at sign time.
 	config := `
 locals {
   a = provider::burnham::pkcs7_sign("payload", ` + testECDSAP256KeyHeredoc + `, ` + testECDSAP256CertHeredoc + `)
@@ -643,7 +643,7 @@ output "test" { value = local.a == local.b }
 }
 
 func TestAcc_PKCS7Sign_RejectsMismatchedKeyAndCert(t *testing.T) {
-	// Key A vs cert for key B — should error rather than silently produce unverifiable CMS.
+	// Key A vs cert for key B: should error rather than silently produce unverifiable CMS.
 	config := `
 locals { key_b = provider::burnham::ecdsa_p256_key_from_seed("different-seed") }
 output "test" { value = provider::burnham::pkcs7_sign("payload", local.key_b, ` + testECDSAP256CertHeredoc + `) }
@@ -710,7 +710,7 @@ func TestAcc_Ed25519KeyFromSeed_RejectsEmptySeed(t *testing.T) {
 	)
 }
 
-// ─── x509_self_sign / pkcs7_sign — Ed25519 paths ────────────────────────
+// ─── x509_self_sign / pkcs7_sign: Ed25519 paths ────────────────────────
 
 func TestAcc_X509SelfSign_AcceptsEd25519Key(t *testing.T) {
 	// Chain ed25519_key_from_seed → x509_self_sign → x509_inspect to assert the cert parses and the public-key algorithm comes back as Ed25519.

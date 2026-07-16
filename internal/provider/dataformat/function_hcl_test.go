@@ -59,7 +59,7 @@ func TestHCLDecode_Empty(t *testing.T) {
 }
 
 func TestHCLEncode_RejectsInvalidIdentifier(t *testing.T) {
-	// HCL identifiers allow hyphens, so "foo-bar" is actually valid. Whitespace and dots are not — use those for the negative test.
+	// HCL identifiers allow hyphens, so "foo-bar" is actually valid. Whitespace and dots are not, so use those for the negative test.
 	in := types.ObjectValueMust(
 		map[string]attr.Type{"foo bar": types.StringType},
 		map[string]attr.Value{"foo bar": types.StringValue("v")},

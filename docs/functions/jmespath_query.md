@@ -20,7 +20,7 @@ Backed by [jmespath-community/go-jmespath](https://github.com/jmespath-community
 ## Example Usage
 
 ```terraform
-// JMESPath query — extract fields from a nested structure without long try() chains.
+// JMESPath query: extract fields from a nested structure without long try() chains.
 output "active_users" {
   value = provider::burnham::jmespath_query(
     {

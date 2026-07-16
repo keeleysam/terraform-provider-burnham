@@ -1,7 +1,7 @@
 /*
-ASCII-art cowsay — render a string inside the speech bubble of a cow drawn in ASCII.
+ASCII-art cowsay: render a string inside the speech bubble of a cow drawn in ASCII.
 
-Self-contained implementation, no third-party cowsay dependency. We support the speech-bubble layout exactly per the original cowsay(1) (multi-line bubbles use `/ \` corners and `| |` sides; single-line uses `< >`), the standard "say" vs "think" distinction (different bubble brackets and a different connector to the cow), and the default cow figure. Customisable eyes (`oo` by default) and tongue (off by default) — same knobs as upstream `-e` and `-T`.
+Self-contained implementation, no third-party cowsay dependency. We support the speech-bubble layout exactly per the original cowsay(1) (multi-line bubbles use `/ \` corners and `| |` sides; single-line uses `< >`), the standard "say" vs "think" distinction (different bubble brackets and a different connector to the cow), and the default cow figure. Customisable eyes (`oo` by default) and tongue (off by default), the same knobs as upstream `-e` and `-T`.
 
 Custom cow shapes (the upstream `.cow` files for `tux`, `dragon`, etc.) are intentionally out of scope: the small file format would either need to be embedded statically or shipped separately, and the value-add over the default cow is mostly aesthetic.
 */
@@ -25,7 +25,7 @@ import (
 // cowsayMaxMessageBytes caps the input message length. Realistic motds and login banners are well under 64 KiB; anything bigger almost certainly indicates an unbounded-input bug in the caller, and rendering it through wordwrap + a per-line scan would balloon plan-time memory.
 const cowsayMaxMessageBytes = 64 * 1024
 
-// printableTwoChar checks that s is exactly two codepoints, both printable. Cowsay's `eyes` and `tongue` slots are positional — control chars or newlines would shift the cow figure or inject escape sequences into the output.
+// printableTwoChar checks that s is exactly two codepoints, both printable. Cowsay's `eyes` and `tongue` slots are positional: control chars or newlines would shift the cow figure or inject escape sequences into the output.
 func printableTwoChar(s string) bool {
 	if utf8.RuneCountInString(s) != 2 {
 		return false
@@ -51,7 +51,7 @@ func (f *CowsayFunction) Metadata(_ context.Context, _ function.MetadataRequest,
 func (f *CowsayFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Render a message inside the ASCII speech bubble of a cow",
-		MarkdownDescription: "Returns `message` rendered as the original `cowsay(1)` would: a multi-line speech bubble (or thought bubble) attached to an ASCII cow figure. Useful for embedding in `/etc/motd` via cloud-init, login banners, or anywhere a generated config benefits from a recognizable greeting.\n\nOptions object:\n\n- `action` (string) — `\"say\"` (default; uses `< >` brackets and a `\\` connector) or `\"think\"` (uses `( )` brackets and `o` connectors).\n- `eyes` (string) — exactly two printable characters used for the cow's eyes. Default `\"oo\"`. Common alternatives: `\"==\"` (drowsy), `\"@@\"` (paranoid), `\"--\"` (dead), `\"$$\"` (greedy), `\"OO\"` (surprised). Control characters and ANSI escapes are rejected so a customised `eyes` value can't shift the cow's alignment or smuggle terminal codes into the rendered output.\n- `tongue` (string) — exactly two printable characters (or empty for no tongue). Default empty. Common: `\"U \"` (sticking out), `\"V \"` (vampire).\n- `width` (number) — wrap the input message to this many columns before rendering. Default `40`. Set to `0` to disable wrapping (lines stay as you wrote them).\n\nMessage lines are word-wrapped at `width` codepoints by default, matching upstream cowsay's `-W` option. Inputs longer than 64 KiB are rejected to bound plan-time memory.",
+		MarkdownDescription: "Returns `message` rendered as the original `cowsay(1)` would: a multi-line speech bubble (or thought bubble) attached to an ASCII cow figure. Useful for embedding in `/etc/motd` via cloud-init, login banners, or anywhere a generated config benefits from a recognizable greeting.\n\nOptions object:\n\n- `action` (string): `\"say\"` (default; uses `< >` brackets and a `\\` connector) or `\"think\"` (uses `( )` brackets and `o` connectors).\n- `eyes` (string): exactly two printable characters used for the cow's eyes. Default `\"oo\"`. Common alternatives: `\"==\"` (drowsy), `\"@@\"` (paranoid), `\"--\"` (dead), `\"$$\"` (greedy), `\"OO\"` (surprised). Control characters and ANSI escapes are rejected so a customised `eyes` value can't shift the cow's alignment or smuggle terminal codes into the rendered output.\n- `tongue` (string): exactly two printable characters (or empty for no tongue). Default empty. Common: `\"U \"` (sticking out), `\"V \"` (vampire).\n- `width` (number): wrap the input message to this many columns before rendering. Default `40`. Set to `0` to disable wrapping (lines stay as you wrote them).\n\nMessage lines are word-wrapped at `width` codepoints by default, matching upstream cowsay's `-W` option. Inputs longer than 64 KiB are rejected to bound plan-time memory.",
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "message", Description: "The message to render in the bubble."},
 		},

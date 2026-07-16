@@ -8,12 +8,12 @@ import (
 
 // crossValidatePrefix is the number of leading digits that must match between the embedded packed table and a freshly-computed Chudnovsky run during normal `go test ./...`.
 //
-// This is a small prefix on purpose: a fast (~3 ms) sanity check to catch DPD-decode or off-by-one bugs in piFirstNDigits without paying the ~25-second cost of regenerating all ⌊π × 10⁶⌋ = 3,141,592 digits inside the test process. The exhaustive whole-table cross-check happens in CI via `go generate ./...` followed by `git diff -- pi_packed.bin` — see .github/workflows/test.yml. Together the two guarantees cover the same ground without doubling the work.
+// This is a small prefix on purpose: a fast (~3 ms) sanity check to catch DPD-decode or off-by-one bugs in piFirstNDigits without paying the ~25-second cost of regenerating all ⌊π × 10⁶⌋ = 3,141,592 digits inside the test process. The exhaustive whole-table cross-check happens in CI via `go generate ./...` followed by `git diff -- pi_packed.bin`; see .github/workflows/test.yml. Together the two guarantees cover the same ground without doubling the work.
 const crossValidatePrefix = 10_000
 
 // TestPackedAgainstChudnovsky cross-validates the first crossValidatePrefix embedded-table digits against an independent Chudnovsky computation.
 //
-// Note this does NOT verify the entire table — that's a CI responsibility.
+// Note this does NOT verify the entire table; that's a CI responsibility.
 // What this catches:
 //   - the runtime DPD decoder produces correct digits,
 //   - the packed file isn't accidentally truncated or corrupted in a way that affects the prefix.

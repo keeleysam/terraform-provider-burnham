@@ -1,5 +1,5 @@
 /*
-Deterministic time-ordered UUIDs (RFC 9562 §5.7). The 48-bit Unix-millisecond timestamp lives in the leading bytes, making v7 UUIDs lexicographically sortable by creation time — much better than v4 for database keys, log IDs, and ordered storage.
+Deterministic time-ordered UUIDs (RFC 9562 §5.7). The 48-bit Unix-millisecond timestamp lives in the leading bytes, making v7 UUIDs lexicographically sortable by creation time, much better than v4 for database keys, log IDs, and ordered storage.
 
 This implementation derives the 74 random-ish bits via HMAC-SHA-256 keyed by `entropy`, so a stable (timestamp, entropy) pair always returns the same UUID. Use a per-resource `entropy` to get unique-per-resource sortable IDs that don't churn the plan.
 */

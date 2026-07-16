@@ -1,7 +1,7 @@
 /*
 Decode an X.509 certificate's metadata into a structured object. Useful for plan-time assertions about expiry, SANs, and key/extended-key usage.
 
-This function reads structure only — it does NOT verify the certificate's signature, validity period, or trust chain. Run a separate signing or trust-validation step if you need to make security decisions based on the result.
+This function reads structure only: it does NOT verify the certificate's signature, validity period, or trust chain. Run a separate signing or trust-validation step if you need to make security decisions based on the result.
 */
 locals {
   cert_pem = <<-EOT

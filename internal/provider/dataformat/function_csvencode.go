@@ -28,7 +28,7 @@ func (f *CSVEncodeFunction) Metadata(_ context.Context, _ function.MetadataReque
 func (f *CSVEncodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Encode a list of objects as a CSV string",
-		MarkdownDescription: "Encodes a list of objects as a CSV string. Each object becomes a row; object keys become columns.\n\nBy default columns are sorted alphabetically and a header row is written. Pass an optional `options` object:\n\n- `columns` (list of strings): explicit column ordering — only listed columns are included.\n- `no_header` (bool): omit the header row.\n\nAll cell values are converted to strings: numbers render as their string representation, bools as `\"true\"`/`\"false\"`, and nulls as empty fields. Nested values (lists, objects) are not supported and produce an error.\n\n**Common uses:** generating CSV inputs for downstream loaders, exporting lookup tables, or producing reproducible spreadsheet-friendly output. Terraform has a built-in `csvdecode` for the reverse direction.",
+		MarkdownDescription: "Encodes a list of objects as a CSV string. Each object becomes a row; object keys become columns.\n\nBy default columns are sorted alphabetically and a header row is written. Pass an optional `options` object:\n\n- `columns` (list of strings): explicit column ordering (only listed columns are included).\n- `no_header` (bool): omit the header row.\n\nAll cell values are converted to strings: numbers render as their string representation, bools as `\"true\"`/`\"false\"`, and nulls as empty fields. Nested values (lists, objects) are not supported and produce an error.\n\n**Common uses:** generating CSV inputs for downstream loaders, exporting lookup tables, or producing reproducible spreadsheet-friendly output. Terraform has a built-in `csvdecode` for the reverse direction.",
 		Parameters: []function.Parameter{
 			function.DynamicParameter{
 				Name:        "rows",
@@ -36,11 +36,8 @@ func (f *CSVEncodeFunction) Definition(_ context.Context, _ function.DefinitionR
 			},
 		},
 		VariadicParameter: function.DynamicParameter{
-			Name: "options",
-			Description: `An optional options object. Supported keys: ` +
-				`"columns" (list of strings) — column names in the desired order; ` +
-				`"no_header" (bool) — if true, omit the header row. ` +
-				`Pass at most one options object.`,
+			Name:        "options",
+			Description: `An optional options object. Supported keys: "columns" (list of strings), column names in the desired order; "no_header" (bool), if true, omit the header row. Pass at most one options object.`,
 		},
 		Return: function.StringReturn{},
 	}

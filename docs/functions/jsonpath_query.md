@@ -11,7 +11,7 @@ description: |-
 
 Evaluates an [RFC 9535](https://www.rfc-editor.org/rfc/rfc9535.html) JSONPath expression against a Terraform value and returns the list of matching nodes. Useful for extracting subsets of nested structures using the standardized JSONPath grammar.
 
-The expression must conform to RFC 9535 — the IETF standardized JSONPath. Common selectors include the root identifier (`$`), name selectors (`$.store.book`), wildcard (`$..*`), descendant segments (`$..price`), array slices (`$[0:5]`), and filters (`$[?@.price < 10]`).
+The expression must conform to RFC 9535, the IETF standardized JSONPath. Common selectors include the root identifier (`$`), name selectors (`$.store.book`), wildcard (`$..*`), descendant segments (`$..price`), array slices (`$[0:5]`), and filters (`$[?@.price < 10]`).
 
 Returns a list of matching values. An expression that matches nothing returns an empty list. To collapse single-match queries to a scalar, use `one(provider::burnham::jsonpath_query(...))` or index the first element.
 
@@ -20,7 +20,7 @@ Backed by [theory/jsonpath](https://github.com/theory/jsonpath), an RFC 9535 con
 ## Example Usage
 
 ```terraform
-// JSONPath (RFC 9535) query — returns a list of matching nodes.
+// JSONPath (RFC 9535) query: returns a list of matching nodes.
 output "low_priced_titles" {
   value = provider::burnham::jsonpath_query(
     {

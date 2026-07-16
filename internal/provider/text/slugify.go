@@ -1,5 +1,5 @@
 /*
-Unicode-aware slugification — turn `"Café au Lait №3"` into `"cafe-au-lait-3"`.
+Unicode-aware slugification: turn `"Café au Lait №3"` into `"cafe-au-lait-3"`.
 
 Different from Terraform's `replace()` + `lower()` and from corefunc's `str_kebab` (which is only a case-conversion): `slugify` transliterates accented and non-Latin characters into their nearest ASCII equivalent before lower-casing and joining with hyphens. That's the actual operation people want when they say "make this URL-safe".
 
@@ -37,7 +37,7 @@ func (f *SlugifyFunction) Metadata(_ context.Context, _ function.MetadataRequest
 func (f *SlugifyFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Convert any string to a URL-safe slug, transliterating Unicode to ASCII",
-		MarkdownDescription: "Returns a URL-safe slug derived from `s`. Lowercases the result, transliterates non-ASCII characters into their nearest ASCII equivalent (`café` → `cafe`, `Москва` → `moskva`, `北京` → `bei-jing`), strips remaining punctuation, and joins runs of word characters with hyphens.\n\n```\nslugify(\"Café au Lait №3\")  → \"cafe-au-lait-no3\"\nslugify(\"Hello, World!\")     → \"hello-world\"\n```\n\nOptions object:\n\n- `language` (string) — ISO 639-1 hint for transliteration (e.g. `\"en\"`, `\"de\"`, `\"ja\"`). The default heuristic produces good output for Latin-script input; pick a language to handle non-Latin input correctly. Library list of supported codes: see [gosimple/slug](https://github.com/gosimple/slug).\n- `separator` (string) — the joiner between words. Default `\"-\"`.\n- `lowercase` (bool) — lowercase the result. Default `true`.\n\nDifferent from Terraform's `replace()` + `lower()` and from corefunc's case-conversion functions: `slugify` does **transliteration**, not just case folding.",
+		MarkdownDescription: "Returns a URL-safe slug derived from `s`. Lowercases the result, transliterates non-ASCII characters into their nearest ASCII equivalent (`café` → `cafe`, `Москва` → `moskva`, `北京` → `bei-jing`), strips remaining punctuation, and joins runs of word characters with hyphens.\n\n```\nslugify(\"Café au Lait №3\")  → \"cafe-au-lait-no3\"\nslugify(\"Hello, World!\")     → \"hello-world\"\n```\n\nOptions object:\n\n- `language` (string): ISO 639-1 hint for transliteration (e.g. `\"en\"`, `\"de\"`, `\"ja\"`). The default heuristic produces good output for Latin-script input; pick a language to handle non-Latin input correctly. Library list of supported codes: see [gosimple/slug](https://github.com/gosimple/slug).\n- `separator` (string): the joiner between words. Default `\"-\"`.\n- `lowercase` (bool): lowercase the result. Default `true`.\n\nDifferent from Terraform's `replace()` + `lower()` and from corefunc's case-conversion functions: `slugify` does **transliteration**, not just case folding.",
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "s", Description: "The string to slugify."},
 		},
@@ -109,7 +109,7 @@ func (f *SlugifyFunction) Run(ctx context.Context, req function.RunRequest, resp
 	resp.Error = function.ConcatFuncErrors(resp.Error, resp.Result.Set(ctx, &result))
 }
 
-// slugifyWith calls gosimple/slug under a package-level lock so concurrent invocations don't race on its `Lowercase` package-global. The mutex unlock and the global restore are both deferred so a panic inside `gosimple.Make` cannot leave the global in a swapped state or the mutex permanently held — gosimple/slug is third-party code and we shouldn't assume it can't panic. gosimple/slug always emits "-" as the separator, so we post-process if a different one was requested.
+// slugifyWith calls gosimple/slug under a package-level lock so concurrent invocations don't race on its `Lowercase` package-global. The mutex unlock and the global restore are both deferred so a panic inside `gosimple.Make` cannot leave the global in a swapped state or the mutex permanently held: gosimple/slug is third-party code and we shouldn't assume it can't panic. gosimple/slug always emits "-" as the separator, so we post-process if a different one was requested.
 func slugifyWith(s string, opts slugifyOpts) string {
 	slugifyMu.Lock()
 	defer slugifyMu.Unlock()

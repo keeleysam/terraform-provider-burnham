@@ -185,7 +185,7 @@ func TestAcc_CIDRWildcard(t *testing.T) {
 	)
 }
 
-// ─── NAT64 (RFC 6052) — covers VariadicParameter pattern ─────────
+// ─── NAT64 (RFC 6052): covers VariadicParameter pattern ─────────
 
 func TestAcc_NAT64Synthesize_DefaultMixedNotation(t *testing.T) {
 	runOutputTest(t,
@@ -284,7 +284,7 @@ func TestAcc_IPv4ToIPv4Mapped(t *testing.T) {
 	)
 }
 
-// ─── IPAM — covers null-or-string return type ────────────────────
+// ─── IPAM: covers null-or-string return type ────────────────────
 
 func TestAcc_CIDRFindFree_Available(t *testing.T) {
 	runOutputTest(t,
@@ -305,7 +305,7 @@ func TestAcc_CIDRFindFree_ExhaustedReturnsNull(t *testing.T) {
 	)
 }
 
-// ─── Coverage fillers — wrappers not exercised above ─────────────
+// ─── Coverage fillers: wrappers not exercised above ─────────────
 
 func TestAcc_CIDRContains(t *testing.T) {
 	runOutputTest(t,
@@ -395,14 +395,11 @@ func TestAcc_CIDRFilterVersion(t *testing.T) {
 
 // ─── Malformed-input tests ───────────────────────────────────────
 //
-// These exist to catch the common shapes of user mistakes — passing an IP
-// where a CIDR is expected, mixing IPv4 and IPv6, typos in addresses, etc.
-// Not adversarial fuzzing: each scenario is something a real Terraform user
-// is plausibly going to do at least once.
+// These exist to catch the common shapes of user mistakes: passing an IP where a CIDR is expected, mixing IPv4 and IPv6, typos in addresses, etc.
+// Not adversarial fuzzing: each scenario is something a real Terraform user is plausibly going to do at least once.
 
 func TestAcc_Errors_CIDRExpectedGotIP(t *testing.T) {
-	// User passes a bare IP where a CIDR is required — easy mistake when
-	// pasting addresses without their /N.
+	// User passes a bare IP where a CIDR is required, an easy mistake when pasting addresses without their /N.
 	runErrorTest(t,
 		`output "test" { value = provider::burnham::cidr_first_ip("10.0.0.1") }`,
 		regexp.MustCompile(`invalid CIDR`),
@@ -465,8 +462,7 @@ func TestAcc_Errors_NAT64IPv6AsIPv4Arg(t *testing.T) {
 }
 
 func TestAcc_Errors_IPAddUnderflow(t *testing.T) {
-	// Subtracting from the lowest IPv4 address — should report underflow,
-	// not silently wrap.
+	// Subtracting from the lowest IPv4 address should report underflow, not silently wrap.
 	runErrorTest(t,
 		`output "test" { value = provider::burnham::ip_add("0.0.0.0", -1) }`,
 		regexp.MustCompile(`underflow`),
@@ -474,9 +470,7 @@ func TestAcc_Errors_IPAddUnderflow(t *testing.T) {
 }
 
 func TestAcc_Errors_CIDREnumerateZeroNewbits(t *testing.T) {
-	// `cidr_enumerate` with newbits=0 doesn't produce subnets — surface a
-	// clear error rather than returning the input prefix as a single-element
-	// list (which would be misleading).
+	// `cidr_enumerate` with newbits=0 doesn't produce subnets, so surface a clear error rather than returning the input prefix as a single-element list (which would be misleading).
 	runErrorTest(t,
 		`output "test" { value = provider::burnham::cidr_enumerate("10.0.0.0/24", 0) }`,
 		// Terraform may wrap "must be positive" across a newline; match the

@@ -1,7 +1,7 @@
 /*
-base64zopfli — a drop-in replacement for Terraform's built-in base64gzip that swaps the standard DEFLATE encoder for Zopfli's iterative one.
+base64zopfli: a drop-in replacement for Terraform's built-in base64gzip that swaps the standard DEFLATE encoder for Zopfli's iterative one.
 
-Zopfli (https://github.com/google/zopfli) spends far more CPU than zlib searching for a smaller DEFLATE encoding of the same data, but the bitstream it emits is ordinary RFC 1951 DEFLATE: any gunzip / zcat / compress-gzip decoder reads it without knowing or caring that Zopfli produced it. That is the whole value proposition — consumers of base64zopfli output change nothing, they just receive a slightly smaller gzip member.
+Zopfli (https://github.com/google/zopfli) spends far more CPU than zlib searching for a smaller DEFLATE encoding of the same data, but the bitstream it emits is ordinary RFC 1951 DEFLATE: any gunzip / zcat / compress-gzip decoder reads it without knowing or caring that Zopfli produced it. That is the whole value proposition: consumers of base64zopfli output change nothing, they just receive a slightly smaller gzip member.
 
 We drive the pure-Go port github.com/foobaz/go-zopfli to produce a *raw* DEFLATE stream and then wrap it in an RFC 1952 gzip container by hand. The port also ships a GzipCompress helper, but it hardcodes the OS header byte to 3 (Unix); the spec calls for OS=255 (unknown), which keeps the output from leaking the producing platform and is the RFC's portable sentinel. Assembling the container ourselves is the only way to control that byte, and it also lets us pin MTIME=0 for determinism (Terraform plan stability requires byte-identical output for identical input).
 */
@@ -31,7 +31,7 @@ const (
 
 // zopfliGzip compresses input with Zopfli and returns a complete, RFC 1952-conformant gzip member. iterations is Zopfli's optimization-pass count (higher = smaller, slower); the caller is responsible for range-validating it.
 func zopfliGzip(input []byte, iterations int) ([]byte, error) {
-	// DefaultOptions() already matches the spec: NumIterations=15, BlockSplitting=true, BlockSplittingLast=false, BlockType=DYNAMIC. We override only the iteration count. BlockSplitting must stay on — it accounts for most of Zopfli's edge over plain gzip.
+	// DefaultOptions() already matches the spec: NumIterations=15, BlockSplitting=true, BlockSplittingLast=false, BlockType=DYNAMIC. We override only the iteration count. BlockSplitting must stay on: it accounts for most of Zopfli's edge over plain gzip.
 	opts := zopfli.DefaultOptions()
 	opts.NumIterations = iterations
 
@@ -47,9 +47,9 @@ func zopfliGzip(input []byte, iterations int) ([]byte, error) {
 		  ID1 ID2 = 0x1f 0x8b (gzip magic)
 		  CM      = 8         (DEFLATE)
 		  FLG     = 0         (no FNAME/FEXTRA/FCOMMENT/FHCRC/FTEXT)
-		  MTIME   = 0         (must be zero — "current time" would churn every plan)
-		  XFL     = 2         (compressor used maximum compression — accurate for Zopfli)
-		  OS      = 255       (unknown — portable sentinel, doesn't leak the producing platform)
+		  MTIME   = 0         (must be zero: "current time" would churn every plan)
+		  XFL     = 2         (compressor used maximum compression, accurate for Zopfli)
+		  OS      = 255       (unknown: portable sentinel, doesn't leak the producing platform)
 	*/
 	out = append(out, 0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff)
 	out = append(out, deflate.Bytes()...)
@@ -74,7 +74,7 @@ func (f *Base64ZopfliFunction) Metadata(_ context.Context, _ function.MetadataRe
 func (f *Base64ZopfliFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "gzip-compress with Zopfli and base64-encode (a tighter, drop-in base64gzip)",
-		MarkdownDescription: "Compresses `input` with [Zopfli](https://github.com/google/zopfli)'s iterative DEFLATE encoder and returns the result as a base64-encoded gzip member. A drop-in replacement for Terraform's built-in `base64gzip`: the output is an ordinary [RFC 1952](https://www.rfc-editor.org/rfc/rfc1952) gzip stream that decompresses with any `gunzip` / `zcat` / `compress/gzip` decoder — consumers cannot tell it came from Zopfli rather than `gzip -9`, and nothing on the decompression side has to change.\n\nZopfli spends much more CPU than zlib searching for a smaller encoding of the same data (typically ~2–5% smaller than `gzip -9` on text). The win is free at the wire — it just makes the plan-time compression slower.\n\nThe gzip header is fixed for deterministic, portable output: `MTIME=0` (never \"current time\", which would churn every plan), `XFL=2`, `OS=255` (unknown), no optional flags. Same `input` and options always produce byte-identical output.\n\nThe optional `options` object accepts:\n\n- `iterations` (number) — Zopfli optimization passes; default `15`, range `[1, 100000]`. Higher is smaller with diminishing returns past ~100. Always valid DEFLATE regardless of value.\n\n```\nboot_scripts_blob = provider::burnham::base64zopfli(jsonencode(scripts))\nboot_scripts_blob = provider::burnham::base64zopfli(jsonencode(scripts), { iterations = 100 })\n```",
+		MarkdownDescription: "Compresses `input` with [Zopfli](https://github.com/google/zopfli)'s iterative DEFLATE encoder and returns the result as a base64-encoded gzip member. A drop-in replacement for Terraform's built-in `base64gzip`: the output is an ordinary [RFC 1952](https://www.rfc-editor.org/rfc/rfc1952) gzip stream that decompresses with any `gunzip` / `zcat` / `compress/gzip` decoder; consumers cannot tell it came from Zopfli rather than `gzip -9`, and nothing on the decompression side has to change.\n\nZopfli spends much more CPU than zlib searching for a smaller encoding of the same data (typically ~2–5% smaller than `gzip -9` on text). The win is free at the wire: it just makes the plan-time compression slower.\n\nThe gzip header is fixed for deterministic, portable output: `MTIME=0` (never \"current time\", which would churn every plan), `XFL=2`, `OS=255` (unknown), no optional flags. Same `input` and options always produce byte-identical output.\n\nThe optional `options` object accepts:\n\n- `iterations` (number): Zopfli optimization passes; default `15`, range `[1, 100000]`. Higher is smaller with diminishing returns past ~100. Always valid DEFLATE regardless of value.\n\n```\nboot_scripts_blob = provider::burnham::base64zopfli(jsonencode(scripts))\nboot_scripts_blob = provider::burnham::base64zopfli(jsonencode(scripts), { iterations = 100 })\n```",
 		Parameters: []function.Parameter{
 			function.StringParameter{
 				Name:        "input",

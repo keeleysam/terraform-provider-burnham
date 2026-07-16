@@ -224,7 +224,7 @@ func TestAcc_Cowsay_RejectsBadEyes(t *testing.T) {
 }
 
 func TestAcc_Cowsay_RejectsControlCharacterInEyes(t *testing.T) {
-	// Two-codepoint string that includes a non-printable rune (U+0007 BEL) — must be rejected so cow output can't be smuggled with terminal control codes.
+	// Two-codepoint string that includes a non-printable rune (U+0007 BEL): must be rejected so cow output can't be smuggled with terminal control codes.
 	runErrorTest(t,
 		`output "test" { value = provider::burnham::cowsay("x", { eyes = "a\u0007" }) }`,
 		regexp.MustCompile(`(?is)eyes\s+must\s+be\s+exactly\s+2\s+printable`),
@@ -290,7 +290,7 @@ func TestAcc_Cowsay_MultiLineBubble(t *testing.T) {
 // ─── qr_ascii ───────────────────────────────────────────────────────────
 
 func TestAcc_QRAscii_LightOnDarkInvertsBlocks(t *testing.T) {
-	// light_on_dark should swap the dark and light roles. Concretely: a payload that produced ▀ ▄ space block in dark_on_light produces the inverted set; the cell counts of ▀ vs space invert. We just assert the raw byte count of `█` differs between styles for the same payload — easier to write than computing the exact module map but enough to lock the inversion path.
+	// light_on_dark should swap the dark and light roles. Concretely: a payload that produced ▀ ▄ space block in dark_on_light produces the inverted set; the cell counts of ▀ vs space invert. We just assert the raw byte count of `█` differs between styles for the same payload, which is easier to write than computing the exact module map but enough to lock the inversion path.
 	runOutputTest(t,
 		`output "test" {
 		   value = (
@@ -304,7 +304,7 @@ func TestAcc_QRAscii_LightOnDarkInvertsBlocks(t *testing.T) {
 
 func TestAcc_QRAscii_BasicShape(t *testing.T) {
 	// Verify the output looks like a QR code: rectangular, contains the half-block characters, has a quiet zone.
-	// Don't lock the exact bytes — that would couple us to rsc.io/qr's encoding choices.
+	// Don't lock the exact bytes: that would couple us to rsc.io/qr's encoding choices.
 	runOutputTest(t,
 		`output "test" { value = provider::burnham::qr_ascii("hello") }`,
 		statecheck.ExpectKnownOutputValue("test", knownvalue.StringRegexp(regexp.MustCompile(`(?s)^\s+\n.*[\x{2580}\x{2584}\x{2588}].*$`))),
@@ -351,7 +351,7 @@ func TestAcc_QRAscii_RejectsExcessiveQuietZone(t *testing.T) {
 }
 
 func TestAcc_QRAscii_ByteExactRegression(t *testing.T) {
-	// Lock the byte-exact half-block rendering for a small fixed payload at EC=L with quiet_zone=0. This is a regression test against rsc.io/qr changing its bit layout under us and against any future tweak to renderHalfBlock that silently corrupts output. If this expected value changes, scan the new output with a real QR reader before updating it — the regex-shape tests above cannot detect a malformed code.
+	// Lock the byte-exact half-block rendering for a small fixed payload at EC=L with quiet_zone=0. This is a regression test against rsc.io/qr changing its bit layout under us and against any future tweak to renderHalfBlock that silently corrupts output. If this expected value changes, scan the new output with a real QR reader before updating it, because the regex-shape tests above cannot detect a malformed code.
 	want := "█▀▀▀▀▀█   ▀ █ █▀▀▀▀▀█\n" +
 		"█ ███ █ ▀ ▀ ▄ █ ███ █\n" +
 		"█ ▀▀▀ █  █▄█▀ █ ▀▀▀ █\n" +

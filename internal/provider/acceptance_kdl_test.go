@@ -36,7 +36,7 @@ func TestAcc_KDLEncode_Basic(t *testing.T) {
 // ─── Malformed-input tests ───────────────────────────────────────
 
 func TestAcc_KDLDecode_MalformedInput(t *testing.T) {
-	// User passes a string with KDL-syntax errors — should be a parse error.
+	// User passes a string with KDL-syntax errors: should be a parse error.
 	runErrorTest(t,
 		`output "test" { value = provider::burnham::kdldecode("node { unclosed") }`,
 		regexp.MustCompile(`(?i)kdl|parse|unexpected`),

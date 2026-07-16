@@ -19,12 +19,12 @@ Examples:
 
 **Implementation cap.** This function is backed by an embedded table of the first 3,141,592 = ⌊π × 10⁶⌋ digits of π, encoded as IEEE 754-2008 [Densely Packed Decimal](https://en.wikipedia.org/wiki/Densely_packed_decimal) (3 digits per 10 bits, ≈3.33 bits/digit). Constant-time lookup, no plan-time computation. `n` > 3,141,592 errors. RFC 3091 imposes no upper bound, but a Terraform provider that shipped more digits would either bloat the binary or silently compute on every plan; this implementation does neither.
 
-**Floor, not round.** The cap is `floor(π × 10⁶) = 3,141,592` — *not* `round(π × 10⁶) = 3,141,593`. Rounding up would require shipping a digit we haven't actually computed and verified; [RFC 3091 §5](https://www.rfc-editor.org/rfc/rfc3091#section-5) is unequivocal that returning incorrect digits is unacceptable: "*The imminent collapse of the Internet is assured if this guideline is not strictly followed.*" So we floor.
+**Floor, not round.** The cap is `floor(π × 10⁶) = 3,141,592`, *not* `round(π × 10⁶) = 3,141,593`. Rounding up would require shipping a digit we haven't actually computed and verified; [RFC 3091 §5](https://www.rfc-editor.org/rfc/rfc3091#section-5) is unequivocal that returning incorrect digits is unacceptable: "*The imminent collapse of the Internet is assured if this guideline is not strictly followed.*" So we floor.
 
 ## Example Usage
 
 ```terraform
-// pi_digit — RFC 3091 §2.1.2 UDP reply for π. Returns "<n>:<digit>".
+// pi_digit: RFC 3091 §2.1.2 UDP reply for π. Returns "<n>:<digit>".
 output "first_digit" {
   value = provider::burnham::pi_digit(1)
   // → "1:1"   (π = 3.[1]415…)

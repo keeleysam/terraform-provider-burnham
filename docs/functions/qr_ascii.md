@@ -9,13 +9,13 @@ description: |-
 
 # function: qr_ascii
 
-Returns a multi-line string containing a QR code that encodes `payload`, rendered with Unicode half-block characters so two QR-module rows fit in one terminal row. Scannable directly from any monospaced display with adequate light/dark contrast (white-on-black terminals work; light themes need an inverted variant — see `style`).
+Returns a multi-line string containing a QR code that encodes `payload`, rendered with Unicode half-block characters so two QR-module rows fit in one terminal row. Scannable directly from any monospaced display with adequate light/dark contrast (white-on-black terminals work; light themes need an inverted variant, see `style`).
 
 Options object:
 
-- `error_correction` (string) — error-correction level, one of `"L"` (default, ~7%), `"M"` (~15%), `"Q"` (~25%), `"H"` (~30%). Higher levels survive more occlusion at the cost of a bigger code.
-- `quiet_zone` (number) — number of empty modules around the code. Default `4` (the [QR spec](https://en.wikipedia.org/wiki/QR_code) minimum). Set to `0` for very tight layouts.
-- `style` (string) — `"dark_on_light"` (default; dark modules render as `▀ █ ▄`, light as space — for white terminals) or `"light_on_dark"` (inverted, for black terminals).
+- `error_correction` (string): error-correction level, one of `"L"` (default, ~7%), `"M"` (~15%), `"Q"` (~25%), `"H"` (~30%). Higher levels survive more occlusion at the cost of a bigger code.
+- `quiet_zone` (number): number of empty modules around the code. Default `4` (the [QR spec](https://en.wikipedia.org/wiki/QR_code) minimum). Set to `0` for very tight layouts.
+- `style` (string): `"dark_on_light"` (default; dark modules render as `▀ █ ▄`, light as space, for white terminals) or `"light_on_dark"` (inverted, for black terminals).
 
 Layout is half-block: each terminal line covers two QR module rows. For payloads above ~150 characters you'll start hitting QR version limits at error_correction=`L`; bump to `H` only for short payloads where the size cost is acceptable.
 
@@ -23,7 +23,7 @@ Layout is half-block: each terminal line covers two QR module rows. For payloads
 
 ```terraform
 /*
-Render a QR code as Unicode-block ASCII art. Useful for embedding scannable codes in cloud-init MOTDs, login banners, or PDF source — anywhere a text representation beats an image asset.
+Render a QR code as Unicode-block ASCII art. Useful for embedding scannable codes in cloud-init MOTDs, login banners, or PDF source: anywhere a text representation beats an image asset.
 
 Each terminal row encodes two QR module rows via the half-block characters ▀ ▄ █, so the output is roughly half as tall as a one-cell-per-module renderer.
 */

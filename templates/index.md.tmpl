@@ -8,15 +8,15 @@ description: |-
 # {{ .ProviderShortName }} Provider
 
 > *"Aim high in hope and work, remembering that a noble, logical diagram once recorded will never die."*
-> — Daniel Burnham
+> – Daniel Burnham
 
-A pure provider-defined function provider — structured data formats, compression (Zopfli gzip and Brotli), IP/CIDR arithmetic, query and patch over decoded values, deterministic identifiers, text manipulation, cryptography (HMAC / HKDF / X.509 / CSR / ASN.1 / deterministic CMS signing), geographic encoding, and a small numerics family. No resources, no data sources, no remote API calls — every function evaluates at plan time.
+A pure provider-defined function provider: structured data formats, compression (Zopfli gzip and Brotli), IP/CIDR arithmetic, query and patch over decoded values, deterministic identifiers, text manipulation, cryptography (HMAC / HKDF / X.509 / CSR / ASN.1 / deterministic CMS signing), geographic encoding, and a small numerics family. No resources, no data sources, no remote API calls, and every function evaluates at plan time.
 
 Burnham is organized into eleven families. Per-function reference for all families lives in the sidebar.
 
 ## Compression Functions
 
-Compress a string and base64-encode the result. `base64zopfli` is a tighter, drop-in replacement for the built-in `base64gzip` (ordinary RFC 1952 gzip output via Zopfli's iterative DEFLATE encoder — `gunzip` on the consumer side is unchanged); `base64brotli` is RFC 7932 Brotli (~8–10% smaller on text, needs a `brotli` decompressor on the consumer side). Both are pure-Go and deterministic, so plans stay stable.
+Compress a string and base64-encode the result. `base64zopfli` is a tighter, drop-in replacement for the built-in `base64gzip` (ordinary RFC 1952 gzip output via Zopfli's iterative DEFLATE encoder, so `gunzip` on the consumer side is unchanged); `base64brotli` is RFC 7932 Brotli (~8–10% smaller on text, needs a `brotli` decompressor on the consumer side). Both are pure-Go and deterministic, so plans stay stable.
 
 ## Structured Data Functions
 
@@ -66,10 +66,10 @@ Pure functions for querying and patching decoded structures, so manifest overlay
 
 Pure mathematical functions: an exhaustively faithful implementation of [RFC 3091](https://www.rfc-editor.org/rfc/rfc3091) (Pi Digit Generation Protocol) plus a small set of statistics and math helpers that fill gaps in Terraform's built-ins.
 
-- **π:** `pi_digit(n)`, `pi_digits(count)`. Backed by an embedded table of the first ⌊π × 10⁶⌋ = 3,141,592 digits, encoded as IEEE 754-2008 [Densely Packed Decimal](https://en.wikipedia.org/wiki/Densely_packed_decimal) — constant-time lookup.
+- **π:** `pi_digit(n)`, `pi_digits(count)`. Backed by an embedded table of the first ⌊π × 10⁶⌋ = 3,141,592 digits, encoded as IEEE 754-2008 [Densely Packed Decimal](https://en.wikipedia.org/wiki/Densely_packed_decimal) for constant-time lookup.
 - **22/7:** `pi_approximate_digit(n)`, `pi_approximate_digits(count)`. Period-6 repeating cycle `"142857"`; unbounded `n`.
 - **Statistics:** `mean`, `median`, `mode`, `percentile`, `variance`, `stddev` (population formulas; sample variance is `var · N / (N − 1)`).
-- **Math helpers:** `clamp`, `mod_floor` (floor-modulo — sign of divisor, unlike Terraform's built-in `%`).
+- **Math helpers:** `clamp`, `mod_floor` (floor-modulo, taking the sign of the divisor, unlike Terraform's built-in `%`).
 
 ## Identifiers Functions
 
@@ -91,11 +91,11 @@ Keyed hashing, key derivation, certificate / CSR / ASN.1 inspection, and a deter
 
 - **Symmetric:** `hmac` ([RFC 2104](https://www.rfc-editor.org/rfc/rfc2104)), `hkdf` ([RFC 5869](https://www.rfc-editor.org/rfc/rfc5869)).
 - **Inspection:** `pem_decode` ([RFC 7468](https://www.rfc-editor.org/rfc/rfc7468)), `x509_inspect`, `x509_fingerprint`, `csr_inspect`, `asn1_decode` (BER/DER walk).
-- **Deterministic signing (ECDSA P-256 via [RFC 6979](https://www.rfc-editor.org/rfc/rfc6979); Ed25519 via [RFC 8032](https://www.rfc-editor.org/rfc/rfc8032) PureEdDSA, naturally deterministic):** `ecdsa_p256_key_from_seed`, `ed25519_key_from_seed` (seed → PEM PKCS#8 key), `x509_self_sign` ([RFC 5280](https://www.rfc-editor.org/rfc/rfc5280) v3 self-signed cert, accepts either algorithm), `pkcs7_sign` ([RFC 5652](https://www.rfc-editor.org/rfc/rfc5652) CMS SignedData with no signed attributes, accepts either algorithm — ECDSA P-256 is the shape Apple's configuration-profile installer accepts; Ed25519 follows [RFC 8419](https://www.rfc-editor.org/rfc/rfc8419) for non-Apple consumers).
+- **Deterministic signing (ECDSA P-256 via [RFC 6979](https://www.rfc-editor.org/rfc/rfc6979); Ed25519 via [RFC 8032](https://www.rfc-editor.org/rfc/rfc8032) PureEdDSA, naturally deterministic):** `ecdsa_p256_key_from_seed`, `ed25519_key_from_seed` (seed → PEM PKCS#8 key), `x509_self_sign` ([RFC 5280](https://www.rfc-editor.org/rfc/rfc5280) v3 self-signed cert, accepts either algorithm), `pkcs7_sign` ([RFC 5652](https://www.rfc-editor.org/rfc/rfc5652) CMS SignedData with no signed attributes, accepts either algorithm: ECDSA P-256 is the shape Apple's configuration-profile installer accepts, and Ed25519 follows [RFC 8419](https://www.rfc-editor.org/rfc/rfc8419) for non-Apple consumers).
 
 ## Geographic Functions
 
-Pure geocoding — `(latitude, longitude)` pairs into short alphanumeric strings and back.
+Pure geocoding: `(latitude, longitude)` pairs into short alphanumeric strings and back.
 
 - **Geohash:** `geohash_encode`, `geohash_decode` ([`mmcloughlin/geohash`](https://pkg.go.dev/github.com/mmcloughlin/geohash)).
 - **Open Location Code / Plus codes:** `pluscode_encode`, `pluscode_decode` ([Google `open-location-code`](https://github.com/google/open-location-code)).
@@ -111,15 +111,15 @@ terraform {
   }
 }
 
-# No provider block needed — burnham is pure functions, no configuration.
+# No provider block needed; burnham is pure functions, no configuration.
 ```
 
 Functions are called as `provider::burnham::<name>(...)`.
 
 ## Further reading
 
-- **GitHub** — [keeleysam/terraform-provider-burnham](https://github.com/keeleysam/terraform-provider-burnham): full README, runnable examples, source.
-- **Examples** — every function has a working snippet under [`examples/`](https://github.com/keeleysam/terraform-provider-burnham/tree/main/examples).
-- **Per-function reference** — see the sidebar.
+- **GitHub**: [keeleysam/terraform-provider-burnham](https://github.com/keeleysam/terraform-provider-burnham): full README, runnable examples, source.
+- **Examples**: every function has a working snippet under [`examples/`](https://github.com/keeleysam/terraform-provider-burnham/tree/main/examples).
+- **Per-function reference**: see the sidebar.
 
 {{ .SchemaMarkdown | trimspace }}

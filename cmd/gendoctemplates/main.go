@@ -1,5 +1,5 @@
 /*
-Command gendoctemplates writes per-function tfplugindocs templates whose frontmatter sets `subcategory:` based on which package's `Functions()` constructor registers the function. The package that returns a function from its `Functions()` is the function's family — same source of truth Burnham uses for everything else. No name-prefix matching, no template-side dispatch. A function moved between packages picks up the new family the next time `go generate ./...` runs.
+Command gendoctemplates writes per-function tfplugindocs templates whose frontmatter sets `subcategory:` based on which package's `Functions()` constructor registers the function. The package that returns a function from its `Functions()` is the function's family, the same source of truth Burnham uses for everything else. No name-prefix matching, no template-side dispatch. A function moved between packages picks up the new family the next time `go generate ./...` runs.
 
 Output: one templates/functions/<name>.md.tmpl per function, written to the working tree but gitignored. tfplugindocs's per-function-template lookup picks them up automatically. Stale templates (for functions that no longer exist) are swept on each run so the directory stays in lockstep with `provider.Functions()`.
 
@@ -99,7 +99,7 @@ func main() {
 		log.Fatalf("creating %s: %v", dst, err)
 	}
 
-	// Collect (name, subcategory) pairs by introspecting each package's Functions(). Using the framework's MetadataResponse path keeps us honest — we read whatever name the function publishes, not whatever we guess from the type name.
+	// Collect (name, subcategory) pairs by introspecting each package's Functions(). Using the framework's MetadataResponse path keeps us honest: we read whatever name the function publishes, not whatever we guess from the type name.
 	ctx := context.Background()
 	want := map[string]string{}
 	for _, fam := range families {

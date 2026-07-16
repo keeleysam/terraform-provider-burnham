@@ -18,9 +18,8 @@ func (f *RangeToCIDRsFunction) Metadata(_ context.Context, _ function.MetadataRe
 
 func (f *RangeToCIDRsFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
-		Summary: "Convert an IP range to a minimal list of CIDRs",
-		MarkdownDescription: "Converts an inclusive IP range `[first_ip, last_ip]` into the minimal list of " +
-			"CIDRs that exactly covers the range. Both IPs must be the same address family (IPv4 or IPv6).",
+		Summary:             "Convert an IP range to a minimal list of CIDRs",
+		MarkdownDescription: "Converts an inclusive IP range `[first_ip, last_ip]` into the minimal list of CIDRs that exactly covers the range. Both IPs must be the same address family (IPv4 or IPv6).",
 		Parameters: []function.Parameter{
 			function.StringParameter{
 				Name:        "first_ip",

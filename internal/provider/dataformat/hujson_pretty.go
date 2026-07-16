@@ -14,7 +14,7 @@ import (
 // and every array element gets its own line, with trailing commas. This
 // bypasses hujson.Format()'s "fit on one line if it can" packing.
 //
-// `comments` mirrors the data shape — string leaves become // (or /* */ for
+// `comments` mirrors the data shape: string leaves become // (or /* */ for
 // multi-line) comments placed before the matching key/element. Nested objects
 // recurse. Missing keys are silently skipped, matching the behavior of the
 // default (compact) path.
@@ -146,7 +146,7 @@ func writePrettyComment(b *strings.Builder, comment, pad string) {
 }
 
 // escapeHTMLInStrings rewrites `<`, `>` and `&` to their `\uXXXX` escapes, but
-// only inside JSON string literals — never inside `//` or `/* */` comments or
+// only inside JSON string literals, never inside `//` or `/* */` comments or
 // structural syntax. It exists for the compact path: hujson.Format/Pack
 // normalizes `\uXXXX` escapes back to literal characters, so honoring
 // escape_html=true there means re-escaping the packed output.

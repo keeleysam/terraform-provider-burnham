@@ -1,7 +1,7 @@
 /*
 PEM block decoding (RFC 7468).
 
-Walks a PEM-armoured input — possibly containing multiple concatenated blocks — and returns each block's type label, its headers, and its base64-encoded body. The body is left base64-encoded (rather than hex or raw) because PEM is fundamentally a base64 envelope; round-tripping through `base64decode` keeps the bytes exact.
+Walks a PEM-armoured input (possibly containing multiple concatenated blocks) and returns each block's type label, its headers, and its base64-encoded body. The body is left base64-encoded (rather than hex or raw) because PEM is fundamentally a base64 envelope; round-tripping through `base64decode` keeps the bytes exact.
 */
 
 package cryptography
@@ -43,7 +43,7 @@ var pemBlockAttrs = map[string]attr.Type{
 func (f *PEMDecodeFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Decode one or more PEM (RFC 7468) blocks into a list of {type, headers, base64_body} objects",
-		MarkdownDescription: "Walks `pem` and returns a list, one entry per PEM block, of:\n\n- `type` — the block label between `-----BEGIN ` / `-----END ` (e.g. `\"CERTIFICATE\"`, `\"PRIVATE KEY\"`, `\"CERTIFICATE REQUEST\"`).\n- `headers` — `map(string)` of any RFC 1421 / 7468 header lines (often empty for modern PEM).\n- `base64_body` — the body, kept base64-encoded so the bytes round-trip exactly through `base64decode`. The body is the standard base64 alphabet, no line breaks.\n\nReturns an empty list when the input contains no PEM blocks. Garbage between blocks is silently skipped — same behaviour as `openssl` and most consumers.",
+		MarkdownDescription: "Walks `pem` and returns a list, one entry per PEM block, of:\n\n- `type`: the block label between `-----BEGIN ` / `-----END ` (e.g. `\"CERTIFICATE\"`, `\"PRIVATE KEY\"`, `\"CERTIFICATE REQUEST\"`).\n- `headers`: `map(string)` of any RFC 1421 / 7468 header lines (often empty for modern PEM).\n- `base64_body`: the body, kept base64-encoded so the bytes round-trip exactly through `base64decode`. The body is the standard base64 alphabet, no line breaks.\n\nReturns an empty list when the input contains no PEM blocks. Garbage between blocks is silently skipped, the same behaviour as `openssl` and most consumers.",
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "pem", Description: "The PEM-armoured input. May contain multiple concatenated blocks."},
 		},
