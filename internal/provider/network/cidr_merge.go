@@ -33,9 +33,14 @@ func (f *CIDRMergeFunction) Definition(_ context.Context, _ function.DefinitionR
 }
 
 func (f *CIDRMergeFunction) Run(ctx context.Context, req function.RunRequest, resp *function.RunResponse) {
-	var cidrs []string
-	resp.Error = function.ConcatFuncErrors(resp.Error, req.Arguments.Get(ctx, &cidrs))
+	var cidrsArg types.List
+	resp.Error = function.ConcatFuncErrors(resp.Error, req.Arguments.Get(ctx, &cidrsArg))
 	if resp.Error != nil {
+		return
+	}
+	cidrs, argErr := cidrListArg(cidrsArg, 0, "cidrs")
+	if argErr != nil {
+		resp.Error = argErr
 		return
 	}
 

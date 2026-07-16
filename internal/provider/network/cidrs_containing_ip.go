@@ -34,9 +34,14 @@ func (f *CIDRsContainingIPFunction) Definition(_ context.Context, _ function.Def
 
 func (f *CIDRsContainingIPFunction) Run(ctx context.Context, req function.RunRequest, resp *function.RunResponse) {
 	var ip string
-	var cidrs []string
-	resp.Error = function.ConcatFuncErrors(resp.Error, req.Arguments.Get(ctx, &ip, &cidrs))
+	var cidrsArg types.List
+	resp.Error = function.ConcatFuncErrors(resp.Error, req.Arguments.Get(ctx, &ip, &cidrsArg))
 	if resp.Error != nil {
+		return
+	}
+	cidrs, argErr := cidrListArg(cidrsArg, 1, "cidrs")
+	if argErr != nil {
+		resp.Error = argErr
 		return
 	}
 

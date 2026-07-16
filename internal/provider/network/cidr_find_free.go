@@ -41,10 +41,20 @@ func (f *CIDRFindFreeFunction) Definition(_ context.Context, _ function.Definiti
 }
 
 func (f *CIDRFindFreeFunction) Run(ctx context.Context, req function.RunRequest, resp *function.RunResponse) {
-	var pool, used []string
+	var poolArg, usedArg types.List
 	var prefixLen int64
-	resp.Error = function.ConcatFuncErrors(resp.Error, req.Arguments.Get(ctx, &pool, &used, &prefixLen))
+	resp.Error = function.ConcatFuncErrors(resp.Error, req.Arguments.Get(ctx, &poolArg, &usedArg, &prefixLen))
 	if resp.Error != nil {
+		return
+	}
+	pool, argErr := cidrListArg(poolArg, 0, "pool")
+	if argErr != nil {
+		resp.Error = argErr
+		return
+	}
+	used, argErr := cidrListArg(usedArg, 1, "used")
+	if argErr != nil {
+		resp.Error = argErr
 		return
 	}
 

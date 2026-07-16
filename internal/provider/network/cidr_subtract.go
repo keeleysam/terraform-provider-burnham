@@ -38,9 +38,19 @@ func (f *CIDRSubtractFunction) Definition(_ context.Context, _ function.Definiti
 }
 
 func (f *CIDRSubtractFunction) Run(ctx context.Context, req function.RunRequest, resp *function.RunResponse) {
-	var input, exclude []string
-	resp.Error = function.ConcatFuncErrors(resp.Error, req.Arguments.Get(ctx, &input, &exclude))
+	var inputArg, excludeArg types.List
+	resp.Error = function.ConcatFuncErrors(resp.Error, req.Arguments.Get(ctx, &inputArg, &excludeArg))
 	if resp.Error != nil {
+		return
+	}
+	input, argErr := cidrListArg(inputArg, 0, "input")
+	if argErr != nil {
+		resp.Error = argErr
+		return
+	}
+	exclude, argErr := cidrListArg(excludeArg, 1, "exclude")
+	if argErr != nil {
+		resp.Error = argErr
 		return
 	}
 

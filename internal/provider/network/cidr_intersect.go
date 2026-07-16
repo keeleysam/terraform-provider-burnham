@@ -38,9 +38,19 @@ func (f *CIDRIntersectFunction) Definition(_ context.Context, _ function.Definit
 }
 
 func (f *CIDRIntersectFunction) Run(ctx context.Context, req function.RunRequest, resp *function.RunResponse) {
-	var a, b []string
-	resp.Error = function.ConcatFuncErrors(resp.Error, req.Arguments.Get(ctx, &a, &b))
+	var aArg, bArg types.List
+	resp.Error = function.ConcatFuncErrors(resp.Error, req.Arguments.Get(ctx, &aArg, &bArg))
 	if resp.Error != nil {
+		return
+	}
+	a, argErr := cidrListArg(aArg, 0, "a")
+	if argErr != nil {
+		resp.Error = argErr
+		return
+	}
+	b, argErr := cidrListArg(bArg, 1, "b")
+	if argErr != nil {
+		resp.Error = argErr
 		return
 	}
 

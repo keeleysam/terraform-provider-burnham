@@ -121,11 +121,16 @@ func (f *NAT64SynthesizeCIDRsFunction) Definition(_ context.Context, _ function.
 }
 
 func (f *NAT64SynthesizeCIDRsFunction) Run(ctx context.Context, req function.RunRequest, resp *function.RunResponse) {
-	var ipv4CIDRs []string
+	var ipv4CIDRsArg types.List
 	var nat64Prefix string
 	var useHexArgs []bool
-	resp.Error = function.ConcatFuncErrors(resp.Error, req.Arguments.Get(ctx, &ipv4CIDRs, &nat64Prefix, &useHexArgs))
+	resp.Error = function.ConcatFuncErrors(resp.Error, req.Arguments.Get(ctx, &ipv4CIDRsArg, &nat64Prefix, &useHexArgs))
 	if resp.Error != nil {
+		return
+	}
+	ipv4CIDRs, argErr := cidrListArg(ipv4CIDRsArg, 0, "ipv4_cidrs")
+	if argErr != nil {
+		resp.Error = argErr
 		return
 	}
 	useMixed := !optionalArg(useHexArgs, false)

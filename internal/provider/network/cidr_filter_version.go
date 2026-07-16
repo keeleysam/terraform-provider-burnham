@@ -36,10 +36,15 @@ func (f *CIDRFilterVersionFunction) Definition(_ context.Context, _ function.Def
 }
 
 func (f *CIDRFilterVersionFunction) Run(ctx context.Context, req function.RunRequest, resp *function.RunResponse) {
-	var cidrs []string
+	var cidrsArg types.List
 	var version int64
-	resp.Error = function.ConcatFuncErrors(resp.Error, req.Arguments.Get(ctx, &cidrs, &version))
+	resp.Error = function.ConcatFuncErrors(resp.Error, req.Arguments.Get(ctx, &cidrsArg, &version))
 	if resp.Error != nil {
+		return
+	}
+	cidrs, argErr := cidrListArg(cidrsArg, 0, "cidrs")
+	if argErr != nil {
+		resp.Error = argErr
 		return
 	}
 
