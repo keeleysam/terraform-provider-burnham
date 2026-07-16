@@ -2,6 +2,7 @@ package cel
 
 import (
 	"fmt"
+	"math"
 	"math/big"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -25,6 +26,10 @@ func nodeToAttr(node any) (attr.Value, error) {
 	case uint64:
 		return types.NumberValue(new(big.Float).SetUint64(v)), nil
 	case float64:
+		// big.Float (and thus a Terraform NumberValue) cannot represent non-finite doubles: big.NewFloat(NaN) panics and infinities emit an invalid plan value. Reject them cleanly.
+		if math.IsNaN(v) || math.IsInf(v, 0) {
+			return nil, fmt.Errorf("cannot represent non-finite number %v as a Terraform value", v)
+		}
 		return types.NumberValue(big.NewFloat(v)), nil
 	case []any:
 		elems := make([]attr.Value, len(v))

@@ -1,6 +1,7 @@
 package cel
 
 import (
+	"math"
 	"reflect"
 	"testing"
 )
@@ -56,6 +57,26 @@ func TestEvalErrors(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			if _, err := Eval(tc.expr, tc.vars, defaultEvalOptions()); err == nil {
 				t.Fatalf("Eval(%q) = nil error, want error", tc.expr)
+			}
+		})
+	}
+}
+
+// TestNodeToAttrNonFinite guards against NaN and +/-Inf reaching types.NumberValue, which cannot represent them:
+// NaN panics in big.NewFloat and infinities silently emit an invalid plan value. Both must be a clean error instead.
+func TestNodeToAttrNonFinite(t *testing.T) {
+	cases := []struct {
+		name string
+		in   float64
+	}{
+		{"NaN", math.NaN()},
+		{"positive infinity", math.Inf(1)},
+		{"negative infinity", math.Inf(-1)},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if _, err := nodeToAttr(tc.in); err == nil {
+				t.Fatalf("nodeToAttr(%v) = nil error, want error", tc.in)
 			}
 		})
 	}
