@@ -183,7 +183,14 @@ func (d *decoder) decodeOperator(fn string, args []ast.Expr) any {
 	key := d.opKey(fn)
 	switch fnKind[fn] {
 	case kUnary:
-		return map[string]any{key: d.decode(args[0])}
+		operand := d.decode(args[0])
+		// A unary operator with a list-literal operand must not be emitted as a bare list under the operator key.
+		// In the surface notations that bare list reads as the operand sequence and gets spread, corrupting "-[1, 2]" into "1 - 2" and making "![a, b]" an arity error.
+		// Wrap it as an explicit list_expr node so encode keeps it as the single operand.
+		if _, isList := operand.([]any); isList {
+			operand = map[string]any{"list_expr": map[string]any{"elements": operand}}
+		}
+		return map[string]any{key: operand}
 	case kTernary:
 		return map[string]any{key: d.decodeArgs(args)}
 	case kVariadic:

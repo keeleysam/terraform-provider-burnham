@@ -27,6 +27,9 @@ func TestRoundTrip(t *testing.T) {
 		`["a", ?b]`,
 		`a && b && c || d`,
 		`-x < 5`,
+		// unary operator applied to a list literal (operand must not be spread into the operand sequence)
+		`-[1, 2]`,
+		`![a, b]`,
 		`type(self) == string ? self == "99%" : self == 42`,
 		`quantity("150Mi").isGreaterThan(quantity("100Mi"))`,
 		`{"k": v, "j": w}`,
