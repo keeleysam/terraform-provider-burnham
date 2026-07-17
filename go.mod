@@ -47,6 +47,7 @@ require (
 	github.com/cedar-policy/cedar-go v1.8.0
 	github.com/prometheus/common v0.70.0
 	github.com/prometheus/prometheus v0.313.1
+	github.com/recolabs/gnata v0.2.2
 )
 
 require (
@@ -113,6 +114,9 @@ require (
 	github.com/prometheus/procfs v0.21.0 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
+	github.com/tidwall/gjson v1.18.0 // indirect
+	github.com/tidwall/match v1.1.1 // indirect
+	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect

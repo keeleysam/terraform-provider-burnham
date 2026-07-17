@@ -8,6 +8,8 @@ func Functions() []func() function.Function {
 		NewJMESPathQueryFunction,
 		NewJSONPathQueryFunction,
 		NewJQFunction,
+		NewJSONataQueryFunction,
+		NewJSONataValidateFunction,
 		NewJSONPatchFunction,
 		NewJSONMergePatchFunction,
 	}

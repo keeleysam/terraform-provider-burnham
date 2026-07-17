@@ -1,0 +1,34 @@
+Evaluates a [JSONata](https://jsonata.org/) expression against a Terraform value and returns the result. JSONata is a query and transformation language for JSON: it goes beyond field extraction with mapping, aggregation, object and array construction, and a large function library, so it is the transformation-oriented sibling of `jmespath_query` and `jsonpath_query`. It is also the expression language behind AWS Step Functions' JSONata mode.
+
+The expression follows the JSONata specification, including:
+
+- Path navigation: `Account.Order.Product.Price`
+- Filters (predicates): `books[price > 10].title`
+- Mapping and construction: `books.{ "name": title, "cost": price }`
+- Functions: `$sum`, `$count`, `$map`, `$filter`, `$sort`, `$keys`, and the rest
+- Lambdas: `$map(nums, function($v) { $v * 2 })`
+
+A path that matches nothing evaluates to no value, which is returned as `null`.
+
+### Determinism
+
+burnham is a pure provider: plan output must equal apply output. JSONata's three non-deterministic builtins are therefore disabled, and any expression that calls one fails with a clear error:
+
+- `$now()`
+- `$millis()`
+- `$random()`
+
+`jsonata_validate` still treats an expression that references these as syntactically valid (validity is about syntax); only `jsonata_query` rejects them when it evaluates.
+
+### Number handling
+
+Numbers are evaluated as IEEE-754 double-precision floats, the only numeric type JSONata computes on.
+
+- A number selected without arithmetic passes through unchanged, so an integer beyond 2^53 keeps full precision when it is merely extracted.
+- A number that takes part in arithmetic or a numeric function is computed as a double, so an integer whose magnitude exceeds 2^53 can come back rounded (`9007199254740993 + 0` yields `9007199254740992`), exactly like `jmespath_query`.
+
+~> **Note:** A computed non-finite result (for example `1/0`, which yields infinity) cannot be represented as a Terraform number and returns an error rather than a bogus value.
+
+Object keys are decoded in a stable (sorted) order before evaluation, so order-sensitive builtins such as `$keys` and `$spread` produce deterministic output.
+
+Backed by [recolabs/gnata](https://github.com/recolabs/gnata), a pure-Go implementation of JSONata 2.x.
