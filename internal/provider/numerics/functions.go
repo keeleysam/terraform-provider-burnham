@@ -22,5 +22,7 @@ func Functions() []func() function.Function {
 		// Math helpers
 		NewModFloorFunction,
 		NewClampFunction,
+		NewGCDFunction,
+		NewLCMFunction,
 	}
 }

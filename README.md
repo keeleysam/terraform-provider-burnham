@@ -268,6 +268,8 @@ Operate on `list(number)`. Empty input is always an error: a statistic of zero o
 | Function | Signature | Returns | Backed by |
 |---|---|---|---|
 | `clamp` | `(value number, min_val number, max_val number)` | `number` | comparison; errors when `min_val > max_val` |
+| `gcd` | `(numbers list(number))` | `number` | greatest common divisor, arbitrary precision `math/big`; integers only |
+| `lcm` | `(numbers list(number))` | `number` | least common multiple, arbitrary precision `math/big`; integers only |
 | `mod_floor` | `(a number, b number)` | `number` | floor-modulo: `a − b·⌊a/b⌋`. Sign of divisor, not dividend (unlike Terraform's built-in `%`). |
 
 Per-function documentation lives under [`docs/functions/`](docs/functions/) and on [registry.terraform.io](https://registry.terraform.io/providers/keeleysam/burnham/latest/docs).
