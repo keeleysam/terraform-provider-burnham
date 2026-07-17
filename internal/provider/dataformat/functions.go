@@ -7,6 +7,7 @@ func Functions() []func() function.Function {
 	return []func() function.Function{
 		// JSON family
 		NewJSONEncodeFunction,
+		NewJSONCanonicalizeFunction,
 		NewHuJSONDecodeFunction,
 		NewHuJSONEncodeFunction,
 		NewNDJSONDecodeFunction,

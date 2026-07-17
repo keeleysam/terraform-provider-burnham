@@ -1,4 +1,4 @@
-// Package cryptography provides cryptographic / certificate-handling provider-defined functions: HMAC, HKDF, PEM block decoding, X.509 certificate inspection / fingerprinting / deterministic self-signing, PKCS #10 CSR inspection, deterministic ECDSA P-256 and Ed25519 key derivation, CMS/PKCS#7 signing, and generic ASN.1 BER/DER tree decoding.
+// Package cryptography provides cryptographic / certificate-handling provider-defined functions: HMAC, HKDF, PEM block decoding, X.509 certificate inspection / fingerprinting / deterministic self-signing, PKCS #10 CSR inspection, deterministic ECDSA P-256 and Ed25519 key derivation, CMS/PKCS#7 signing, generic ASN.1 BER/DER tree decoding, and a deterministic JOSE stack (JWT/JWS sign, decode, and verify; JWK encode, decode, thumbprint, and JWK Set assembly).
 package cryptography
 
 import "github.com/hashicorp/terraform-plugin-framework/function"
@@ -19,5 +19,13 @@ func Functions() []func() function.Function {
 		NewPKCS7SignFunction,
 		NewBtoeFunction,
 		NewEtobFunction,
+		// JOSE: JWT / JWS and JWK
+		NewJWTSignFunction,
+		NewJWTDecodeFunction,
+		NewJWTVerifyFunction,
+		NewJWKEncodeFunction,
+		NewJWKDecodeFunction,
+		NewJWKThumbprintFunction,
+		NewJWKSFunction,
 	}
 }

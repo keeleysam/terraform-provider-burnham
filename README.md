@@ -20,7 +20,7 @@ The result is Terraform code that reads like a blueprint: clear, logical, and bu
 Burnham is organized into eleven families of functions:
 
 - **[Expression Language Functions](#expression-language-functions)**: build, validate, format, decode, and evaluate expression- and policy-language strings from HCL data. [CEL](https://cel.dev) (Common Expression Language) for GCP IAM / Access Context Manager, Kubernetes, and any other CEL sink; [Okta Expression Language](https://developer.okta.com/docs/reference/okta-expression-language/) for Okta group rules, profile mappings, and policy conditions; [Cedar](https://www.cedarpolicy.com) for Amazon Verified Permissions authorization policies; and [PromQL](https://prometheus.io/docs/prometheus/latest/querying/basics/) for Prometheus alerting and recording rules.
-- **[Structured Data Functions](#structured-data-functions)**: encode/decode for JSON (pretty), HuJSON, plist, INI, CSV, YAML, .reg, VDF, KDL, NDJSON, MessagePack, CBOR, dotenv, Java .properties, Apple .strings, and general HCL.
+- **[Structured Data Functions](#structured-data-functions)**: encode/decode for JSON (pretty and RFC 8785 canonical), HuJSON, plist, INI, CSV, YAML, .reg, VDF, KDL, NDJSON, MessagePack, CBOR, dotenv, Java .properties, Apple .strings, and general HCL.
 - **[Compression Functions](#compression-functions)**: `base64zopfli` (RFC 1952 gzip via Zopfli, a tighter drop-in for `base64gzip`) and `base64brotli` (RFC 7932 Brotli).
 - **[Encoding Functions](#encoding-functions)**: byte codecs that fill core gaps: hex (`hexencode`/`hexdecode`), base64 and base32 with alphabet/padding options and lenient decoders, and `urlencode` (with `query`/`path`/`component` modes) / `urldecode` (the decoder core lacks).
 - **[Networking Functions](#networking-functions)**: CIDR set operations, queries, IP arithmetic, NAT64 (RFC 6052), NPTv6 (RFC 6296), IPAM helpers, and a faithful RFC 1149 / RFC 2549 (IP over Avian Carriers) throughput calculator.
@@ -28,7 +28,7 @@ Burnham is organized into eleven families of functions:
 - **[Numerics Functions](#numerics-functions)**: RFC 3091 (Pi Digit Generation Protocol), statistics, and small math helpers.
 - **[Identifiers Functions](#identifiers-functions)**: deterministic UUIDs (v5, v7), Nano ID, and petname.
 - **[Text Functions](#text-functions)**: Unicode normalization, transliterating slugify, Levenshtein distance, word-wrap, dedent, key/value parsing, cowsay, ASCII QR.
-- **[Cryptography Functions](#cryptography-functions)**: HMAC (RFC 2104), HKDF (RFC 5869), PEM block decoding, X.509 / CSR inspection and fingerprinting, generic ASN.1 BER/DER decoding, deterministic ECDSA P-256 + Ed25519 key derivation, deterministic X.509 self-signing (RFC 5280) and CMS/PKCS#7 signing (RFC 5652), with ECDSA signing via RFC 6979 deterministic `k` and Ed25519 via naturally-deterministic PureEdDSA (RFC 8032 / RFC 8419), plus RFC 1751 human-readable key encoding (`btoe` / `etob`).
+- **[Cryptography Functions](#cryptography-functions)**: HMAC (RFC 2104), HKDF (RFC 5869), PEM block decoding, X.509 / CSR inspection and fingerprinting, generic ASN.1 BER/DER decoding, deterministic ECDSA P-256 + Ed25519 key derivation, deterministic X.509 self-signing (RFC 5280) and CMS/PKCS#7 signing (RFC 5652), with ECDSA signing via RFC 6979 deterministic `k` and Ed25519 via naturally-deterministic PureEdDSA (RFC 8032 / RFC 8419), a deterministic JOSE stack (`jwt_sign` / `jwt_decode` / `jwt_verify` for compact JWS/JWT per RFC 7515/7519, `jwk_encode` / `jwk_decode` / `jwk_thumbprint` / `jwks` for JWK per RFC 7517/7638), plus RFC 1751 human-readable key encoding (`btoe` / `etob`).
 - **[Geographic Functions](#geographic-functions)**: geohash and Open Location Code (Plus codes), encode and decode.
 
 ## Expression Language Functions
@@ -104,6 +104,7 @@ The encode / validate / format / decode functions are syntax-only and dialect-ne
 | INI | `iniencode` | `inidecode` | Standard `[section]` / `key = value` files |
 | Java .properties | `javapropertiesencode` | `javapropertiesdecode` | `=`/`:`/whitespace separators, line continuation, `\uXXXX` escapes |
 | JSON (pretty-printed) | `jsonencode` | — | Terraform has `jsondecode` built-in. Does not HTML-escape `<` `>` `&` by default (`escape_html` option to opt in); configurable `indent` |
+| JSON (canonical) | `json_canonicalize` | — | RFC 8785 JCS: sorted keys, no whitespace, ES6 number formatting. The exact bytes to feed `hmac` / `hkdf` / `pkcs7_sign` |
 | KDL | `kdlencode` | `kdldecode` | Modern document language, v1 and v2 |
 | MessagePack | `msgpackencode` | `msgpackdecode` | Binary format ([msgpack.org spec](https://github.com/msgpack/msgpack/blob/master/spec.md)); base64-wrapped on the HCL side |
 | NDJSON / JSON Lines | `ndjsonencode` | `ndjsondecode` | One JSON value per line, trailing newline |
@@ -338,6 +339,13 @@ Pure functions for keyed hashing, key derivation, certificate / CSR / ASN.1 insp
 | `etob` | `(words string)` | `string` (hex) | custom (RFC 1751 §, faithful port). Decodes RFC 1751 English words back to a key, verifying the embedded parity |
 | `hkdf` | `(algorithm string, secret string, salt string, info string, length number)` | `string` (hex) | [`golang.org/x/crypto/hkdf`](https://pkg.go.dev/golang.org/x/crypto/hkdf), RFC 5869 |
 | `hmac` | `(algorithm string, key string, message string)` | `string` (hex) | stdlib `crypto/hmac`, RFC 2104 |
+| `jwk_decode` | `(jwk object, [options object])` | `string` (PEM) | [`go-jose/go-jose/v4`](https://github.com/go-jose/go-jose), RFC 7517 |
+| `jwk_encode` | `(pem string, [options object])` | object (JWK) | [`go-jose/go-jose/v4`](https://github.com/go-jose/go-jose), RFC 7517 |
+| `jwk_thumbprint` | `(key dynamic, [hash string])` | `string` (base64url) | [`go-jose/go-jose/v4`](https://github.com/go-jose/go-jose), RFC 7638 |
+| `jwks` | `(keys dynamic)` | object (JWK Set) | [`go-jose/go-jose/v4`](https://github.com/go-jose/go-jose), RFC 7517 §5 |
+| `jwt_decode` | `(token string)` | object `{ header, payload }` | stdlib `encoding/base64` + `encoding/json`, RFC 7519 (no signature check) |
+| `jwt_sign` | `(claims object, algorithm string, key string, [options object])` | `string` (compact JWS) | stdlib `crypto/*` + [`nspcc-dev/rfc6979`](https://github.com/nspcc-dev/rfc6979), RFC 7515 / 7518 / 8037 (deterministic) |
+| `jwt_verify` | `(token string, key string, [options object])` | object `{ valid, header, payload }` | stdlib `crypto/*`, RFC 7515 |
 | `pem_decode` | `(pem string)` | `list(object)` | stdlib `encoding/pem`, RFC 7468 |
 | `pkcs7_sign` | `(data string, private_key_pem string, cert_pem string)` | `string` (base64 DER) | [`digitorus/pkcs7`](https://github.com/digitorus/pkcs7) `SignWithoutAttr` + [`nspcc-dev/rfc6979`](https://github.com/nspcc-dev/rfc6979), RFC 5652 + RFC 6979 (ECDSA) / RFC 8419 (Ed25519) |
 | `x509_fingerprint` | `(pem string, algorithm string)` | `string` (hex) | stdlib SHA-1/SHA-2 over the cert's DER bytes |
@@ -349,6 +357,8 @@ Pure functions for keyed hashing, key derivation, certificate / CSR / ASN.1 insp
 `x509_self_sign` and `pkcs7_sign` both accept ECDSA P-256 and Ed25519 keys and dispatch the right signing algorithm on the key type. ECDSA P-256 signs deterministically via [RFC 6979](https://www.rfc-editor.org/rfc/rfc6979) `k` derivation; Ed25519 is naturally deterministic by spec ([RFC 8032 §5.1.6](https://www.rfc-editor.org/rfc/rfc8032#section-5.1.6)) and signs as PureEdDSA per [RFC 8419](https://www.rfc-editor.org/rfc/rfc8419) (no pre-hash, SignerInfo `digestAlgorithm` set to `id-sha512` per §3). `pkcs7_sign` produces the "no signed attributes" CMS shape; it deliberately is *not* a general-purpose CMS-with-signed-attrs builder, since `signingTime` would otherwise reintroduce non-determinism. RSA is intentionally out of scope; add it if a use case appears.
 
 **macOS configuration-profile signing** uses ECDSA P-256: Apple's installer rejects Ed25519-signed `.mobileconfig` files at the keychain-import layer as of macOS 26.5. For everything else (OpenSSL `cms`, container signing, internal tooling) Ed25519 is the better default: shorter keys, simpler signatures, deterministic by spec.
+
+**JOSE (JWT / JWS / JWK).** `jwt_sign` mints a compact JWS/JWT and is deterministic across every algorithm it offers: HS256/384/512 (HMAC), ES256 (ECDSA P-256 via RFC 6979, emitted as the fixed 64-byte `R||S` per RFC 7518), EdDSA (Ed25519), and RS256/384/512 (RSASSA-PKCS1-v1_5). Time claims are never derived from the clock: `exp` / `iat` / `nbf` are whatever the caller supplies. `jwt_decode` reads a token's header and payload without checking the signature; `jwt_verify` always checks the signature and only touches `exp` / `nbf` when you pass `options.now`, so it stays pure by default and can pin the accepted `alg` to guard against algorithm substitution. `jwk_encode` / `jwk_decode` convert a PEM key to and from a JWK (round-trip pair), `jwk_thumbprint` computes the RFC 7638 canonical thumbprint (the standard `kid`) from a PEM or a JWK, and `jwks` assembles a JWK Set for a JWKS endpoint. RSASSA-PSS is intentionally omitted because its signatures are randomised, which would break the determinism guarantee. Pair `jwt_sign(..., { kid = jwk_thumbprint(key) })` with `jwks([...])` to publish a self-consistent signing identity.
 
 Per-function documentation lives under [`docs/functions/`](docs/functions/) and on [registry.terraform.io](https://registry.terraform.io/providers/keeleysam/burnham/latest/docs).
 
