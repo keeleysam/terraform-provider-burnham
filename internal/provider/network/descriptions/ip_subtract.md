@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham ip_subtract function. docs/functions/ip_subtract.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Returns the signed integer distance between two IP addresses: how many address positions separate them.
 
 The result is `a - b`:

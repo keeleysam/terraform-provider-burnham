@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham vdfencode function. docs/functions/vdfencode.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Encodes a Terraform object as a [Valve Data Format (VDF)](https://developer.valvesoftware.com/wiki/KeyValues) string. VDF is a nested key-value format built from strings and nested objects.
 
 Value handling:

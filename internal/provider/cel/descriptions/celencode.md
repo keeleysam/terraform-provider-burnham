@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham celencode function. docs/functions/celencode.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Builds a [CEL](https://cel.dev) (Common Expression Language) expression string from a structured HCL value, so you can assemble expressions from Terraform data (variables, `for` expressions, `merge`, `concat`) with no string templating. The result is a canonical, deterministic CEL string suitable for GCP IAM / Access Context Manager conditions, Workload Identity Federation, Cloud Armor, Kubernetes CEL, and any other CEL sink.
 
 The data model mirrors the CEL canonical AST (`cel/expr/syntax.proto`). Two notations are accepted and may be freely mixed: a readable **surface** notation with shorter type-name keys and friendly operator aliases over that model, and the verbose **canonical** notation that uses the `syntax.proto` node and field names directly.

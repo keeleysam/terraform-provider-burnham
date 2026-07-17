@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham nat64_synthesize_cidrs function. docs/functions/nat64_synthesize_cidrs.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Converts a list of IPv4 CIDRs into their NAT64 IPv6 CIDR equivalents in a single call.
 
 Returns each IPv4 CIDR in `ipv4_cidrs` converted to its IPv6 equivalent under `nat64_prefix`. Only `/64` and `/96` NAT64 prefixes are supported.

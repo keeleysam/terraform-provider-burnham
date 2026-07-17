@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham oelencode function. docs/functions/oelencode.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Builds an [Okta Expression Language](https://developer.okta.com/docs/reference/okta-expression-language/) (OEL) string from a structured HCL value, so you assemble expressions from Terraform data (variables, `for` expressions, `merge`, `concat`) without string templating or manual quote escaping.
 
 The result is a canonical string suitable for `okta_group_rule.expression_value`, `okta_profile_mapping` mapping expressions, `okta_app_signon_policy_rule.custom_expression`, and Okta Identity Governance policy conditions.

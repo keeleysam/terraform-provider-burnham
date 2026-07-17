@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham plistencode function. docs/functions/plistencode.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Encodes a Terraform value as an [Apple property list](https://developer.apple.com/documentation/foundation/archives_and_serialization/property_lists) string.
 
 The `format` key in `options` selects the output format:

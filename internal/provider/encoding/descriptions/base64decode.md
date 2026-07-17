@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham base64decode function. docs/functions/base64decode.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Decodes base64 to its bytes, returned as a string of those raw bytes.
 
 Deliberately lenient, so it is a friction-free superset of Terraform's built-in `base64decode` (which rejects URL-safe input) and round-trips anything `base64encode` produces regardless of its options:

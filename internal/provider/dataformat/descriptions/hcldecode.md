@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham hcldecode function. docs/functions/hcldecode.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Parses an attribute-only [HCL2](https://github.com/hashicorp/hcl) document (a sequence of `key = value` attribute statements) and returns it as a Terraform object.
 
 Values are evaluated as static literals only, because there is no eval context:

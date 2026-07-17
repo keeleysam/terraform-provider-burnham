@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham cbordecode function. docs/functions/cbordecode.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Decodes [CBOR](https://www.rfc-editor.org/rfc/rfc8949) ([RFC 8949](https://www.rfc-editor.org/rfc/rfc8949)) bytes into a Terraform value. Provide the bytes as a standard base64 string, since HCL strings are UTF-8 only.
 
 Type mapping:

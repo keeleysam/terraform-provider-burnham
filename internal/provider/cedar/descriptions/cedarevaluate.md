@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham cedarevaluate function. docs/functions/cedarevaluate.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Authorizes a request against a [Cedar](https://www.cedarpolicy.com) policy document and returns the decision, for previewing or unit-testing authorization policies at plan time.
 
 Because it uses [cedar-go](https://github.com/cedar-policy/cedar-go), the official Go implementation of Cedar, the decision comes from Cedar's own evaluation engine rather than an approximation (Amazon Verified Permissions is built on the same engine).

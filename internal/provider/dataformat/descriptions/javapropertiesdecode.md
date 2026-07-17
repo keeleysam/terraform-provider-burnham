@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham javapropertiesdecode function. docs/functions/javapropertiesdecode.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Parses a Java [`.properties`](https://en.wikipedia.org/wiki/.properties) file body into an object. Comments (`#` and `!`), `=`/`:`/whitespace separators, line continuation via trailing `\`, and `\uXXXX` Unicode escapes are all handled per the standard `java.util.Properties` semantics.
 
 By default property expansion (`${other.key}` substitution) is disabled, so values are returned exactly as written. All values are returned as strings.

@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham ip_idunno_decode function. docs/functions/ip_idunno_decode.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Reverses [`ip_idunno_encode`](#function-ip_idunno_encode), turning an RFC 8771 I-DUNNO string back into a normal IP address.
 
 It walks the input codepoint-by-codepoint, determines each codepoint's UTF-8 byte length, and accumulates the corresponding number of low-order bits per RFC 8771 §3 Table 1:

@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham jwks function. docs/functions/jwks.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Assembles a [JWK Set](https://www.rfc-editor.org/rfc/rfc7517#section-5) (JWKS): given a list of keys, returns `{ keys = [ ...jwk... ] }`, the shape a JWKS endpoint serves.
 
 Each element of `keys` is either a PEM string or a JWK object. PEM inputs are converted to JWKs; JWK objects pass through normalised. Mix the two freely.

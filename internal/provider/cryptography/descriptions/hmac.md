@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham hmac function. docs/functions/hmac.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Computes the keyed-hash message authentication code ([HMAC](https://www.rfc-editor.org/rfc/rfc2104), RFC 2104) of `message` under `key`, and returns it hex-encoded. Reach for it at boundaries that expect a signed payload: webhook signatures, stable per-tenant tokens, or CSRF cookie validation.
 
 `algorithm` selects the underlying hash:

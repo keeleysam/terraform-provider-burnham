@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham hujsonencode function. docs/functions/hujsonencode.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Encodes a Terraform value as a HuJSON string with trailing commas and pretty-printed formatting. By default every object member and array element gets its own line, producing diff-friendly output.
 
 Pass an optional `options` object with these keys:

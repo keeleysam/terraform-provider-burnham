@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham jwt_decode function. docs/functions/jwt_decode.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Decodes a compact [JWS](https://www.rfc-editor.org/rfc/rfc7515) / [JWT](https://www.rfc-editor.org/rfc/rfc7519) into its `header` and `payload` objects, **without verifying the signature**. Use it to inspect a token's claims (for example to read a `kid` or an `iss` before choosing a verification key).
 
 Returns an object:

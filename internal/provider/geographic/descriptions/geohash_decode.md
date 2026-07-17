@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham geohash_decode function. docs/functions/geohash_decode.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Parses `code` and returns:
 
 - `latitude` / `longitude`: the centre of the cell, in degrees.

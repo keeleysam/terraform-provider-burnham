@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham pkcs7_sign function. docs/functions/pkcs7_sign.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 CMS / PKCS#7 signs `data` with an ECDSA P-256 or Ed25519 identity and returns base64-encoded DER. Use it as the on-the-wire signing primitive for signed configuration profiles, CMS payloads, and similar artefacts that must be byte-stable across Terraform runs.
 
 It produces an RFC 5652 SignedData ContentInfo that carries `data` as its encapsulated `id-data` content, with the signer cert embedded and no signed attributes (RFC 5652 §5.3 permits omitting `signedAttrs` when the encapsulated content type is `id-data`). Decode the result with `base64decode(...)` or feed it straight into `local_file.content_base64`.

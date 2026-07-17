@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham dotenvencode function. docs/functions/dotenvencode.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Encodes a flat string-keyed object as `KEY=value` lines in alphabetical key order. Numeric and boolean values are stringified; nested objects and lists are not allowed.
 
 ~> **Note:** Keys must be valid POSIX shell identifiers, matching `[A-Za-z_][A-Za-z0-9_]*`. An empty key fails the plan with `dotenv key cannot be empty`; any other invalid key (containing a dot, dash, whitespace, `=`, a quote, etc.) fails with `invalid dotenv key`.

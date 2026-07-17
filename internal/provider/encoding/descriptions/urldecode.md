@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham urldecode function. docs/functions/urldecode.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Decodes a percent-encoded string, the function Terraform core is missing entirely. `%XX` escapes are decoded in every mode; the `mode` only controls how `+` is treated, because `+` is ambiguous (a space in a query string, a literal `+` in a path):
 
 - `"query"` (default): form semantics; `+` → space (and `%2B` → `+`). The inverse of `urlencode`'s default.

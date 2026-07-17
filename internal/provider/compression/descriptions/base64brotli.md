@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham base64brotli function. docs/functions/base64brotli.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Compresses `input` with [Brotli](https://www.rfc-editor.org/rfc/rfc7932) and returns the result as a base64-encoded brotli stream. Use it when you want the smallest possible blob and can afford a brotli decompressor on the consuming side.
 
 On text-heavy payloads this is ~8–10% smaller than `base64gzip` (and a few percent smaller than `base64zopfli`), at the cost of requiring a brotli decompressor to read it. Decompress with `base64 -d | brotli -d`, or any RFC 7932 decoder (browsers' `Content-Encoding: br`, Python `brotli`, and so on). `brotli -d` ships with every current Linux distro.

@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham pem_decode function. docs/functions/pem_decode.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Splits PEM-armoured text (RFC 7468) into a structured list, one entry per block, so you can pull a certificate, key, or CSR body out of a bundle and hand it to another function.
 
 Each entry has:

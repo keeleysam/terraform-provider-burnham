@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham popcount function. docs/functions/popcount.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Returns the number of set bits (the **Hamming weight** or population count) in `value`. `popcount(255) = 8`, `popcount(0) = 0`.
 
 `value` is arbitrary-precision, so the count is exact past 64 bits: `popcount(2^64) = 1`.

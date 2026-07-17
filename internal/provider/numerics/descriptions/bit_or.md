@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham bit_or function. docs/functions/bit_or.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Returns the bitwise **OR** of every integer in the list, folded left to right (`numbers[0] | numbers[1] | ...`). The list must be non-empty; a single-element list returns that element unchanged.
 
 This is the natural way to combine flag bits into a single value: `bit_or([1, 2, 8]) = 11`.

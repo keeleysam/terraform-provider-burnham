@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham slugify function. docs/functions/slugify.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Returns a URL-safe slug derived from `s`. Lowercases the result, transliterates non-ASCII characters into their nearest ASCII equivalent (`café` → `cafe`, `Москва` → `moskva`, `北京` → `bei-jing`), strips remaining punctuation, and joins runs of word characters with hyphens.
 
 ```

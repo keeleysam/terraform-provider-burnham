@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham hkdf function. docs/functions/hkdf.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Derives `length` bytes of deterministic key material from `secret` using the [RFC 5869](https://www.rfc-editor.org/rfc/rfc5869) Extract-then-Expand HKDF construction, and returns them hex-encoded. Use it to stretch a single master secret into many stable subkeys (for example one per tenant) without storing each derived value.
 
 The two RFC 5869 steps:

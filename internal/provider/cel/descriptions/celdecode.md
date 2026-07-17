@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham celdecode function. docs/functions/celdecode.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Parses a [CEL](https://cel.dev) expression string and returns it as the HCL data tree that `celencode` consumes, so `provider::burnham::celencode(provider::burnham::celdecode(expr))` round-trips to the canonical form of `expr`. Primarily a tool for testing and for migrating hand-written CEL into the data model.
 
 The optional second argument selects the notation returned:

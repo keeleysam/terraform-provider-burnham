@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham bit_shift_left function. docs/functions/bit_shift_left.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Returns `value << n`: `value` shifted left by `n` bit positions, equivalent to multiplying by `2^n`. `bit_shift_left(1, 10) = 1024`.
 
 The result is an arbitrary-precision integer, so shifts that overflow a 64-bit word are exact: `bit_shift_left(1, 100)` returns `2^100` in full.

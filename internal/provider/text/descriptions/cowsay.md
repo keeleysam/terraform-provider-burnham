@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham cowsay function. docs/functions/cowsay.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Returns `message` rendered as the original `cowsay(1)` would: a multi-line speech bubble (or thought bubble) attached to an ASCII cow figure. Useful for embedding in `/etc/motd` via cloud-init, login banners, or anywhere a generated config benefits from a recognizable greeting.
 
 Options object:

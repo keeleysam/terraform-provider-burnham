@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham oeldecode function. docs/functions/oeldecode.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Parses an [Okta Expression Language](https://developer.okta.com/docs/reference/okta-expression-language/) string and returns it as the HCL data tree that `oelencode` consumes, so `provider::burnham::oelencode(provider::burnham::oeldecode(expr))` round-trips to the canonical form of `expr`.
 
 This is primarily a tool for testing and for migrating hand-written expressions into the data model.

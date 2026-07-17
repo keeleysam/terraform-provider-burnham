@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham regqword function. docs/functions/regqword.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Returns a tagged object representing a `REG_QWORD` (64-bit unsigned integer) registry value, for use inside a `regencode` payload.
 
 Pass the value as a decimal integer between `0` and `18446744073709551615`. HCL's number type (a 512-bit big.Float) carries the full range exactly. HCL doesn't accept `0x...` literals; convert to decimal manually or use `parseint("...", 16)`.

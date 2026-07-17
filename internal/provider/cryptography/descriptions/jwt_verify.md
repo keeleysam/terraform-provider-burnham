@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham jwt_verify function. docs/functions/jwt_verify.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Verifies a compact [JWS](https://www.rfc-editor.org/rfc/rfc7515) / [JWT](https://www.rfc-editor.org/rfc/rfc7519) signature against `key`, returning an object:
 
 - `valid`: `true` when the signature checks out (and, if `options.now` is supplied, the time claims are within range).

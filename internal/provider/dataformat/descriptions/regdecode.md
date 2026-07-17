@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham regdecode function. docs/functions/regdecode.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Parses a [Windows Registry Editor export (`.reg`) file](https://learn.microsoft.com/en-us/windows/win32/sysinfo/regedit) into a Terraform object.
 
 Both header versions are auto-detected:

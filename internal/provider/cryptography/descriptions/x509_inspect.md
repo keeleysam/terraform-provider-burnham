@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham x509_inspect function. docs/functions/x509_inspect.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Decodes a PEM-encoded X.509 certificate into a structured object you can assert on at plan time (expiry comparisons, SAN coverage, key usage) without shelling out to `openssl`.
 
 Parses the first `CERTIFICATE` block in `pem` and returns a fixed-shape object:

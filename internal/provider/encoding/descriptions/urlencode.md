@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham urlencode function. docs/functions/urlencode.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Percent-encodes a string for use in a URL. With no options it uses `mode = "query"` (`application/x-www-form-urlencoded`, encoding a space as `+`), which is byte-identical to Terraform's built-in `urlencode`. The optional `mode` selects where the value is going:
 
 - `"query"` (default): form encoding; space → `+`. For `a=b&c=d` query strings.

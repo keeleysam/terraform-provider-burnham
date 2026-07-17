@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham promqlencode function. docs/functions/promqlencode.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Builds a canonical [PromQL](https://prometheus.io/docs/prometheus/latest/querying/basics/) query from a structured HCL value, so you can assemble a query from Terraform data with correct quoting and no fragile string interpolation.
 
 The pain it removes is selectors. A label value or regex built with `${...}` breaks on quotes or special characters, whereas here the matcher values are quoted correctly for you.

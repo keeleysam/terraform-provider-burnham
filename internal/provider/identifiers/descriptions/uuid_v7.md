@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham uuid_v7 function. docs/functions/uuid_v7.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Returns a [version 7 UUID](https://www.rfc-editor.org/rfc/rfc9562#name-uuid-version-7) with a 48-bit Unix-millisecond timestamp embedded in its leading bytes.
 
 v7 UUIDs are **lexicographically sortable** by creation time, which makes them a much better choice than v4 for database keys, log IDs, and ordered storage.

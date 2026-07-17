@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham nanoid function. docs/functions/nanoid.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Returns a Nano ID string derived deterministically from `seed` via HMAC-SHA-256 in counter mode.
 
 The same `seed` always returns the same ID, which makes it a good fit for stable, plan-time identifiers that don't churn on re-apply:

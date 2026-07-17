@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham inidecode function. docs/functions/inidecode.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Parses an INI string into a Terraform object. The result is a two-level map: section names at the outer level, key/value pairs at the inner level. Keys outside any section ("global" keys) are placed under the empty-string key (`""`) so the structure stays uniform.
 
 All values are strings, since INI has no native type system, so cast on the Terraform side with `tonumber()` / `tobool()` when needed.

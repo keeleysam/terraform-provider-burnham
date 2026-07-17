@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham qr_ascii function. docs/functions/qr_ascii.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Returns a multi-line string containing a QR code that encodes `payload`, rendered with Unicode half-block characters so two QR-module rows fit in one terminal row. Scannable directly from any monospaced display with adequate light/dark contrast (light-background terminals and light themes scan the default dark-on-light output directly; dark themes such as white-on-black need the inverted `light_on_dark` variant, see `style`).
 
 Options object:

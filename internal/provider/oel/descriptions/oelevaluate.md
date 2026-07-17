@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham oelevaluate function. docs/functions/oelevaluate.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Evaluates an [Okta Expression Language](https://developer.okta.com/docs/reference/okta-expression-language/) expression against a supplied context and returns the result, for previewing or testing a group rule or profile mapping at plan time.
 
 ~> **Note:** This is a local approximation, not Okta's engine. Real evaluation happens server-side against live data.

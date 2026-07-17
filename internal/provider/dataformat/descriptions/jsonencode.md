@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham jsonencode function. docs/functions/jsonencode.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Encodes a Terraform value as a pretty-printed JSON string with newlines and indentation. Unlike Terraform's built-in `jsonencode`, which produces a single compact line, this function returns output that's reviewable in pull requests and diff-friendly when written to a file.
 
 The optional `options` object supports:

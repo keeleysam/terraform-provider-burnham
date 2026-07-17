@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham csvencode function. docs/functions/csvencode.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Encodes a list of objects as a CSV string. Each object becomes a row and object keys become columns. By default columns are sorted alphabetically and a header row is written.
 
 Pass an optional `options` object:

@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham jsonata_query function. docs/functions/jsonata_query.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Evaluates a [JSONata](https://jsonata.org/) expression against a Terraform value and returns the result. JSONata is a query and transformation language for JSON: it goes beyond field extraction with mapping, aggregation, object and array construction, and a large function library, so it is the transformation-oriented sibling of `jmespath_query` and `jsonpath_query`. It is also the expression language behind AWS Step Functions' JSONata mode.
 
 The expression follows the JSONata specification, including:

@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham applestringsencode function. docs/functions/applestringsencode.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Encodes a flat string-keyed object as an Apple `.strings` localization file body. Output is UTF-8 with `"key" = "value";` lines in alphabetical key order.
 
 Inside the quoted strings these characters are escaped, and other control characters pass through unchanged:

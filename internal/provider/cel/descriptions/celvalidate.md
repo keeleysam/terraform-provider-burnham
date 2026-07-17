@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham celvalidate function. docs/functions/celvalidate.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Returns `true` if `expr` is a syntactically valid [CEL](https://cel.dev) expression, `false` otherwise. Unlike `celformat`, it does not fail the plan on invalid input, so it is suitable for a boolean check (for example in a `precondition`).
 
 Validation is syntax-only: it does not require variables or functions to be declared, and it does not check types or evaluate the expression.

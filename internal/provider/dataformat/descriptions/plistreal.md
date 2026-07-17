@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham plistreal function. docs/functions/plistreal.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Returns a tagged object representing a plist `<real>` (floating-point) value. `plistencode` would normally encode whole numbers as `<integer>` and only fractional numbers as `<real>`, so this helper forces a whole number into `<real>` form when the consumer expects a floating-point type. `plistdecode` returns the same tagged-object shape for whole-number `<real>` elements, preserving the type across round-trips.
 
 Fractional values like `3.14` already encode as `<real>` automatically, so this helper is only needed for whole-number reals.

@@ -1,1 +1,3 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham median function. docs/functions/median.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Returns the median of `numbers`. For odd N this is the middle value of the sorted list; for even N it is the arithmetic mean of the two central values. Equivalent to `percentile(numbers, 50)`. Errors when `numbers` is empty.

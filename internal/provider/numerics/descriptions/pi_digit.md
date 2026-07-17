@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham pi_digit function. docs/functions/pi_digit.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Returns the n-th decimal digit of π *following* the decimal point, formatted as the [RFC 3091 §2.1.2](https://www.rfc-editor.org/rfc/rfc3091#section-2.1.2) UDP reply payload `reply = nth_digit ":" DIGIT`. No whitespace, no newline, leading 3 implied per the RFC's "Note" section.
 
 `n` is 1-indexed per the RFC.

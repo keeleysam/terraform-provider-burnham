@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham ip_to_mixed_notation function. docs/functions/ip_to_mixed_notation.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Returns the IPv6 address formatted with the last 32 bits expressed as a dotted-decimal IPv4 address, e.g. `64:ff9b::192.0.2.1` instead of `64:ff9b::c000:201`. Zero-compression (::) is applied to the hex portion. IPv4 addresses are returned unchanged.
 
 Common uses:

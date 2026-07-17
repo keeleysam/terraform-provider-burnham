@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham bit_shift_right function. docs/functions/bit_shift_right.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Returns `value >> n`: `value` shifted right by `n` bit positions. `bit_shift_right(1024, 3) = 128`.
 
 This is an **arithmetic** shift: for a negative `value` it floors toward negative infinity (matching `math/big`'s `Rsh`), so `bit_shift_right(-8, 1) = -4` and `bit_shift_right(-1, 1) = -1`, not truncation toward zero. For non-negative values it is the same as integer division by `2^n`.

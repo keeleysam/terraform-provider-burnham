@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham msgpackdecode function. docs/functions/msgpackdecode.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Decodes [MessagePack](https://msgpack.org/) bytes into a Terraform value. Provide the bytes as a standard base64 string, since HCL strings are UTF-8 only.
 
 Type mapping:

@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham pluscode_encode function. docs/functions/pluscode_encode.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Returns the [Plus code](https://maps.google.com/pluscodes/) (Open Location Code) for `(latitude, longitude)` at the requested `length`. Code length controls cell size:
 
 | length | cell size |

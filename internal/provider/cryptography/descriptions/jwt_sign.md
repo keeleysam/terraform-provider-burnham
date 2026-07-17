@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham jwt_sign function. docs/functions/jwt_sign.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Mints a compact [JWS](https://www.rfc-editor.org/rfc/rfc7515) / [JWT](https://www.rfc-editor.org/rfc/rfc7519), returning the `header.payload.signature` string. Reach for it to sign service-account assertions, short-lived API tokens, or webhook payloads directly in a plan.
 
 `claims` is the JWT payload, an arbitrary object. The registered claim names (`iss`, `sub`, `aud`, `exp`, `iat`, `nbf`, `jti`) are treated as ordinary members: this function never reads the wall clock, so if you want `exp` / `iat` / `nbf` you must supply them yourself (compute them upstream from `plantimestamp()` or a variable).

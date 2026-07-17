@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham csr_inspect function. docs/functions/csr_inspect.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Decodes a PKCS #10 certificate signing request (RFC 2986) into a structured object, useful at plan time for asserting that a CSR's subject, SANs, or signature algorithm are what you expect before handing it to a CA.
 
 Parses the first `CERTIFICATE REQUEST` (or the legacy pre-RFC 7468 `NEW CERTIFICATE REQUEST`) block in `pem` and returns a fixed-shape object:

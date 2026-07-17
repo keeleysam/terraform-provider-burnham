@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham celformat function. docs/functions/celformat.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Parses a hand-written [CEL](https://cel.dev) expression string and returns its canonical form, failing the plan with a diagnostic if the expression is not syntactically valid. Use `celvalidate` instead if you want a boolean rather than a hard failure.
 
 The returned string is normalized (canonical quoting, spacing, and precedence-minimal parentheses) and stable across runs.

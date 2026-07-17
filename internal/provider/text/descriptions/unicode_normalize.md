@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham unicode_normalize function. docs/functions/unicode_normalize.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Re-encodes `s` under the named [Unicode Normalization Form](https://unicode.org/reports/tr15/) so that strings which look identical also compare equal byte-for-byte. This fixes the classic "looks the same, doesn't compare equal" bug: browsers, macOS, and rich-text editors often hand you NFD-encoded text, while most server-side data is NFC. For most use cases the right call is `unicode_normalize(s, "NFC")`.
 
 The `form` argument selects one of the four normalization forms (two canonical, two compatibility):

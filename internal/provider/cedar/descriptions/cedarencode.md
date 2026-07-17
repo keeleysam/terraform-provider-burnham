@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham cedarencode function. docs/functions/cedarencode.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Builds a single [Cedar](https://www.cedarpolicy.com) policy, in its human-readable text form, from a structured HCL value, so you can assemble a policy from Terraform data with no string templating. The result is a canonical policy statement suitable for `aws_verifiedpermissions_policy`.
 
 The HCL you pass mirrors Cedar's own JSON policy format, the EST, one-to-one, so `cedardecode` produces the same shape. Cedar defines the EST directly, and this function walks that structured value (not a JSON string).

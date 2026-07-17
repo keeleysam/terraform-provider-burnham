@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham regdword function. docs/functions/regdword.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Returns a tagged object representing a `REG_DWORD` (32-bit unsigned integer) registry value, for use inside a `regencode` payload.
 
 Pass the value as a decimal integer between `0` and `4294967295`. HCL doesn't accept `0x...` literals; convert to decimal manually or use `parseint("01020304", 16)`.

@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham plistdecode function. docs/functions/plistdecode.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Parses an [Apple property list](https://developer.apple.com/documentation/foundation/archives_and_serialization/property_lists) string into a Terraform value.
 
 The format is auto-detected: XML, binary, OpenStep, and GNUStep are all accepted. For binary plists, pass the output of `filebase64()`; base64-encoded input is detected automatically.

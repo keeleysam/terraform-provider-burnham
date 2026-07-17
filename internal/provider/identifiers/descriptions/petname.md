@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham petname function. docs/functions/petname.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Returns a short, human-friendly identifier composed of dictionary words, the same form `dustinkirkland/golang-petname` and Heroku app names take.
 
 Deterministic: the same `seed` always returns the same petname. The word indices are derived from `HMAC-SHA-256(seed, "burnham/petname")`, which keeps the result stable across plans without leaking anything about the seed.

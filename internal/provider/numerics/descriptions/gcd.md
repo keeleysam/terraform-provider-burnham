@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham gcd function. docs/functions/gcd.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Returns the **greatest common divisor** of a list of integers: the largest integer that divides every element with no remainder. Uses arbitrary-precision arithmetic, so a list of very large integers returns an exact result.
 
 Every element must be an integer. Negatives are reduced to their absolute value, so the result is always non-negative.

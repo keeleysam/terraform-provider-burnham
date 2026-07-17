@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham json_canonicalize function. docs/functions/json_canonicalize.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Serializes a value as canonical JSON per [RFC 8785](https://www.rfc-editor.org/rfc/rfc8785) (the JSON Canonicalization Scheme, JCS). Canonical JSON is the exact byte sequence you feed to a signing or MAC primitive so that the same logical value always hashes to the same digest, regardless of key order or whitespace.
 
 Reach for it when the bytes matter:

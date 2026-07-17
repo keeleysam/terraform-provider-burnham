@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham jmespath_query function. docs/functions/jmespath_query.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Evaluates a [JMESPath](https://jmespath.org/) expression against a Terraform value and returns the matching result. Use it to extract fields from large nested structures (decoded API responses, manifests, configuration trees) without long chains of `try(local.x.foo[0].bar, null)`.
 
 The expression follows the JMESPath specification, including:

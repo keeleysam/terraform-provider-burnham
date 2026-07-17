@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham pigeon_throughput function. docs/functions/pigeon_throughput.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Returns a fixed-shape object describing the theoretical IP-over-Avian-Carriers throughput for transmitting `payload_bytes` over `distance_km` at `altitude_m`, faithful to the metrics implied by [RFC 1149](https://www.rfc-editor.org/rfc/rfc1149) and [RFC 2549](https://www.rfc-editor.org/rfc/rfc2549).
 
 ### Output fields

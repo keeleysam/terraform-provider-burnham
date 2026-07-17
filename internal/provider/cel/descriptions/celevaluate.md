@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham celevaluate function. docs/functions/celevaluate.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Compiles and evaluates a [CEL](https://cel.dev) expression against variable bindings and returns the result as a Terraform value. Useful for testing the logic of an expression you built with `celencode`, and for computing or validating values inside a plan.
 
 This evaluates **standard CEL only**: cel-go's standard library, its extension libraries (strings, math, lists, sets, encoders, bindings, two-variable comprehensions, regex, network), and optional types.

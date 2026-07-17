@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham ip_idunno_encode function. docs/functions/ip_idunno_encode.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Encodes an IPv4 or IPv6 address into the Internationalized Deliberately Unreadable Network Notation per [RFC 8771](https://www.rfc-editor.org/rfc/rfc8771.html) (April 1, 2020).
 
 The output is a UTF-8 string of Unicode codepoints whose UTF-8 byte lengths carry the address bits per RFC §3 Table 1:

@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham uuid_inspect function. docs/functions/uuid_inspect.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Parses any UUID and returns a fixed-shape object describing it.
 
 The returned object has these attributes:

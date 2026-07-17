@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham x509_fingerprint function. docs/functions/x509_fingerprint.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Returns the hex-encoded `algorithm` digest of the first `CERTIFICATE` block's DER bytes, the same value `openssl x509 -fingerprint -<algorithm>` produces, lowercased and with the colon separators between byte pairs removed. Handy for pinning a certificate or comparing it against a known-good digest.
 
 `algorithm` is one of:

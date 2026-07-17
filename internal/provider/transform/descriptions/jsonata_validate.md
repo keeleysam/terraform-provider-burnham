@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham jsonata_validate function. docs/functions/jsonata_validate.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Returns `true` if `expression` is a syntactically valid [JSONata](https://jsonata.org/) expression, `false` otherwise. Unlike `jsonata_query`, it does not fail the plan on invalid input, so it is suitable for a boolean check (for example in a `precondition`).
 
 Validation is syntax-only: it does not require the referenced fields to exist, and it does not evaluate the expression.

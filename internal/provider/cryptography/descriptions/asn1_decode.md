@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham asn1_decode function. docs/functions/asn1_decode.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Decodes ASN.1 DER bytes into a recursive object tree you can walk in HCL, for pulling apart an extension payload, a field inside an opaque blob, or any structure Terraform has no native decoder for.
 
 Input is base64-encoded DER bytes, the same shape `pem_decode` returns in `base64_body`, which keeps inputs ASCII-safe inside HCL strings.

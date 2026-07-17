@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham parse_kv function. docs/functions/parse_kv.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Parses a delimited key/value string into a `map(string)`. This replaces the fragile HCL idiom `{ for p in split(",", s) : split("=", p)[0] => split("=", p)[1] }`, which breaks the moment a value contains an `=`, carries surrounding whitespace, or is quoted to protect a literal separator.
 
 ```

@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham ed25519_key_from_seed function. docs/functions/ed25519_key_from_seed.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Derives an Ed25519 private key deterministically from `seed` and returns it as PEM PKCS#8. The same `seed` always produces the same key, so you get a stable signing identity from a checked-in secret or input artefact rather than a randomly generated key stored in state.
 
 `seed` is stretched to 32 bytes with HKDF-SHA256 (info string `%q`) and used as the Ed25519 private-key seed per [RFC 8032 §5.1.5](https://www.rfc-editor.org/rfc/rfc8032#section-5.1.5).

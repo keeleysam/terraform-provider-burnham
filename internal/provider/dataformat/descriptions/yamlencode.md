@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham yamlencode function. docs/functions/yamlencode.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Encodes a Terraform value as a YAML string. Unlike Terraform's built-in `yamlencode`, this defaults to block style, renders multi-line strings as literal block scalars (`|`), and supports inline comments through `options.comments`.
 
 Pass an optional `options` object. Every key is optional:

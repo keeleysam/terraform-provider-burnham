@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham regencode function. docs/functions/regencode.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Encodes a Terraform object as a [Windows Registry Editor export (`.reg`) file](https://learn.microsoft.com/en-us/windows/win32/sysinfo/regedit) in Version 5 format.
 
 The input must be a two-level map: registry key paths at the outer level, value names at the inner level. The default value uses the key name `"@"`.

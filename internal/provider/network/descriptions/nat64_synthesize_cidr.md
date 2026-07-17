@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham nat64_synthesize_cidr function. docs/functions/nat64_synthesize_cidr.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Returns the IPv6 CIDR that corresponds to `ipv4_cidr` under the given NAT64 `nat64_prefix`. Only /64 and /96 NAT64 prefixes are supported.
 
 By default returns the result in mixed `x:x:x:x:x:x:d.d.d.d/N` notation. Pass `true` as the optional third argument to use standard hex notation.

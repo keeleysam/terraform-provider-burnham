@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham lcm function. docs/functions/lcm.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Returns the **least common multiple** of a list of integers: the smallest non-negative integer that every element divides evenly. Uses arbitrary-precision arithmetic and combines pairwise as `l / gcd(l, x) * abs(x)`, dividing before multiplying so an intermediate product never overflows and the result stays exact for very large inputs.
 
 Every element must be an integer. Negatives are reduced to their absolute value, so the result is always non-negative.

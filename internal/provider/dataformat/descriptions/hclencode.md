@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham hclencode function. docs/functions/hclencode.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Encodes a Terraform object as a sequence of HCL attribute statements (`key = value` lines), one per object member, in alphabetical key order.
 
 Values render in their natural HCL form:

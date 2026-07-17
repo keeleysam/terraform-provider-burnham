@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham uuid_v5 function. docs/functions/uuid_v5.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Returns a [version 5 UUID](https://www.rfc-editor.org/rfc/rfc9562#name-uuid-version-5): the SHA-1 hash of a namespace UUID concatenated with a name.
 
 This function is **deterministic**: the same `(namespace, name)` pair always returns the same UUID, with no randomness involved. That makes it ideal for stable, plan-time IDs derived from human-meaningful names.

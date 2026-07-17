@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham pluscode_decode function. docs/functions/pluscode_decode.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Parses a full Open Location Code and returns:
 
 - `latitude` / `longitude`: the centre of the cell, in degrees.

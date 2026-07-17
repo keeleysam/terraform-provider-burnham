@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham promqlformat function. docs/functions/promqlformat.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Parses `query` and returns its canonical [PromQL](https://prometheus.io/docs/prometheus/latest/querying/basics/) serialization: normalized spacing and operator layout, on a single line.
 
 Pass `{ pretty = true }` for the parser's multi-line, indented form, which wraps only long sub-expressions (nice for a long alerting expression).

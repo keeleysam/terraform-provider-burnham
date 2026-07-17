@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham promqlvalidate function. docs/functions/promqlvalidate.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Returns `true` if `query` is a valid [PromQL](https://prometheus.io/docs/prometheus/latest/querying/basics/) expression, `false` otherwise.
 
 Unlike `promqlformat`, it does not fail the plan on invalid input, so it suits a boolean check in a `precondition` guarding a hand-written query (in a `grafana_rule_group`, a Mimir rule, a `PrometheusRule` manifest, or a dashboard panel).

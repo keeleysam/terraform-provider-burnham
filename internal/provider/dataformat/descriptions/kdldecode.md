@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham kdldecode function. docs/functions/kdldecode.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Parses a [KDL document](https://kdl.dev/) string into a Terraform list of node objects.
 
 Each node object has these keys:

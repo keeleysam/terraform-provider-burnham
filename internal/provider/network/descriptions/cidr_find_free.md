@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham cidr_find_free function. docs/functions/cidr_find_free.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Finds the first free subnet of a given size inside an address pool, so you can allocate the next subnet without hardcoding offsets.
 
 Returns the first prefix of length `prefix_len` that is available within `pool` after removing all `used` CIDRs.

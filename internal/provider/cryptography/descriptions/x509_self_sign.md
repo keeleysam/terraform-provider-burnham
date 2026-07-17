@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham x509_self_sign function. docs/functions/x509_self_sign.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Builds a self-signed X.509 v3 certificate from a PEM-encoded private key and returns it as PEM. Use it, together with a deterministic key, to mint a stable signing identity that does not churn in Terraform state.
 
 Signing is deterministic on both supported key types: ECDSA P-256 uses RFC 6979 deterministic `k`, Ed25519 uses PureEdDSA (naturally deterministic per RFC 8032). Given the same `private_key_pem` and the same parameters, the output is byte-identical across runs. Paired with [`ecdsa_p256_key_from_seed`](#function-ecdsa_p256_key_from_seed) or [`ed25519_key_from_seed`](#function-ed25519_key_from_seed), the full chain from seed to key to cert is deterministic, with no random state at any step.

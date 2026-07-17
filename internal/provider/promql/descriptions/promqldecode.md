@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham promqldecode function. docs/functions/promqldecode.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Parses a [PromQL](https://prometheus.io/docs/prometheus/latest/querying/basics/) query and returns it as the HCL data tree that `promqlencode` consumes, so `promqlencode(promqldecode(query))` round-trips to the canonical form of `query`.
 
 Use it to lift a hand-written query into the structured model, whether to edit part of it programmatically or to check what tree a query corresponds to.

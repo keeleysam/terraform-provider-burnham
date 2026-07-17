@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham oelvalidate function. docs/functions/oelvalidate.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Returns `true` if `expr` is a syntactically valid [Okta Expression Language](https://developer.okta.com/docs/reference/okta-expression-language/) expression, `false` otherwise. Unlike `oelformat`, it does not fail the plan on invalid input, so it suits a boolean check (for example in a `precondition` guarding a hand-written `okta_group_rule.expression_value`).
 
 Validation is syntax-only: it does not resolve attributes, check types, or evaluate the expression. It covers the full documented grammar (class calls, group builtins, receiver method calls, the Identity Engine method dialect, indexing, projection, Elvis, and `matches`). Backed by [okta-expression-parser](https://github.com/keeleysam/okta-expression-parser).

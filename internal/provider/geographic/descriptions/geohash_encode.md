@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham geohash_encode function. docs/functions/geohash_encode.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Returns the [geohash](https://en.wikipedia.org/wiki/Geohash) of the given `(latitude, longitude)` at the requested `precision` (number of base-32 characters). Higher precision = smaller cell. Approximate cell side at the equator (worst case):
 
 | precision | cell side |

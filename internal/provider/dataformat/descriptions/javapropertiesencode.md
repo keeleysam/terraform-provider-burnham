@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham javapropertiesencode function. docs/functions/javapropertiesencode.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Encodes a flat string-keyed object as `key=value` lines in alphabetical key order, ready to write to disk. Numeric and boolean values are stringified; nested objects and lists are not allowed.
 
 Keys and values are escaped according to `java.util.Properties` rules:

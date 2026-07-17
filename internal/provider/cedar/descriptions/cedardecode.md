@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham cedardecode function. docs/functions/cedardecode.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Parses a single [Cedar](https://www.cedarpolicy.com) policy in its human-readable text form and returns Cedar's JSON policy format, the EST, as a data tree.
 
 It is the inverse of `cedarencode`, so `cedarencode(cedardecode(x))` round-trips to the canonical form of `x`. Use it to inspect, query, or patch a hand-written policy as structured data, or to discover the EST shape to feed back into `cedarencode`.

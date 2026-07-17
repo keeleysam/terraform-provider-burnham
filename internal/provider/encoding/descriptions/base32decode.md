@@ -1,3 +1,5 @@
+<!-- Edit here: this is the MarkdownDescription source for the burnham base32decode function. docs/functions/base32decode.md is generated from it by "go generate ./..."; do not edit the generated doc. -->
+
 Decodes base32 to its bytes, returned as a string of those raw bytes.
 
 Decoding is lenient, so a TOTP secret pasted in any case, padded or not, decodes cleanly:
