@@ -27,7 +27,7 @@ Burnham is organized into eleven families of functions:
 - **[Query and Patch Functions](#query-and-patch-functions)**: jq, JMESPath, JSONPath (RFC 9535), JSON Patch (RFC 6902), and JSON Merge Patch (RFC 7396) over decoded structures.
 - **[Numerics Functions](#numerics-functions)**: RFC 3091 (Pi Digit Generation Protocol), statistics, and small math helpers.
 - **[Identifiers Functions](#identifiers-functions)**: deterministic UUIDs (v5, v7), Nano ID, and petname.
-- **[Text Functions](#text-functions)**: Unicode normalization, transliterating slugify, Levenshtein distance, word-wrap, dedent, cowsay, ASCII QR.
+- **[Text Functions](#text-functions)**: Unicode normalization, transliterating slugify, Levenshtein distance, word-wrap, dedent, key/value parsing, cowsay, ASCII QR.
 - **[Cryptography Functions](#cryptography-functions)**: HMAC (RFC 2104), HKDF (RFC 5869), PEM block decoding, X.509 / CSR inspection and fingerprinting, generic ASN.1 BER/DER decoding, deterministic ECDSA P-256 + Ed25519 key derivation, deterministic X.509 self-signing (RFC 5280) and CMS/PKCS#7 signing (RFC 5652), with ECDSA signing via RFC 6979 deterministic `k` and Ed25519 via naturally-deterministic PureEdDSA (RFC 8032 / RFC 8419), plus RFC 1751 human-readable key encoding (`btoe` / `etob`).
 - **[Geographic Functions](#geographic-functions)**: geohash and Open Location Code (Plus codes), encode and decode.
 
@@ -314,6 +314,7 @@ Pure functions for string manipulation and small text-rendering tasks. Carefully
 | `cowsay` | `(message string [, options object])` | `string` | self-contained; no external `cowsay` binary involved |
 | `dedent` | `(s string)` | `string` | `textwrap.dedent`: strips the common leading whitespace from every line (the inverse of core `indent`) |
 | `levenshtein` | `(a string, b string)` | `number` | classic two-row DP, codepoint-aware |
+| `parse_kv` | `(s string [, options object])` | `map(string)` | quote-aware key/value string parser; robust replacement for the naive `split`-based HCL idiom |
 | `qr_ascii` | `(payload string [, options object])` | `string` | [`rsc.io/qr`](https://pkg.go.dev/rsc.io/qr) + half-block Unicode rendering |
 | `slugify` | `(s string [, options object])` | `string` | [`gosimple/slug`](https://github.com/gosimple/slug): Unicode → ASCII transliteration |
 | `unicode_normalize` | `(s string, form string)` | `string` | [`golang.org/x/text/unicode/norm`](https://pkg.go.dev/golang.org/x/text/unicode/norm); UAX #15 |

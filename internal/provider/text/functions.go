@@ -16,5 +16,6 @@ func Functions() []func() function.Function {
 		NewCowsayFunction,
 		NewQRAsciiFunction,
 		NewDedentFunction,
+		NewParseKVFunction,
 	}
 }
