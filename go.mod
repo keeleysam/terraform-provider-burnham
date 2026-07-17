@@ -47,6 +47,8 @@ require (
 	github.com/cedar-policy/cedar-go v1.8.0
 	github.com/go-jose/go-jose/v4 v4.1.4
 	github.com/gowebpki/jcs v1.0.1
+	github.com/lucasb-eyer/go-colorful v1.4.0
+	github.com/mazznoer/csscolorparser v0.1.8
 	github.com/prometheus/common v0.70.0
 	github.com/prometheus/prometheus v0.313.1
 	github.com/recolabs/gnata v0.2.2

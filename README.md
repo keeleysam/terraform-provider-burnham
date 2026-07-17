@@ -30,6 +30,7 @@ Burnham is organized into eleven families of functions:
 - **[Text Functions](#text-functions)**: Unicode normalization, transliterating slugify, Levenshtein distance, word-wrap, dedent, key/value parsing, cowsay, ASCII QR.
 - **[Cryptography Functions](#cryptography-functions)**: HMAC (RFC 2104), HKDF (RFC 5869), PEM block decoding, X.509 / CSR inspection and fingerprinting, generic ASN.1 BER/DER decoding, deterministic ECDSA P-256 + Ed25519 key derivation, deterministic X.509 self-signing (RFC 5280) and CMS/PKCS#7 signing (RFC 5652), with ECDSA signing via RFC 6979 deterministic `k` and Ed25519 via naturally-deterministic PureEdDSA (RFC 8032 / RFC 8419), a deterministic JOSE stack (`jwt_sign` / `jwt_decode` / `jwt_verify` for compact JWS/JWT per RFC 7515/7519, `jwk_encode` / `jwk_decode` / `jwk_thumbprint` / `jwks` for JWK per RFC 7517/7638), plus RFC 1751 human-readable key encoding (`btoe` / `etob`).
 - **[Geographic Functions](#geographic-functions)**: geohash and Open Location Code (Plus codes), encode and decode.
+- **[Color Functions](#color-functions)**: parse and reformat CSS colors, WCAG contrast ratio and readable-text selection, N deterministic distinct colors, blend, ramp, and OKLCh channel adjustment (lighten/darken/saturate/hue), all perceptually uniform.
 
 ## Expression Language Functions
 
@@ -374,6 +375,24 @@ Pure functions for geocoding: turning `(latitude, longitude)` pairs into short a
 | `pluscode_encode` | `(latitude number, longitude number, length number)` | `string` | Google `open-location-code` `Encode` |
 
 Both decoders return `{latitude, longitude, lat_min, lat_max, lon_min, lon_max, …}` so callers can use either the centre or the cell extents. Plus code decoder additionally returns the code's `length`.
+
+Per-function documentation lives under [`docs/functions/`](docs/functions/) and on [registry.terraform.io](https://registry.terraform.io/providers/keeleysam/burnham/latest/docs).
+
+## Color Functions
+
+Pure, deterministic color operations for the places infrastructure config actually carries colors: label backgrounds (GitHub / GitLab), dashboard series (Grafana / Datadog), and generated themes. All math runs in the perceptually-uniform OKLab / OKLCh space and serializes back to sRGB, mirroring CSS Color 4 semantics; there is no randomness, so plan output never churns.
+
+| Function | Signature | Returns | Backed by |
+|---|---|---|---|
+| `color_adjust` | `(color string, adjustments object)` | `string` | [`go-colorful`](https://github.com/lucasb-eyer/go-colorful) OKLCh |
+| `color_contrast_ratio` | `(a string, b string)` | `number` | WCAG 2.x relative luminance |
+| `color_convert` | `(color string, target string, [options])` | `string` | [`csscolorparser`](https://github.com/mazznoer/csscolorparser) + `go-colorful` |
+| `color_distinct` | `(count number, [options])` | `list(string)` | `go-colorful` OKLCh |
+| `color_mix` | `(a string, b string, amount number, [options])` | `string` | `go-colorful` blends |
+| `color_ramp` | `(stops list(string), count number, [options])` | `list(string)` | `go-colorful` blends |
+| `color_readable_text` | `(background string, [options])` | `string` | WCAG 2.x contrast |
+
+Colors are accepted in any CSS notation (hex, `rgb()`, `hsl()`, `hwb()`, `lab()`, `oklch()`, named). `color_adjust` collapses lighten / darken / saturate / desaturate / rotate-hue / grayscale / fade into one function via OKLCh channel operations (`{ lightness = "*0.9" }`, `{ hue = "+30" }`).
 
 Per-function documentation lives under [`docs/functions/`](docs/functions/) and on [registry.terraform.io](https://registry.terraform.io/providers/keeleysam/burnham/latest/docs).
 
