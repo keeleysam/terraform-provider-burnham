@@ -224,6 +224,32 @@ func TestAcc_CELFormat_WrapBeforeOperator(t *testing.T) {
 	)
 }
 
+// wrap_on_operators is documented to take friendly operator symbols ("&&", "||"), which the function must translate to the cel-go unparser's internal operator IDs ("_&&_", "_||_"). Passing the raw symbol straight through makes cel-go reject it ("Unsupported operator: &&").
+func TestAcc_CELFormat_WrapOnOperatorsSymbol(t *testing.T) {
+	runOutputTest(t,
+		`output "test" {
+			value = provider::burnham::celformat(
+				"aaaaa == 1 && bbbbb == 2 && ccccc == 3",
+				{ format = { wrap_on_column = 20, wrap_on_operators = ["&&"] } },
+			)
+		}`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("aaaaa == 1 && bbbbb == 2 &&\nccccc == 3")),
+	)
+}
+
+// The cel-go internal operator ID must keep working too, so authors who pass "_&&_" are not broken by the symbol translation.
+func TestAcc_CELFormat_WrapOnOperatorsID(t *testing.T) {
+	runOutputTest(t,
+		`output "test" {
+			value = provider::burnham::celformat(
+				"aaaaa == 1 && bbbbb == 2 && ccccc == 3",
+				{ format = { wrap_on_column = 20, wrap_on_operators = ["_&&_"] } },
+			)
+		}`,
+		statecheck.ExpectKnownOutputValue("test", knownvalue.StringExact("aaaaa == 1 && bbbbb == 2 &&\nccccc == 3")),
+	)
+}
+
 func TestAcc_CELFormat_InvalidError(t *testing.T) {
 	runErrorTest(t,
 		`output "test" {

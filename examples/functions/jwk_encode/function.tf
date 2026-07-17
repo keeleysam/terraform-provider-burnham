@@ -9,7 +9,7 @@ output "jwk" {
     alg = "ES256"
     kid = provider::burnham::jwk_thumbprint(local.ec_key)
   })
-  /* -> an object like:
+  /* → an object like:
      {
        kty = "EC"
        crv = "P-256"

@@ -12,7 +12,7 @@ output "hs256" {
     "topsecret",
     { typ = "JWT" },
   )
-  // -> "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzU2ODk2MDAsInJvbGUiOiJhZG1pbiIsInN1YiI6ImFsaWNlIn0.iSfdZFITiXsyvzRTshLDuWiIaRDsw1XWuk73vxFCwp0"
+  // → "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzU2ODk2MDAsInJvbGUiOiJhZG1pbiIsInN1YiI6ImFsaWNlIn0.iSfdZFITiXsyvzRTshLDuWiIaRDsw1XWuk73vxFCwp0"
 }
 
 // ES256 with a deterministic key derived from a seed: identity and signature are both a pure function of the inputs.

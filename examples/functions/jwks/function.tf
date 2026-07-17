@@ -12,5 +12,5 @@ output "jwks_json" {
     provider::burnham::jwk_encode(local.key1, { kid = "2025-06", use = "sig" }),
     provider::burnham::jwk_encode(local.key2, { kid = "2025-07", use = "sig" }),
   ]))
-  // -> {"keys":[{"crv":"P-256","kid":"2025-06","kty":"EC","use":"sig","x":"...","y":"..."}, ...]}
+  // → {"keys":[{"crv":"P-256","kid":"2025-06","kty":"EC","use":"sig","x":"...","y":"..."}, ...]}
 }

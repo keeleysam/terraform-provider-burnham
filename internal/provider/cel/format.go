@@ -6,6 +6,7 @@ import (
 	"github.com/elastic/celfmt"
 	"github.com/google/cel-go/common"
 	"github.com/google/cel-go/common/ast"
+	"github.com/google/cel-go/common/operators"
 	"github.com/google/cel-go/parser"
 )
 
@@ -39,12 +40,36 @@ func (c formatConfig) unparserOpts() []parser.UnparserOption {
 		o = append(o, parser.WrapOnColumn(c.wrapCol))
 	}
 	if c.wrapOps != nil {
-		o = append(o, parser.WrapOnOperators(c.wrapOps...))
+		o = append(o, parser.WrapOnOperators(celOperatorIDs(c.wrapOps)...))
 	}
 	if c.wrapAfter != nil {
 		o = append(o, parser.WrapAfterColumnLimit(*c.wrapAfter))
 	}
 	return o
+}
+
+// celLogicalSymbols augments operators.Find with the operators cel-go's symbol table omits: Find only knows arithmetic and comparison symbols, not the logical/ternary ones, which are the operators worth wrapping on. This lets the friendly "&&" / "||" a user writes reach WrapOnOperators as the IDs it wants.
+var celLogicalSymbols = map[string]string{
+	"&&": operators.LogicalAnd,
+	"||": operators.LogicalOr,
+	"?:": operators.Conditional,
+}
+
+// celOperatorIDs maps friendly operator symbols to the cel-go unparser's internal operator IDs. cel-go's WrapOnOperators wants the ID form ("_&&_"), but wrap_on_operators is documented to take the symbol a user actually writes ("&&"), so we translate. A value already in ID form (or any symbol cel-go doesn't know) passes through unchanged, so cel-go still reports it if it is genuinely unsupported.
+func celOperatorIDs(symbols []string) []string {
+	ids := make([]string, len(symbols))
+	for i, s := range symbols {
+		if id, ok := operators.Find(s); ok {
+			ids[i] = id
+			continue
+		}
+		if id, ok := celLogicalSymbols[s]; ok {
+			ids[i] = id
+			continue
+		}
+		ids[i] = s
+	}
+	return ids
 }
 
 // formatExpr renders expr (+ its SourceInfo) with the given options.
@@ -81,7 +106,7 @@ func formatExpr(expr ast.Expr, si *ast.SourceInfo, opts ...FormatOption) (string
 	}
 	uo := []parser.UnparserOption{parser.WrapOnColumn(col)}
 	if cfg.wrapOps != nil {
-		uo = append(uo, parser.WrapOnOperators(cfg.wrapOps...))
+		uo = append(uo, parser.WrapOnOperators(celOperatorIDs(cfg.wrapOps)...))
 	}
 	if cfg.wrapAfter != nil {
 		uo = append(uo, parser.WrapAfterColumnLimit(*cfg.wrapAfter))

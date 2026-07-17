@@ -32,7 +32,10 @@ output "mac" {
   value = provider::burnham::hmac("sha256", provider::burnham::hexdecode(var.signing_key_hex), "payload")
 }
 
-variable "signing_key_hex" { type = string }
+variable "signing_key_hex" {
+  type    = string
+  default = "0f1e2d3c4b5a69788796a5b4c3d2e1f0"
+}
 ```
 
 ## Signature

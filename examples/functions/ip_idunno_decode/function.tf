@@ -8,13 +8,14 @@ Returns the address in canonical form: dotted-quad for IPv4, RFC 5952 lowercase 
 RFC §3.2 of the original spec says deforming is "intentionally omitted" because "the machines will know how to do it, and by definition humans SHOULD NOT attempt the process." This is the machines knowing how to do it.
 */
 
-output "rfc_8771_example_decoded" {
-  // The four-codepoint string from RFC 8771 §5 → "198.51.100.164".
-  value = provider::burnham::ip_idunno_decode("clҤ")
+output "rfc_8771_ipv4" {
+  // RFC 8771 §5's worked example is 198.51.100.164. Encoding then decoding returns it in canonical dotted-quad. (An I-DUNNO string is high-codepoint Unicode you would never hand-type, so encode is how you produce a valid one.)
+  value = provider::burnham::ip_idunno_decode(provider::burnham::ip_idunno_encode("198.51.100.164"))
+  // → "198.51.100.164"
 }
 
-// Round-trip an IPv6 address through encode + decode.
-output "round_trip" {
+// Round-trip an IPv6 address; decode canonicalizes to RFC 5952 lowercase colon-hex.
+output "round_trip_ipv6" {
   value = provider::burnham::ip_idunno_decode(provider::burnham::ip_idunno_encode("2001:db8::1"))
   // → "2001:db8::1"
 }

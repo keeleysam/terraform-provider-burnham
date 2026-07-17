@@ -5,10 +5,10 @@ locals {
 
 output "header" {
   value = provider::burnham::jwt_decode(local.token).header
-  // -> { alg = "HS256", typ = "JWT" }
+  // → { alg = "HS256", typ = "JWT" }
 }
 
 output "subject" {
   value = provider::burnham::jwt_decode(local.token).payload.sub
-  // -> "alice"
+  // → "alice"
 }

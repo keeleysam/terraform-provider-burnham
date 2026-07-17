@@ -30,7 +30,10 @@ output "token" {
   value = provider::burnham::base64encode(var.payload, { url_safe = true, padding = false })
 }
 
-variable "payload" { type = string }
+variable "payload" {
+  type    = string
+  default = "hello world"
+}
 ```
 
 ## Signature

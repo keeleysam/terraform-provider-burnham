@@ -9,17 +9,17 @@ locals {
 // Signature only.
 output "signature_valid" {
   value = provider::burnham::jwt_verify(local.token, "topsecret").valid
-  // -> true
+  // → true
 }
 
 // A different secret fails the signature check (result is false, not an error).
 output "wrong_secret" {
   value = provider::burnham::jwt_verify(local.token, "not-the-secret").valid
-  // -> false
+  // → false
 }
 
 // With `now` past `exp` (1735689600), the token is expired.
 output "expired" {
   value = provider::burnham::jwt_verify(local.token, "topsecret", { now = 1900000000 }).valid
-  // -> false
+  // → false
 }

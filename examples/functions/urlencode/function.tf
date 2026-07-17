@@ -4,4 +4,7 @@ output "segment" {
   value = provider::burnham::urlencode(var.name, { mode = "path" })
 }
 
-variable "name" { type = string }
+variable "name" {
+  type    = string
+  default = "annual report.pdf"
+}
