@@ -5,6 +5,8 @@ description: |-
   Pure, plan-time Terraform functions for structured data, expression languages, networking, cryptography, encoding, text, and more. No resources, no data sources, no API calls.
 ---
 
+![Burnham](https://raw.githubusercontent.com/keeleysam/terraform-provider-burnham/main/assets/logo.svg)
+
 # burnham Provider
 
 > *"Make no little plans."* – Daniel Burnham

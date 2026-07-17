@@ -94,6 +94,11 @@ func main() {
 	log.SetFlags(0)
 	log.SetPrefix("gendoctemplates: ")
 
+	// The registry overview page (templates/index.md.tmpl) embeds the logo by absolute raw URL, which tfplugindocs cannot verify. Guard it here, in the same go:generate pipeline that runs just before tfplugindocs, so the docs are never generated pointing at a logo that is not in the tree.
+	if logo := filepath.Join(repoRoot(), "assets", "logo.svg"); !fileExists(logo) {
+		log.Fatalf("assets/logo.svg is missing (%s); templates/index.md.tmpl references it on the registry overview page", logo)
+	}
+
 	dst := outputDir()
 	if err := os.MkdirAll(dst, 0755); err != nil {
 		log.Fatalf("creating %s: %v", dst, err)
@@ -149,13 +154,23 @@ func main() {
 	log.Printf("wrote %d per-function templates to %s (gitignored)", len(want), dst)
 }
 
-// outputDir returns the absolute path to templates/functions/, anchored to this main.go's source location. Same trick cmd/genpi uses, for the same reason: works under `go generate ./...` and `go run ./cmd/gendoctemplates` from any cwd.
-func outputDir() string {
+// repoRoot returns the absolute path to the repository root, anchored to this main.go's source location. Same trick cmd/genpi uses, for the same reason: works under `go generate ./...` and `go run ./cmd/gendoctemplates` from any cwd.
+func repoRoot() string {
 	_, thisFile, _, ok := runtime.Caller(0)
 	if !ok {
 		log.Fatal("runtime.Caller(0) failed; cannot locate source file")
 	}
 	// thisFile = .../cmd/gendoctemplates/main.go
-	// target  = .../templates/functions
-	return filepath.Join(filepath.Dir(thisFile), "..", "..", "templates", "functions")
+	return filepath.Join(filepath.Dir(thisFile), "..", "..")
+}
+
+// outputDir returns the absolute path to templates/functions/.
+func outputDir() string {
+	return filepath.Join(repoRoot(), "templates", "functions")
+}
+
+// fileExists reports whether p exists and is a regular file.
+func fileExists(p string) bool {
+	info, err := os.Stat(p)
+	return err == nil && !info.IsDir()
 }
