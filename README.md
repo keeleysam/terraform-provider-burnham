@@ -272,6 +272,23 @@ Operate on `list(number)`. Empty input is always an error: a statistic of zero o
 | `lcm` | `(numbers list(number))` | `number` | least common multiple, arbitrary precision `math/big`; integers only |
 | `mod_floor` | `(a number, b number)` | `number` | floor-modulo: `a − b·⌊a/b⌋`. Sign of divisor, not dividend (unlike Terraform's built-in `%`). |
 
+### Bitwise operations
+
+Terraform's configuration language has no bitwise operators or functions at all (no AND/OR/XOR/NOT, no shifts, no popcount). These fill that gap. Every function is integer-only and rejects a non-integral or infinite argument, and all arithmetic is arbitrary-precision `math/big`, so nothing overflows `int64` (a left shift by 100 or a popcount of `2^64` is exact). AND/OR/XOR treat a negative operand as an infinite two's-complement bit string; the flag / mask use case uses non-negative integers. `bit_not` is width-parameterized because a width-less complement is infinite in two's-complement. `bit_shift_right` is arithmetic (floors a negative value toward negative infinity).
+
+| Function | Signature | Returns | Backed by |
+|---|---|---|---|
+| `bit_and` | `(numbers list(number))` | `number` | `math/big.Int.And` folded over a non-empty list |
+| `bit_or` | `(numbers list(number))` | `number` | `math/big.Int.Or` folded (combine flag bits) |
+| `bit_xor` | `(numbers list(number))` | `number` | `math/big.Int.Xor` folded |
+| `bit_not` | `(value number, bits number)` | `number` | `value ^ (2^bits - 1)`; requires `bits >= 1`, `0 <= value < 2^bits` |
+| `bit_shift_left` | `(value number, n number)` | `number` | `math/big.Int.Lsh`; requires `n >= 0` |
+| `bit_shift_right` | `(value number, n number)` | `number` | `math/big.Int.Rsh` (arithmetic, floors negatives); requires `n >= 0` |
+| `popcount` | `(value number)` | `number` | Hamming weight via `math/bits.OnesCount`; requires `value >= 0` |
+| `bit_set` | `(value number, i number)` | `number` | `math/big.Int.SetBit` to 1; requires `i >= 0` |
+| `bit_clear` | `(value number, i number)` | `number` | `math/big.Int.SetBit` to 0; requires `i >= 0` |
+| `bit_test` | `(value number, i number)` | `bool` | `math/big.Int.Bit`; requires `i >= 0` |
+
 Per-function documentation lives under [`docs/functions/`](docs/functions/) and on [registry.terraform.io](https://registry.terraform.io/providers/keeleysam/burnham/latest/docs).
 
 ## Identifiers Functions

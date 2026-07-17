@@ -24,5 +24,17 @@ func Functions() []func() function.Function {
 		NewClampFunction,
 		NewGCDFunction,
 		NewLCMFunction,
+
+		// Bitwise operations
+		NewBitAndFunction,
+		NewBitOrFunction,
+		NewBitXorFunction,
+		NewBitNotFunction,
+		NewBitShiftLeftFunction,
+		NewBitShiftRightFunction,
+		NewPopcountFunction,
+		NewBitSetFunction,
+		NewBitClearFunction,
+		NewBitTestFunction,
 	}
 }
