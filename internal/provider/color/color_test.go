@@ -258,3 +258,155 @@ func TestAdjustColorErrors(t *testing.T) {
 		t.Fatal("expected error for divide by zero")
 	}
 }
+
+func TestSchemeColorsCounts(t *testing.T) {
+	cases := []struct {
+		scheme string
+		want   int
+	}{
+		{"complementary", 2},
+		{"analogous", 3},
+		{"triadic", 3},
+		{"split-complementary", 3},
+		{"tetradic", 4},
+		{"square", 4},
+	}
+	for _, tc := range cases {
+		t.Run(tc.scheme, func(t *testing.T) {
+			got, err := schemeColors("#1e3a8a", tc.scheme, defaultSchemeAngle)
+			if err != nil {
+				t.Fatalf("schemeColors error: %v", err)
+			}
+			if len(got) != tc.want {
+				t.Fatalf("len = %d, want %d", len(got), tc.want)
+			}
+			for _, c := range got {
+				if !hexRE.MatchString(c) {
+					t.Fatalf("not a hex color: %q", c)
+				}
+			}
+		})
+	}
+}
+
+func TestSchemeColorsBaseFirst(t *testing.T) {
+	// Element 0 is the base color, canonicalized to hex (parsed then re-emitted).
+	base, alpha, _ := parseColor("rebeccapurple")
+	want := hexOut(base, alpha, true, false)
+	got, err := schemeColors("rebeccapurple", "triadic", defaultSchemeAngle)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got[0] != want {
+		t.Fatalf("scheme[0] = %q, want canonical base %q", got[0], want)
+	}
+}
+
+func TestSchemeColorsComplementaryOpposesHue(t *testing.T) {
+	// The hue is rotated exactly 180 degrees in OKLCh before serialization.
+	// Reading it back out of the clamped sRGB hex drifts somewhat (an out-of-gamut
+	// complement is pulled toward the gamut boundary), so we assert the complement
+	// lands in the opposing hemisphere rather than at a precise 180.
+	got, err := schemeColors("#1e3a8a", "complementary", defaultSchemeAngle)
+	if err != nil {
+		t.Fatal(err)
+	}
+	c0, _, _ := parseColor(got[0])
+	c1, _, _ := parseColor(got[1])
+	_, _, h0 := oklchOf(c0)
+	_, _, h1 := oklchOf(c1)
+	diff := math.Abs(h1 - h0)
+	if diff > 180 {
+		diff = 360 - diff
+	}
+	if diff < 120 {
+		t.Fatalf("complement hue separation = %v, want opposing (> 120)", diff)
+	}
+}
+
+func TestSchemeColorsAngleWidensAnalogous(t *testing.T) {
+	// A larger analogous angle pushes the neighbors further from the base hue.
+	narrow, _ := schemeColors("#1e3a8a", "analogous", 15)
+	wide, _ := schemeColors("#1e3a8a", "analogous", 60)
+	if narrow[1] == wide[1] {
+		t.Fatalf("angle had no effect: %q == %q", narrow[1], wide[1])
+	}
+}
+
+func TestSchemeColorsDeterministic(t *testing.T) {
+	a, _ := schemeColors("#1e3a8a", "tetradic", defaultSchemeAngle)
+	b, _ := schemeColors("#1e3a8a", "tetradic", defaultSchemeAngle)
+	for i := range a {
+		if a[i] != b[i] {
+			t.Fatalf("non-deterministic at %d: %q vs %q", i, a[i], b[i])
+		}
+	}
+}
+
+func TestSchemeColorsErrors(t *testing.T) {
+	if _, err := schemeColors("#000", "pentadic", defaultSchemeAngle); err == nil {
+		t.Fatal("expected error for unknown scheme")
+	}
+	if _, err := schemeColors("not-a-color", "triadic", defaultSchemeAngle); err == nil {
+		t.Fatal("expected error for bad base color")
+	}
+}
+
+func TestNearestColor(t *testing.T) {
+	palette := []string{"#1e3a8a", "#b91c1c", "#15803d"}
+	// A near-blue snaps to the blue.
+	got, err := nearestColor("#1d40ab", palette, "ciede2000")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got != "#1e3a8a" {
+		t.Fatalf("nearest = %q, want #1e3a8a", got)
+	}
+	// An exact match returns itself.
+	if g, _ := nearestColor("#b91c1c", palette, "ciede2000"); g != "#b91c1c" {
+		t.Fatalf("exact nearest = %q, want #b91c1c", g)
+	}
+}
+
+func TestNearestColorReturnsVerbatim(t *testing.T) {
+	// The palette entry is returned exactly as written, not canonicalized.
+	got, err := nearestColor("#000010", []string{"navy", "#EEE"}, "ciede2000")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got != "navy" {
+		t.Fatalf("nearest = %q, want navy (verbatim)", got)
+	}
+}
+
+func TestNearestColorTieGoesToEarlier(t *testing.T) {
+	// Two identical palette entries: the earlier one wins.
+	got, _ := nearestColor("#808080", []string{"#777777", "#777777"}, "ciede2000")
+	if got != "#777777" {
+		t.Fatalf("tie = %q, want first #777777", got)
+	}
+}
+
+func TestNearestColorMetrics(t *testing.T) {
+	palette := []string{"#000000", "#ffffff"}
+	for _, m := range []string{"ciede2000", "oklab", "lab", "rgb"} {
+		if _, err := nearestColor("#222222", palette, m); err != nil {
+			t.Fatalf("metric %q errored: %v", m, err)
+		}
+	}
+}
+
+func TestNearestColorErrors(t *testing.T) {
+	if _, err := nearestColor("#000", nil, "ciede2000"); err == nil {
+		t.Fatal("expected error for empty palette")
+	}
+	if _, err := nearestColor("not-a-color", []string{"#000"}, "ciede2000"); err == nil {
+		t.Fatal("expected error for bad input color")
+	}
+	if _, err := nearestColor("#000", []string{"nope"}, "ciede2000"); err == nil {
+		t.Fatal("expected error for bad palette color")
+	}
+	if _, err := nearestColor("#000", []string{"#fff"}, "cmyk"); err == nil {
+		t.Fatal("expected error for unknown metric")
+	}
+}

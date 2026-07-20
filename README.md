@@ -30,7 +30,7 @@ Burnham is organized into eleven families of functions:
 - **[Text Functions](#text-functions)**: Unicode normalization, transliterating slugify, Levenshtein distance, word-wrap, dedent, key/value parsing, cowsay, ASCII QR.
 - **[Cryptography Functions](#cryptography-functions)**: HMAC (RFC 2104), HKDF (RFC 5869), PEM block decoding, X.509 / CSR inspection and fingerprinting, generic ASN.1 BER/DER decoding, deterministic ECDSA P-256 + Ed25519 key derivation, deterministic X.509 self-signing (RFC 5280) and CMS/PKCS#7 signing (RFC 5652), with ECDSA signing via RFC 6979 deterministic `k` and Ed25519 via naturally-deterministic PureEdDSA (RFC 8032 / RFC 8419), a deterministic JOSE stack (`jwt_sign` / `jwt_decode` / `jwt_verify` for compact JWS/JWT per RFC 7515/7519, `jwk_encode` / `jwk_decode` / `jwk_thumbprint` / `jwks` for JWK per RFC 7517/7638), plus RFC 1751 human-readable key encoding (`btoe` / `etob`).
 - **[Geographic Functions](#geographic-functions)**: geohash and Open Location Code (Plus codes), encode and decode.
-- **[Color Functions](#color-functions)**: parse and reformat CSS colors, WCAG contrast ratio and readable-text selection, N deterministic distinct colors, blend, ramp, and OKLCh channel adjustment (lighten/darken/saturate/hue), all perceptually uniform.
+- **[Color Functions](#color-functions)**: parse and reformat CSS colors, WCAG contrast ratio and readable-text selection, N deterministic distinct colors, blend, ramp, OKLCh channel adjustment (lighten/darken/saturate/hue), harmony-scheme palettes, and snap-to-nearest-in-palette, all perceptually uniform.
 
 ## Expression Language Functions
 
@@ -389,10 +389,12 @@ Pure, deterministic color operations for the places infrastructure config actual
 | `color_convert` | `(color string, target string, [options])` | `string` | [`csscolorparser`](https://github.com/mazznoer/csscolorparser) + `go-colorful` |
 | `color_distinct` | `(count number, [options])` | `list(string)` | `go-colorful` OKLCh |
 | `color_mix` | `(a string, b string, amount number, [options])` | `string` | `go-colorful` blends |
+| `color_nearest` | `(color string, palette list(string), [options])` | `string` | `go-colorful` CIEDE2000 |
 | `color_ramp` | `(stops list(string), count number, [options])` | `list(string)` | `go-colorful` blends |
 | `color_readable_text` | `(background string, [options])` | `string` | WCAG 2.x contrast |
+| `color_scheme` | `(base string, scheme string, [options])` | `list(string)` | `go-colorful` OKLCh |
 
-Colors are accepted in any CSS notation (hex, `rgb()`, `hsl()`, `hwb()`, `lab()`, `oklch()`, named). `color_adjust` collapses lighten / darken / saturate / desaturate / rotate-hue / grayscale / fade into one function via OKLCh channel operations (`{ lightness = "*0.9" }`, `{ hue = "+30" }`).
+Colors are accepted in any CSS notation (hex, `rgb()`, `hsl()`, `hwb()`, `lab()`, `oklch()`, named). `color_adjust` collapses lighten / darken / saturate / desaturate / rotate-hue / grayscale / fade into one function via OKLCh channel operations (`{ lightness = "*0.9" }`, `{ hue = "+30" }`). `color_scheme` rotates a base hue into a harmony palette (`complementary`, `analogous`, `triadic`, `split-complementary`, `tetradic`, `square`), and `color_nearest` snaps a color onto a fixed palette by perceptual distance, returning the matched entry verbatim.
 
 Per-function documentation lives under [`docs/functions/`](docs/functions/) and on [registry.terraform.io](https://registry.terraform.io/providers/keeleysam/burnham/latest/docs).
 
