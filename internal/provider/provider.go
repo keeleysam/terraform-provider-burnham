@@ -19,6 +19,7 @@ import (
 	"github.com/keeleysam/terraform-burnham/internal/provider/encoding"
 	"github.com/keeleysam/terraform-burnham/internal/provider/geographic"
 	"github.com/keeleysam/terraform-burnham/internal/provider/identifiers"
+	"github.com/keeleysam/terraform-burnham/internal/provider/image"
 	"github.com/keeleysam/terraform-burnham/internal/provider/network"
 	"github.com/keeleysam/terraform-burnham/internal/provider/numerics"
 	"github.com/keeleysam/terraform-burnham/internal/provider/oel"
@@ -70,6 +71,7 @@ func (p *BurnhamProvider) Functions(_ context.Context) []func() function.Functio
 		encoding.Functions(),
 		geographic.Functions(),
 		identifiers.Functions(),
+		image.Functions(),
 		network.Functions(),
 		numerics.Functions(),
 		oel.Functions(),

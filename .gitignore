@@ -53,6 +53,9 @@
 !/internal/**/*.bin
 !/internal/**/*.txt
 !/internal/**/*.md
+!/internal/**/*.rs
+!/internal/**/Cargo.toml
+!/internal/**/Cargo.lock
 
 /cmd/**
 !/cmd/**/
@@ -75,3 +78,7 @@
 !/.github/**/*.yml
 !/.github/**/*.yaml
 !/.github/**/*.md
+
+# resvg wasm build artifacts (built via go generate; see internal/provider/image/resvg)
+internal/provider/image/resvg/svg_render.wasm
+internal/provider/image/resvg/rust/target/

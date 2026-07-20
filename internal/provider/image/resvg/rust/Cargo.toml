@@ -1,0 +1,20 @@
+[package]
+name = "svg_render"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0 OR MIT"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+resvg     = { version = "0.47", default-features = false, features = ["text", "raster-images"] }
+usvg      = { version = "0.47", default-features = false, features = ["text"] }
+tiny-skia = { version = "0.12" }
+
+[profile.release]
+opt-level        = "z"
+lto              = true
+codegen-units    = 1
+panic            = "abort"
+strip            = true
