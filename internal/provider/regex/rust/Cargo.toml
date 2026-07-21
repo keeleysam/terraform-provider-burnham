@@ -12,7 +12,7 @@ crate-type = ["cdylib"]
 # serde_json builds the result envelope. Both are pure Rust and build clean for
 # wasm32-wasip1.
 [dependencies]
-fancy-regex = "0.14"
+fancy-regex = "0.18"
 serde_json = "1"
 
 [profile.release]
