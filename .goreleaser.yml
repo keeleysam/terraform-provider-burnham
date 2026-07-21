@@ -10,7 +10,10 @@ project_name: terraform-provider-burnham
 before:
   hooks:
     - go mod tidy
-    - go generate ./...
+    # Generate only the embedded assets the binary needs: the WASM engines (resvg, fancy-regex), the bundled fonts, and the packed Pi table, all of which live under internal/provider.
+    # We deliberately do NOT run the root `go generate ./...` here: that also fires the tfplugindocs directive in main.go, which `go build`s the provider and would fail on the not-yet-generated `go:embed` targets (a chicken-and-egg), and the generated docs are committed to the tree already so a release does not need to regenerate them.
+    # Building the WASM engines requires the Rust toolchain and the wasm32-wasip1 target, which the release workflow installs before this hook runs.
+    - go generate ./internal/provider/...
 builds:
   - env:
       - CGO_ENABLED=0

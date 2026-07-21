@@ -20,6 +20,10 @@ jobs:
         with:
           go-version-file: "go.mod"
           cache: true
+      # The WASM function families (image/resvg, regex) go:embed a wasm blob that is gitignored and built from Rust by the goreleaser `before` hook (`go generate ./internal/provider/...`). goreleaser cannot build the provider until that blob exists, so the toolchain and the wasm32-wasip1 target have to be present before goreleaser runs. No rust-cache here: releases are infrequent tag pushes, so a cold cargo build is fine and we avoid coupling to per-family workspace paths.
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-wasip1
       - name: Import GPG key
         uses: crazy-max/ghaction-import-gpg@v7
         id: import_gpg
