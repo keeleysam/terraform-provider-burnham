@@ -23,20 +23,24 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          file=internal/provider/image/fonts.go
+          file=internal/provider/image/genfonts.go
           latest=$(gh api repos/googlefonts/noto-emoji/releases/latest --jq .tag_name)
-          current=$(grep -oE 'noto-emoji/raw/[^/]+/' "$file" | head -1 | sed -E 's#noto-emoji/raw/(.+)/#\1#')
+          current=$(grep -oE 'emojiRef = "[^"]+"' "$file" | sed -E 's/emojiRef = "(.+)"/\1/')
           echo "current=$current latest=$latest"
           if [ "$latest" = "$current" ]; then echo "already up to date"; exit 0; fi
-          # Only bump if the COLRv1 build actually exists at the new tag.
-          if ! curl -fsSL -I "https://github.com/googlefonts/noto-emoji/raw/$latest/fonts/Noto-COLRv1.ttf" >/dev/null 2>&1; then
+          url="https://github.com/googlefonts/noto-emoji/raw/$latest/fonts/Noto-COLRv1.ttf"
+          if ! curl -fsSL -o /tmp/emoji.ttf "$url"; then
             echo "Noto-COLRv1.ttf not present at $latest; skipping"; exit 0
           fi
           branch="chore/noto-emoji-$latest"
           if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
             echo "branch $branch already exists; skipping"; exit 0
           fi
-          sed -i "s#noto-emoji/raw/$current/#noto-emoji/raw/$latest/#g" "$file"
+          # Bump the ref and its pinned checksum together so genfonts verifies.
+          oldsha=$(grep -A2 'fonts/Noto-COLRv1.ttf' "$file" | grep -oE 'sha256: "[0-9a-f]{64}"' | sed -E 's/sha256: "(.+)"/\1/')
+          newsha=$(sha256sum /tmp/emoji.ttf | cut -d' ' -f1)
+          sed -i "s/emojiRef = \"$current\"/emojiRef = \"$latest\"/" "$file"
+          sed -i "s/$oldsha/$newsha/" "$file"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b "$branch"
