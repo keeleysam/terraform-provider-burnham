@@ -1,0 +1,23 @@
+[package]
+name = "pcre_engine"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0 OR MIT"
+
+[lib]
+crate-type = ["cdylib"]
+
+# fancy-regex adds backreferences and lookaround on top of the Rust regex engine,
+# the PCRE-style features Go's RE2-based regexp (and Terraform core) cannot do.
+# serde_json builds the result envelope. Both are pure Rust and build clean for
+# wasm32-wasip1.
+[dependencies]
+fancy-regex = "0.14"
+serde_json = "1"
+
+[profile.release]
+opt-level     = "z"
+lto           = true
+codegen-units = 1
+panic         = "abort"
+strip         = true

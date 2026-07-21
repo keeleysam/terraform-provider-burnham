@@ -33,6 +33,7 @@ import (
 	"github.com/keeleysam/terraform-burnham/internal/provider/numerics"
 	"github.com/keeleysam/terraform-burnham/internal/provider/oel"
 	"github.com/keeleysam/terraform-burnham/internal/provider/promql"
+	"github.com/keeleysam/terraform-burnham/internal/provider/regex"
 	"github.com/keeleysam/terraform-burnham/internal/provider/text"
 	"github.com/keeleysam/terraform-burnham/internal/provider/transform"
 )
@@ -58,6 +59,7 @@ var families = []struct {
 	{"Encoding", encoding.Functions()},
 	{"Color", color.Functions()},
 	{"Image", image.Functions()},
+	{"Regular Expressions", regex.Functions()},
 }
 
 // perFunctionTemplate mirrors tfplugindocs's defaultFunctionTemplate (internal to that module) with two additions: `subcategory` (%[1]q) is hard-coded per function instead of left empty, and an HTML comment (%[2]s, the pre-indented source list) points a reader at the files to edit. The comment sits after the YAML frontmatter so it never disturbs the front-matter parse, and renders invisibly on the Terraform Registry (HTML comments are not displayed) while being loud in the repo. Anything not specific to those two additions should match the upstream default exactly so we don't drift.

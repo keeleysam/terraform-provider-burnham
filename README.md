@@ -17,7 +17,7 @@ Your configuration profiles, ACL policies, and structured documents become first
 
 The result is Terraform code that reads like a blueprint: clear, logical, and built to last.
 
-Burnham is organized into eleven families of functions:
+Burnham is organized into fourteen families of functions:
 
 - **[Expression Language Functions](#expression-language-functions)**: build, validate, format, decode, and evaluate expression- and policy-language strings from HCL data. [CEL](https://cel.dev) (Common Expression Language) for GCP IAM / Access Context Manager, Kubernetes, and any other CEL sink; [Okta Expression Language](https://developer.okta.com/docs/reference/okta-expression-language/) for Okta group rules, profile mappings, and policy conditions; [Cedar](https://www.cedarpolicy.com) for Amazon Verified Permissions authorization policies; and [PromQL](https://prometheus.io/docs/prometheus/latest/querying/basics/) for Prometheus alerting and recording rules.
 - **[Structured Data Functions](#structured-data-functions)**: encode/decode for JSON (pretty and RFC 8785 canonical), HuJSON, plist, INI, CSV, YAML, .reg, VDF, KDL, NDJSON, MessagePack, CBOR, dotenv, Java .properties, Apple .strings, and general HCL.
@@ -32,6 +32,7 @@ Burnham is organized into eleven families of functions:
 - **[Geographic Functions](#geographic-functions)**: geohash and Open Location Code (Plus codes), encode and decode.
 - **[Color Functions](#color-functions)**: parse and reformat CSS colors, WCAG contrast ratio and readable-text selection, N deterministic distinct colors, blend, ramp, OKLCh channel adjustment (lighten/darken/saturate/hue), harmony-scheme palettes, and snap-to-nearest-in-palette, all perceptually uniform.
 - **[Image Functions](#image-functions)**: render SVG to PNG at near-browser fidelity (gradients, filters, text, color emoji) via resvg-as-WebAssembly, deterministically and CGO-free.
+- **[Regular Expression Functions](#regular-expression-functions)**: PCRE matching, capture, replace, and split with backreferences and lookaround (via fancy-regex-as-WebAssembly), the features Terraform's RE2 regex omits.
 
 ## Expression Language Functions
 
@@ -408,6 +409,20 @@ Rasterize SVG to PNG at plan time, for the places Terraform config actually carr
 | `svg_render` | `(svg string, [options])` | `string` (base64 PNG) | [`resvg`](https://github.com/linebender/resvg) as WebAssembly via [`wazero`](https://github.com/tetratelabs/wazero) |
 
 `svg_render` renders at near-browser fidelity (gradients, `clipPath`, masks, filters, text, and native color emoji) using resvg compiled to WebAssembly and run under the pure-Go wazero runtime, so the provider stays CGO-free and the output is byte-identical across operating systems and CPU architectures. Options: `width` / `height` (output pixels; supply one and the other follows the SVG's aspect ratio, or neither for the intrinsic size), `scale`, and `fonts` (base64 TTF/OTF to load alongside the bundled Go text font and Noto Color Emoji, for other scripts or brand fonts). No system fonts are consulted, so a plan on one machine and an apply on another produce the same bytes.
+
+## Regular Expression Functions
+
+PCRE-flavored regular expressions with the features Terraform core's RE2 engine deliberately omits: backreferences and lookahead/lookbehind. Backed by [fancy-regex](https://github.com/fancy-regex/fancy-regex) compiled to WebAssembly and run under [wazero](https://github.com/tetratelabs/wazero), so it stays CGO-free and deterministic, with bounded backtracking.
+
+| Function | Signature | Returns |
+|---|---|---|
+| `pcre_match` | `(pattern string, str string)` | `bool` |
+| `pcre_captures` | `(pattern string, str string)` | `map(string)` |
+| `pcre_find_all` | `(pattern string, str string)` | `list(string)` |
+| `pcre_replace` | `(pattern string, str string, replacement string)` | `string` |
+| `pcre_split` | `(pattern string, str string)` | `list(string)` |
+
+Patterns use PCRE syntax, so `(\w+)\s+\1` (backreference) and `foo(?=bar)` / `(?<=\$)\d+` (lookaround) work. Set flags inline, e.g. `(?i)`. `pcre_captures` keys the result by both numbered (`"0"` is the whole match) and named `(?<name>...)` groups; `pcre_replace` expands `$1` / `${name}` in the replacement.
 
 ## Installation
 

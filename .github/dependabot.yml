@@ -12,6 +12,18 @@ updates:
     directory: "/internal/provider/image/resvg/rust"
     schedule:
       interval: "daily"
+  # Rust crates behind the PCRE regex engine: fancy-regex, serde_json. Bumps
+  # Cargo.toml/Cargo.lock; CI rebuilds the wasm from them (with --locked) and the
+  # regex unit tests gate any behavior change.
+  - package-ecosystem: "cargo"
+    directory: "/internal/provider/regex/rust"
+    schedule:
+      interval: "daily"
+  # Actions, including the Rust toolchain and cache actions (dtolnay/rust-toolchain,
+  # Swatinem/rust-cache) and goreleaser-action. The toolchain itself is pinned to
+  # `@stable` in the workflows, which always resolves to the latest stable Rust, so
+  # it self-updates; there is no rust-toolchain.toml to bump (Dependabot has no
+  # updater for that file anyway). This entry keeps the action versions current.
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
