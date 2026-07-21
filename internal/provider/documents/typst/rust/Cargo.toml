@@ -1,0 +1,28 @@
+[package]
+name = "typst_engine"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+typst = "0.15"
+typst-utils = "0.15"
+typst-layout = "0.15"
+# The typst-html feature makes typst-as-lib build the library with Typst's
+# experimental Feature::Html enabled, which the html op requires.
+typst-as-lib = { version = "0.16", features = ["typst-html"] }
+typst-pdf = "0.15"
+typst-render = "0.15"
+typst-svg = "0.15"
+typst-html = "0.15"
+serde_json = "1"
+base64 = "0.22"
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true

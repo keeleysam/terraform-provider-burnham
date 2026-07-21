@@ -17,7 +17,7 @@ Your configuration profiles, ACL policies, and structured documents become first
 
 The result is Terraform code that reads like a blueprint: clear, logical, and built to last.
 
-Burnham is organized into fourteen families of functions:
+Burnham is organized into fifteen families of functions:
 
 - **[Expression Language Functions](#expression-language-functions)**: build, validate, format, decode, and evaluate expression- and policy-language strings from HCL data. [CEL](https://cel.dev) (Common Expression Language) for GCP IAM / Access Context Manager, Kubernetes, and any other CEL sink; [Okta Expression Language](https://developer.okta.com/docs/reference/okta-expression-language/) for Okta group rules, profile mappings, and policy conditions; [Cedar](https://www.cedarpolicy.com) for Amazon Verified Permissions authorization policies; and [PromQL](https://prometheus.io/docs/prometheus/latest/querying/basics/) for Prometheus alerting and recording rules.
 - **[Structured Data Functions](#structured-data-functions)**: encode/decode for JSON (pretty and RFC 8785 canonical), HuJSON, plist, INI, CSV, YAML, .reg, VDF, KDL, NDJSON, MessagePack, CBOR, dotenv, Java .properties, Apple .strings, and general HCL.
@@ -33,6 +33,7 @@ Burnham is organized into fourteen families of functions:
 - **[Color Functions](#color-functions)**: parse and reformat CSS colors, WCAG contrast ratio and readable-text selection, N deterministic distinct colors, blend, ramp, OKLCh channel adjustment (lighten/darken/saturate/hue), harmony-scheme palettes, and snap-to-nearest-in-palette, all perceptually uniform.
 - **[Image Functions](#image-functions)**: render SVG to PNG at near-browser fidelity (gradients, filters, text, color emoji) via resvg-as-WebAssembly, deterministically and CGO-free.
 - **[Regular Expression Functions](#regular-expression-functions)**: PCRE matching, capture, replace, and split with backreferences and lookaround (via fancy-regex-as-WebAssembly), the features Terraform's RE2 regex omits.
+- **[Document Functions](#document-functions)**: typeset [Typst](https://typst.app) documents to PDF, PNG, SVG, and HTML (via Typst-as-WebAssembly), with structured HCL passed straight into the document as `sys.inputs`, deterministic and CGO-free.
 
 ## Expression Language Functions
 
@@ -423,6 +424,23 @@ PCRE-flavored regular expressions with the features Terraform core's RE2 engine 
 | `pcre_split` | `(pattern string, str string)` | `list(string)` |
 
 Patterns use PCRE syntax, so `(\w+)\s+\1` (backreference) and `foo(?=bar)` / `(?<=\$)\d+` (lookaround) work. Set flags inline, e.g. `(?i)`. `pcre_captures` keys the result by both numbered (`"0"` is the whole match) and named `(?<name>...)` groups; `pcre_replace` expands `$1` / `${name}` in the replacement.
+
+## Document Functions
+
+Typeset [Typst](https://typst.app) documents to rendered output at plan time. The Typst engine is compiled to WebAssembly and run under [wazero](https://github.com/tetratelabs/wazero), so the provider stays CGO-free and the output is deterministic across operating systems and architectures.
+
+| Function | Signature | Returns |
+|---|---|---|
+| `typst_pdf` | `(source string, options object?)` | `string` (base64 PDF) |
+| `typst_png` | `(source string, options object?)` | `list(string)` (base64 PNG per page) |
+| `typst_svg` | `(source string, options object?)` | `list(string)` (SVG text per page) |
+| `typst_html` | `(source string, options object?)` | `string` (self-contained HTML, experimental) |
+
+The `options` object accepts `inputs` (structured HCL data, exposed to the document as `sys.inputs` as native Typst values, so the source reads `sys.inputs.customer.name` with no decoding), `files` (a map of path to base64-encoded content for `#import`ed modules and `#image` assets), `fonts` (a list of base64-encoded fonts on top of the bundled Noto and Liberation families), and `ppi` (raster resolution, `typst_png` only). Output is deterministic unless the document calls a non-deterministic Typst builtin such as `datetime.today()`.
+
+```hcl
+provider::burnham::typst_pdf(local.invoice, { inputs = { customer = "Ada", total = "$1,240.00" } })
+```
 
 ## Installation
 

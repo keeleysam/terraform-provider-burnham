@@ -1,0 +1,5 @@
+Typesets a [Typst](https://typst.app) document and returns the resulting PDF, base64-encoded (decode it with `base64decode`, or write it with a `local_file`'s `content_base64`).
+
+Pass structured data through the `inputs` option: it is exposed to the document as `sys.inputs` as native Typst values (dictionaries, arrays, numbers), so the document reads `sys.inputs.customer.name` directly with no decoding. Use `files` (a map of path to base64-encoded content) for `#import`ed modules and `#image` assets like a logo, and `fonts` (a list of base64-encoded fonts) for families beyond the bundled Noto and Liberation sets. Reference a bundled family by name, e.g. `#set text(font: "Noto Serif")`.
+
+Typst runs as WebAssembly under a pure-Go runtime, so the provider stays CGO-free and the output is deterministic across operating systems and architectures. The one exception is deliberate: a document that calls a non-deterministic Typst builtin such as `datetime.today()` will produce different output on different days.

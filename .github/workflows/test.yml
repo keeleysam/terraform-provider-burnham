@@ -36,10 +36,12 @@ jobs:
           targets: wasm32-wasip1
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: internal/provider/image/resvg/rust
+          workspaces: |
+            internal/provider/image/resvg/rust
+            internal/provider/documents/typst/rust
       - run: go mod download
       - name: Build render wasm + fetch emoji font (go generate)
-        run: go generate ./internal/provider/image/... ./internal/provider/regex/...
+        run: go generate ./internal/provider/image/... ./internal/provider/regex/... ./internal/provider/documents/...
       - run: go build ./...
       - run: go vet ./...
 
@@ -58,7 +60,9 @@ jobs:
           targets: wasm32-wasip1
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: internal/provider/image/resvg/rust
+          workspaces: |
+            internal/provider/image/resvg/rust
+            internal/provider/documents/typst/rust
       # Pre-install the Terraform CLI so terraform-plugin-testing's plugintest helper doesn't have to. The runner has no terraform out of the box, so without this every test invocation routes through `hc-install` which writes the binary to a per-process tempdir and execs it. Under `t.Parallel()` in the acceptance suite, many goroutines hit that install path nearly simultaneously and race on the file-write→exec sequence — Linux returns ETXTBSY ("text file busy") because the writable fd hasn't been closed by the time a sibling tries to `fork/exec` the same path. Pre-installing avoids the write entirely; the `TF_ACC_TERRAFORM_PATH` env var below tells plugintest to use the installed binary directly.
       - uses: hashicorp/setup-terraform@v4
         id: setup-terraform
@@ -66,7 +70,7 @@ jobs:
           terraform_wrapper: false # The wrapper intercepts `terraform version` output and breaks plugintest's version probe.
       - run: go mod download
       - name: Build render wasm + fetch emoji font (go generate)
-        run: go generate ./internal/provider/image/... ./internal/provider/regex/...
+        run: go generate ./internal/provider/image/... ./internal/provider/regex/... ./internal/provider/documents/...
       - run: go build ./...
       - run: go vet ./...
       # `-coverpkg=./internal/...` captures cross-package coverage. The acceptance tests live in package provider but exercise package dataformat and package network through the protocol layer; without -coverpkg, that work doesn't count toward those packages and the per-package numbers look much worse than they actually are. We then write all per-package profiles into one merged file and report a single combined coverage figure, which is the number worth tracking.
@@ -92,7 +96,9 @@ jobs:
           targets: wasm32-wasip1
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: internal/provider/image/resvg/rust
+          workspaces: |
+            internal/provider/image/resvg/rust
+            internal/provider/documents/typst/rust
       # tfplugindocs (called from `go generate ./...` below) needs `terraform` on PATH to extract the provider schema via `terraform providers schema -json`. Without a pre-installed binary it falls back to `hc-install` and downloads the latest version every run — an extra ~5-10s of network work plus a possible flake source. Pre-installing pins the version and skips the download.
       - uses: hashicorp/setup-terraform@v4
         with:
@@ -102,7 +108,7 @@ jobs:
       # provider go:embeds the SVG renderer wasm + emoji font, so those must exist
       # before the docs generation runs.
       - name: Build render wasm + fetch emoji font (go generate)
-        run: go generate ./internal/provider/image/... ./internal/provider/regex/...
+        run: go generate ./internal/provider/image/... ./internal/provider/regex/... ./internal/provider/documents/...
       # Guard: every example is the verbatim source for its doc's "Example Usage" block (tfplugindocs embeds it via `tffile`), so an unformatted example renders badly on the registry. This is the only thing enforcing canonical `terraform fmt` on the examples tree.
       - name: Verify examples are terraform fmt clean
         run: terraform fmt -check -recursive examples/
@@ -132,7 +138,9 @@ jobs:
           targets: wasm32-wasip1
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: internal/provider/image/resvg/rust
+          workspaces: |
+            internal/provider/image/resvg/rust
+            internal/provider/documents/typst/rust
       # `build --snapshot` runs the real `before` hooks (go mod tidy, then `go generate ./internal/provider/...` which builds the wasm engines and fetches the fonts), then compiles the provider, so this is the same path a tagged release takes minus signing and publishing. `--single-target` limits the compile to the runner's platform to keep the job fast; the full matrix runs at release time. No GITHUB_TOKEN or GPG key: a snapshot build neither publishes a release nor signs artifacts.
       - uses: goreleaser/goreleaser-action@v7
         with:

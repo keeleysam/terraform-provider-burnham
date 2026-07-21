@@ -29,6 +29,11 @@ var bundledFonts = [][]byte{
 	monoregular.TTF, monobold.TTF, monoitalic.TTF, monobolditalic.TTF,
 }
 
+// BundledFonts returns the fonts embedded in this package: the Noto Sans / Serif / Mono families, the metric-compatible Liberation families (Arial / Times / Courier lookalikes), and Noto Color Emoji. Other bundled-font engines reuse these, notably the Typst documents family, so the font bytes are embedded once in the binary rather than duplicated per family. The returned slice is a fresh copy of the header, so callers can append without disturbing the package's list; the font byte slices themselves are read-only embeds.
+func BundledFonts() [][]byte {
+	return append([][]byte(nil), bundledFonts...)
+}
+
 // webSafeAliases maps common named fonts (lowercased) to a bundled family.
 // resvg has no font-alias table, so we rewrite font-family before rendering.
 // Arial / Times / Courier map to the metric-compatible Liberation families;

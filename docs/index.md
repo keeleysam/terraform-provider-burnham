@@ -64,7 +64,7 @@ Provider-defined functions require Terraform 1.8 or later, or OpenTofu 1.7 or la
 
 ## Function Families
 
-The complete, per-function reference is in the sidebar. Burnham groups its functions into fourteen families:
+The complete, per-function reference is in the sidebar. Burnham groups its functions into fifteen families:
 
 | Family | What it provides |
 |--------|------------------|
@@ -81,6 +81,7 @@ The complete, per-function reference is in the sidebar. Burnham groups its funct
 | Geographic | Geohash and Open Location Code (Plus codes). |
 | Color | Parse and reformat CSS colors, WCAG contrast and readable-text selection, distinct-color, ramp, and harmony-scheme generation, blending, OKLCh adjustment, and snap-to-nearest-in-palette. |
 | Image | Render SVG to PNG at near-browser fidelity (gradients, filters, text, color emoji) via resvg-as-WebAssembly, deterministically and CGO-free. |
+| Documents | Typeset Typst documents to PDF, PNG, SVG, and HTML (via Typst-as-WebAssembly), with structured HCL passed straight into the document as `sys.inputs`. |
 | Regular Expressions | PCRE-flavored matching, capture, replace, and split with backreferences and lookaround (via fancy-regex-as-WebAssembly), the features Terraform's RE2 regex omits. |
 
 ## Further reading

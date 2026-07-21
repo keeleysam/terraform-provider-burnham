@@ -25,6 +25,7 @@ import (
 	"github.com/keeleysam/terraform-burnham/internal/provider/compression"
 	"github.com/keeleysam/terraform-burnham/internal/provider/cryptography"
 	"github.com/keeleysam/terraform-burnham/internal/provider/dataformat"
+	"github.com/keeleysam/terraform-burnham/internal/provider/documents"
 	"github.com/keeleysam/terraform-burnham/internal/provider/encoding"
 	"github.com/keeleysam/terraform-burnham/internal/provider/geographic"
 	"github.com/keeleysam/terraform-burnham/internal/provider/identifiers"
@@ -59,6 +60,7 @@ var families = []struct {
 	{"Encoding", encoding.Functions()},
 	{"Color", color.Functions()},
 	{"Image", image.Functions()},
+	{"Documents", documents.Functions()},
 	{"Regular Expressions", regex.Functions()},
 }
 
