@@ -132,6 +132,8 @@ github.com/fxamacker/cbor/v2 v2.9.2 h1:X4Ksno9+x3cz0TZv69ec1hxP/+tymuR8PXQJyDwfh
 github.com/fxamacker/cbor/v2 v2.9.2/go.mod h1:vM4b+DJCtHn+zz7h3FFp/hDAI9WNWCsZj23V5ytsSxQ=
 github.com/gersonkurz/go-regis3 v0.0.0-20260204141052-9cc701fe149b h1:/bmcyvvvvfOgRGbXnq2xFkayFAlkRHz3ikblL16tvik=
 github.com/gersonkurz/go-regis3 v0.0.0-20260204141052-9cc701fe149b/go.mod h1:B3lrdIphv32ct0QsgjWe0uxvJFkLOJF8G2VJnqpGT1k=
+github.com/go-fonts/liberation v0.3.3 h1:tM/T2vEOhjia6v5krQu8SDDegfH1SfXVRUNNKpq0Usk=
+github.com/go-fonts/liberation v0.3.3/go.mod h1:eUAzNRuJnpSnd1sm2EyloQfSOT79pdw7X7++Ri+3MCU=
 github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 h1:+zs/tPmkDkHx3U66DAb0lQFJrpS6731Oaa12ikc+DiI=
 github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376/go.mod h1:an3vInlBmSxCcxctByoQdvwPiA7DTK7jaaFDBTtu0ic=
 github.com/go-git/go-billy/v5 v5.8.0 h1:I8hjc3LbBlXTtVuFNJuwYuMiHvQJDq1AT6u4DwDzZG0=
@@ -434,8 +436,6 @@ golang.org/x/crypto v0.54.0 h1:YLIA59K4fiNzHzjnZt2tUJQjQtUWfWbeHBqKtk3eScw=
 golang.org/x/crypto v0.54.0/go.mod h1:KWL8ny2AZdGR2cWmzeHrp2azQPGogOv+HeQaVEXC2dk=
 golang.org/x/exp v0.0.0-20260218203240-3dfff04db8fa h1:Zt3DZoOFFYkKhDT3v7Lm9FDMEV06GpzjG2jrqW+QTE0=
 golang.org/x/exp v0.0.0-20260218203240-3dfff04db8fa/go.mod h1:K79w1Vqn7PoiZn+TkNpx3BUWUQksGO3JcVX6qIjytmA=
-golang.org/x/image v0.44.0 h1:+tDekMZED9+LrtB3G5xzRggpVh9CARjZqROla3R3R+I=
-golang.org/x/image v0.44.0/go.mod h1:V8K3KE9KKKE+pLpQDOeN18w9oacNSvy1tDOirTu4xtY=
 golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4/go.mod h1:jJ57K6gSWd91VN4djpZkiMVwK6gcyfeH4XE8wZrZaV4=
 golang.org/x/mod v0.37.0 h1:vF1DjpVEshcIqoEaauuHebaLk1O1forxjxBaVn884JQ=
 golang.org/x/mod v0.37.0/go.mod h1:m8S8VeM9r4dzDwjrKO0a1sZP3YjeMamRRlD+fmR2Q/0=

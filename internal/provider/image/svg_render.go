@@ -10,17 +10,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	"golang.org/x/image/font/gofont/goregular"
 
 	"github.com/keeleysam/terraform-burnham/internal/provider/image/resvg"
 	"github.com/keeleysam/terraform-burnham/internal/provider/optionsutil"
 )
-
-// bundledFonts are always available to the renderer. The real design will bundle
-// DejaVu Sans/Serif/Mono + Liberation via the go-fonts modules; for now we ship
-// the Go font (text) plus Noto Color Emoji COLRv1 (vector color emoji), both
-// permissive. resvg renders the COLRv1 build natively.
-var bundledFonts = [][]byte{goregular.TTF, notoColorEmoji}
 
 //go:embed descriptions/svg_render.md
 var svgRenderDescription string
@@ -68,7 +61,10 @@ func (f *SVGRenderFunction) Run(ctx context.Context, req function.RunRequest, re
 	all = append(all, bundledFonts...)
 	all = append(all, fonts...)
 
-	png, err := resvg.Render(ctx, []byte(svg), all, width, height, scale)
+	// Route common named web-safe fonts (Arial, Times New Roman, ...) to the
+	// bundled Liberation families so they render in the right category with
+	// metric-compatible widths, since resvg has no font-alias table.
+	png, err := resvg.Render(ctx, []byte(aliasFontFamilies(svg)), all, width, height, scale)
 	if err != nil {
 		resp.Error = function.NewArgumentFuncError(0, err.Error())
 		return

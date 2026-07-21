@@ -54,43 +54,30 @@ pub extern "C" fn render(
     let mut opt = Options::default();
     if !fonts_ptr.is_null() && fonts_len > 0 {
         let blob: &[u8] = unsafe { slice::from_raw_parts(fonts_ptr, fonts_len) };
-        // Load fonts and pick a default family in a scope so the `db` borrow of
-        // `opt` is released before we assign `opt.font_family`.
-        let default_family = {
-            let db = opt.fontdb_mut();
-            let mut off = 0usize;
-            while off + 4 <= blob.len() {
-                let n =
-                    u32::from_le_bytes([blob[off], blob[off + 1], blob[off + 2], blob[off + 3]])
-                        as usize;
-                off += 4;
-                if n == 0 || off + n > blob.len() {
-                    break;
-                }
-                db.load_font_data(blob[off..off + n].to_vec());
-                off += n;
+        let db = opt.fontdb_mut();
+        let mut off = 0usize;
+        while off + 4 <= blob.len() {
+            let n =
+                u32::from_le_bytes([blob[off], blob[off + 1], blob[off + 2], blob[off + 3]]) as usize;
+            off += 4;
+            if n == 0 || off + n > blob.len() {
+                break;
             }
-            let fam = db
-                .faces()
-                .next()
-                .and_then(|face| face.families.first().map(|(name, _)| name.clone()));
-            // Map the CSS generic families to a loaded font so font-family
-            // "sans-serif"/"serif"/"monospace" resolve. (The real provider loads
-            // DejaVu Sans/Serif/Mono and maps each generic to the right one; here
-            // in the shim we point them all at the default family.)
-            if let Some(ref f) = fam {
-                db.set_serif_family(f.clone());
-                db.set_sans_serif_family(f.clone());
-                db.set_monospace_family(f.clone());
-                db.set_cursive_family(f.clone());
-                db.set_fantasy_family(f.clone());
-            }
-            fam
-        };
-        if let Some(family) = default_family {
-            opt.font_family = family;
+            db.load_font_data(blob[off..off + n].to_vec());
+            off += n;
         }
     }
+    // Map the CSS generic families to the bundled Noto families. The provider
+    // always bundles Noto Sans / Serif / Sans Mono, and routes named web-safe
+    // fonts (Arial, Times New Roman, Courier New, ...) to the Liberation families
+    // via an alias map applied before the SVG reaches this shim.
+    {
+        let db = opt.fontdb_mut();
+        db.set_sans_serif_family("Noto Sans");
+        db.set_serif_family("Noto Serif");
+        db.set_monospace_family("Noto Sans Mono");
+    }
+    opt.font_family = "Noto Sans".to_string();
 
     let tree: Tree = match Tree::from_data(svg, &opt) {
         Ok(t) => t,

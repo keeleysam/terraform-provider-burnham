@@ -2,6 +2,8 @@ Rasterizes an SVG document to a PNG, returned as a base64 string (pair it with `
 
 Rendering is done by [resvg](https://github.com/linebender/resvg) compiled to WebAssembly and executed under a pure-Go runtime, so the provider stays CGO-free and the output is byte-identical across operating systems and CPU architectures: a plan on one machine and an apply on another produce the same PNG. It renders at near-browser fidelity, gradients, `clipPath`, masks, filters, patterns, text, and native color emoji, with no access to system fonts (fonts come only from the bundled set plus any you supply, which keeps the result deterministic and self-contained).
 
+Bundled fonts cover the common cases: the generic families `sans-serif` / `serif` / `monospace` map to Noto Sans / Serif / Sans Mono (variable builds, so any `font-weight` and italic render), and the web-safe named fonts (`Arial`, `Helvetica`, `Times New Roman`, `Courier New`, `Verdana`, `Georgia`, and friends) are recognized and rendered with the metric-compatible Liberation families, so text laid out for those keeps its widths. Color emoji use Noto Color Emoji. For CJK, other scripts, or brand fonts, supply your own via the `fonts` option.
+
 Options object keys:
 
 - `width` / `height` (numbers, pixels): the output size. Supply one and the other is derived from the SVG's aspect ratio; supply both to force an exact box; supply neither to use the SVG's intrinsic size.
