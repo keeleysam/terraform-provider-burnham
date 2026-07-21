@@ -36,3 +36,35 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
+      # The Terraform Registry is supposed to ingest each new version automatically via a webhook it installs on the repo, but that webhook is never reliably created, so released versions silently never appear until someone clicks "Resync" in the app.terraform.io UI. This step fires that same resync from CI: it POSTs to the (undocumented) endpoint the UI uses, which accepts a standard HCP Terraform API token via Bearer (no cookie/CSRF), is idempotent, and returns 200 whether or not there was anything to sync.
+      # The POST is synchronous: the server holds the connection open while it ingests, so the request itself can run for tens of seconds (observed ~47s when the UI backfilled four missing versions at once; a single new release is faster). --max-time is set well above that so a genuine stall fails the job instead of hanging.
+      - name: Resync Terraform Registry
+        env:
+          TF_REGISTRY_TOKEN: ${{ secrets.TF_REGISTRY_TOKEN }}
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          echo "Requesting registry resync for keeleysam/burnham (expecting version ${version})"
+          status=$(curl -sS -o /tmp/resync.json -w '%{http_code}' -X POST \
+            --connect-timeout 30 --max-time 300 \
+            -H "Authorization: Bearer ${TF_REGISTRY_TOKEN}" \
+            -H "Content-Type: application/vnd.api+json" \
+            https://app.terraform.io/api/v2/organizations/keeleysam/registry/providers/keeleysam/burnham/resync)
+          echo "Resync response (HTTP ${status}):"; cat /tmp/resync.json; echo
+          if [ "${status}" != "200" ]; then
+            echo "::error::Registry resync request failed with HTTP ${status}"
+            exit 1
+          fi
+          # Resync only triggers an async scan, so confirm the version actually became live on the public registry. The versions endpoint returns 202 while the release is still being ingested and 200 once it is published.
+          for attempt in $(seq 1 12); do
+            code=$(curl -sS -o /dev/null -w '%{http_code}' \
+              "https://registry.terraform.io/v3/providers/keeleysam/burnham/versions/${version}")
+            if [ "${code}" = "200" ]; then
+              echo "Version ${version} is live on registry.terraform.io"
+              exit 0
+            fi
+            echo "Version ${version} not published yet (HTTP ${code}); retrying in 15s (attempt ${attempt}/12)"
+            sleep 15
+          done
+          echo "::error::Version ${version} did not appear on the registry within the timeout"
+          exit 1
