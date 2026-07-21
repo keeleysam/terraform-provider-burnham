@@ -37,25 +37,54 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
       # The Terraform Registry is supposed to ingest each new version automatically via a webhook it installs on the repo, but that webhook is never reliably created, so released versions silently never appear until someone clicks "Resync" in the app.terraform.io UI. This step fires that same resync from CI: it POSTs to the (undocumented) endpoint the UI uses, which accepts a standard HCP Terraform API token via Bearer (no cookie/CSRF), is idempotent, and returns 200 whether or not there was anything to sync.
-      # The resync scans GitHub's release list, and that list lags a freshly published release by a few seconds to a minute: a resync fired immediately after goreleaser sees nothing new and creates nothing (this is why the naive fire-once version raced the release and left the version unpublished). So the POST itself is what we retry, not just the version check. Each attempt re-fires the resync (harmless when there is nothing to do) and then checks whether the version has gone live on the public registry; the loop exits as soon as it has.
+      # The step works in three stages. First, if the version is already on the public registry (a webhook that happened to fire, or an earlier run/sync already ingested it) there is nothing to do. Second, wait for the GitHub release to be visible via the same GitHub API the registry scans: resyncing before the release is published just returns an empty scan, which is exactly the race that left v0.1.60 unpublished when this fired ~1s after goreleaser. Third, fire the resync and confirm the version went live, retrying because the registry's view of GitHub's releases can still lag by a few seconds even once GitHub itself reports the release.
       # The POST is synchronous: the server holds the connection open while it ingests, so a single request can run for tens of seconds (observed ~47s when the UI backfilled four missing versions at once). --max-time bounds each attempt so a genuine stall fails the job instead of hanging.
       - name: Resync Terraform Registry
         env:
           TF_REGISTRY_TOKEN: ${{ secrets.TF_REGISTRY_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           version="${GITHUB_REF_NAME#v}"
           resync_url="https://app.terraform.io/api/v2/organizations/keeleysam/registry/providers/keeleysam/burnham/resync"
           version_url="https://registry.terraform.io/v3/providers/keeleysam/burnham/versions/${version}"
-          echo "Ensuring version ${version} is published to the Terraform Registry"
+          release_url="https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/tags/${GITHUB_REF_NAME}"
+
+          # Stage 1: skip everything if the version is already published.
+          if [ "$(curl -sS -o /dev/null -w '%{http_code}' "${version_url}")" = "200" ]; then
+            echo "Version ${version} is already live on registry.terraform.io; nothing to do"
+            exit 0
+          fi
+
+          # Stage 2: wait for the GitHub release to be visible before asking the registry to scan for it.
+          echo "Waiting for GitHub release ${GITHUB_REF_NAME} to be visible"
+          release_visible=false
           for attempt in $(seq 1 12); do
-            # Already live? Covers the case where a prior attempt (or the webhook) already ingested it.
-            code=$(curl -sS -o /dev/null -w '%{http_code}' "${version_url}")
+            code=$(curl -sS -o /dev/null -w '%{http_code}' \
+              -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+              -H "Accept: application/vnd.github+json" \
+              "${release_url}")
             if [ "${code}" = "200" ]; then
+              echo "GitHub release ${GITHUB_REF_NAME} is visible"
+              release_visible=true
+              break
+            fi
+            echo "Attempt ${attempt}/12: GitHub release not visible yet (HTTP ${code}); retrying in 10s"
+            sleep 10
+          done
+          if [ "${release_visible}" != "true" ]; then
+            echo "::error::GitHub release ${GITHUB_REF_NAME} never became visible"
+            exit 1
+          fi
+
+          # Stage 3: resync until the version lands on the registry, re-checking first so we never sync something already there.
+          echo "Publishing version ${version} to the Terraform Registry"
+          for attempt in $(seq 1 12); do
+            if [ "$(curl -sS -o /dev/null -w '%{http_code}' "${version_url}")" = "200" ]; then
               echo "Version ${version} is live on registry.terraform.io"
               exit 0
             fi
-            echo "Attempt ${attempt}/12: version ${version} not live yet (HTTP ${code}); requesting resync"
+            echo "Attempt ${attempt}/12: version ${version} not live yet; requesting resync"
             resync=$(curl -sS -w $'\n%{http_code}' -X POST --connect-timeout 30 --max-time 300 \
               -H "Authorization: Bearer ${TF_REGISTRY_TOKEN}" \
               -H "Content-Type: application/vnd.api+json" \
