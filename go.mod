@@ -52,11 +52,12 @@ require (
 	github.com/prometheus/common v0.70.0
 	github.com/prometheus/prometheus v0.313.1
 	github.com/recolabs/gnata v0.2.2
+	github.com/tetratelabs/wazero v1.12.0
+	golang.org/x/image v0.44.0
 )
 
 require (
 	cel.dev/expr v0.25.1 // indirect
-	eliasnaur.com/font v0.0.0-20230308162249-dd43949cb42d // indirect
 	github.com/BurntSushi/toml v1.2.1 // indirect
 	github.com/Kunde21/markdownfmt/v3 v3.1.0 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
@@ -119,7 +120,6 @@ require (
 	github.com/prometheus/procfs v0.21.0 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
-	github.com/tetratelabs/wazero v1.12.0 // indirect
 	github.com/tidwall/gjson v1.18.0 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
@@ -132,7 +132,6 @@ require (
 	go.uber.org/atomic v1.11.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/exp v0.0.0-20260218203240-3dfff04db8fa // indirect
-	golang.org/x/image v0.44.0 // indirect
 	golang.org/x/mod v0.37.0 // indirect
 	golang.org/x/net v0.56.0 // indirect
 	golang.org/x/sync v0.22.0 // indirect

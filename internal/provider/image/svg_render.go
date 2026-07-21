@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"fmt"
 
-	notoemoji "eliasnaur.com/font/noto/emoji/color"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -18,8 +17,9 @@ import (
 
 // bundledFonts are always available to the renderer. The real design will bundle
 // DejaVu Sans/Serif/Mono + Liberation via the go-fonts modules; for now we ship
-// the Go font (text) plus Noto Color Emoji (color emoji), both permissive.
-var bundledFonts = [][]byte{goregular.TTF, notoemoji.TTF}
+// the Go font (text) plus Noto Color Emoji COLRv1 (vector color emoji), both
+// permissive. resvg renders the COLRv1 build natively.
+var bundledFonts = [][]byte{goregular.TTF, notoColorEmoji}
 
 var _ function.Function = (*SVGRenderFunction)(nil)
 
