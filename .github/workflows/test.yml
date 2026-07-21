@@ -8,45 +8,68 @@ permissions:
   contents: read
 
 # Three parallel jobs:
-#   - build:    `go build ./...` + `go vet ./...`. ~30s with a warm module cache. Fast-fail for the common "I broke compilation" case so contributors don't wait the full ~3-5 min `test` cycle to see a missing-import error.
+#   - build:    `go build ./...` + `go vet ./...`. Fast-fail for the common "I broke compilation" case so contributors don't wait the full ~3-5 min `test` cycle to see a missing-import error.
 #   - test:     build, vet, the full TF_ACC=1 acceptance suite, coverage. Repeats the build/vet for self-containment so this job is also runnable in isolation.
 #   - generate: regenerate docs/ and pi_packed.bin, fail if either drifts.
 # The Chudnovsky regen for pi_packed.bin takes ~80s on Actions runners — splitting it off keeps the generate-drift feedback loop separate from the acceptance pass.
 # `-race` is intentionally not enabled here. On `ubuntu-latest` (2-core) runners with the per-test Terraform-subprocess overhead, race-detector wall time blew through Go's default 10-minute per-binary `-timeout`. The provider's real concurrency surface is tiny (slugify's mutex around gosimple/slug's package globals is essentially the whole story) and is well-covered by local dev runs. Add a separate periodic race-detector job if regression risk becomes a concern.
+#
+# The SVG renderer (internal/provider/image) go:embeds a wasm blob and an emoji
+# font that are gitignored and produced by `go generate` (a Rust->wasm build via
+# cargo, plus a pinned font download). Nothing that compiles the image package
+# will build until those exist, so every job installs the Rust toolchain and runs
+# the image generate step first. Swatinem/rust-cache keeps the cargo build warm
+# across runs so this is cheap after the first build.
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
         with:
           go-version-file: "go.mod"
           cache: true
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-wasip1
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: internal/provider/image/resvg/rust
       - run: go mod download
+      - name: Build render wasm + fetch emoji font (go generate)
+        run: go generate ./internal/provider/image/...
       - run: go build ./...
       - run: go vet ./...
 
   test:
     runs-on: ubuntu-latest
-    # Recent runs land near the old 10-min ceiling (record 9:57); 5 min of pad.
-    timeout-minutes: 15
+    # Recent runs land near the old 10-min ceiling (record 9:57); pad for the added wasm build.
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
         with:
           go-version-file: "go.mod"
           cache: true
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-wasip1
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: internal/provider/image/resvg/rust
       # Pre-install the Terraform CLI so terraform-plugin-testing's plugintest helper doesn't have to. The runner has no terraform out of the box, so without this every test invocation routes through `hc-install` which writes the binary to a per-process tempdir and execs it. Under `t.Parallel()` in the acceptance suite, many goroutines hit that install path nearly simultaneously and race on the file-write→exec sequence — Linux returns ETXTBSY ("text file busy") because the writable fd hasn't been closed by the time a sibling tries to `fork/exec` the same path. Pre-installing avoids the write entirely; the `TF_ACC_TERRAFORM_PATH` env var below tells plugintest to use the installed binary directly.
       - uses: hashicorp/setup-terraform@v4
         id: setup-terraform
         with:
           terraform_wrapper: false # The wrapper intercepts `terraform version` output and breaks plugintest's version probe.
       - run: go mod download
+      - name: Build render wasm + fetch emoji font (go generate)
+        run: go generate ./internal/provider/image/...
       - run: go build ./...
       - run: go vet ./...
       # `-coverpkg=./internal/...` captures cross-package coverage. The acceptance tests live in package provider but exercise package dataformat and package network through the protocol layer; without -coverpkg, that work doesn't count toward those packages and the per-package numbers look much worse than they actually are. We then write all per-package profiles into one merged file and report a single combined coverage figure, which is the number worth tracking.
-      # `TF_ACC=1` opts in to running the `TestAcc_*` acceptance tests (terraform-plugin-testing skips them by default — without this every TestAcc_* call is a no-op). `-p 1` runs test *packages* serially — the long pole is `internal/provider` (~100s; everything else is <3s), and serialising avoids the parallel-package contention that surprised us on Actions runners. Within `internal/provider` the TestAcc_* helpers call `t.Parallel()` so all 390 acceptance tests run concurrently up to GOMAXPROCS (= the runner's core count).
+      # `TF_ACC=1` opts in to running the `TestAcc_*` acceptance tests (terraform-plugin-testing skips them by default — without this every TestAcc_* call is a no-op). `-p 1` runs test *packages* serially — the long pole is `internal/provider` (~100s; everything else is <3s), and serialising avoids the parallel-package contention that surprised us on Actions runners. Within `internal/provider` the TestAcc_* helpers call `t.Parallel()` so all acceptance tests run concurrently up to GOMAXPROCS (= the runner's core count).
       - run: go test ./... -count=1 -p 1 -coverpkg=./internal/... -coverprofile=coverage.out
         env:
           TF_ACC: "1"
@@ -56,13 +79,19 @@ jobs:
 
   generate:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
         with:
           go-version-file: "go.mod"
           cache: true
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-wasip1
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: internal/provider/image/resvg/rust
       # tfplugindocs (called from `go generate ./...` below) needs `terraform` on PATH to extract the provider schema via `terraform providers schema -json`. Without a pre-installed binary it falls back to `hc-install` and downloads the latest version every run — an extra ~5-10s of network work plus a possible flake source. Pre-installing pins the version and skips the download.
       - uses: hashicorp/setup-terraform@v4
         with:
@@ -71,10 +100,7 @@ jobs:
       # Guard: every example is the verbatim source for its doc's "Example Usage" block (tfplugindocs embeds it via `tffile`), so an unformatted example renders badly on the registry. This is the only thing enforcing canonical `terraform fmt` on the examples tree.
       - name: Verify examples are terraform fmt clean
         run: terraform fmt -check -recursive examples/
-      # Guard: generated artifacts must be up-to-date with their sources. Two things get regenerated by `go generate ./...`:
-      #   - docs/ from each function's MarkdownDescription / Summary / parameter docs (via tfplugindocs, reading per-function templates that cmd/gendoctemplates writes with the right `subcategory:` based on which package's Functions() registers each function; the templates themselves are gitignored).
-      #   - internal/provider/numerics/pi_packed.bin from cmd/genpi (Chudnovsky binary-splitting on ⌊π × 10⁶⌋ = 3,141,592 digits; ~75s on Actions runners).
-      # If a contributor edited a function's metadata, registered a new function in a different family, or changed the digit-count knob in cmd/genpi/main.go without running `go generate ./...`, this step fails with the diff so the PR can be told to regenerate.
+      # Guard: generated artifacts must be up-to-date with their sources. `go generate ./...` regenerates docs/ (via tfplugindocs), pi_packed.bin (via cmd/genpi), and the SVG renderer wasm + emoji font (Rust build + pinned download). Only docs/ and pi_packed.bin are committed, so those are the drift check; the wasm and font are gitignored (built fresh here, never committed).
       - name: Verify generated artifacts are up to date
         run: |
           go generate ./...

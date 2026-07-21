@@ -1,7 +1,15 @@
 version: 2
 updates:
+  # Go modules: wazero, golang.org/x/image (Go text font), and everything else.
   - package-ecosystem: "gomod"
     directory: "/"
+    schedule:
+      interval: "daily"
+  # Rust crates behind the SVG renderer: resvg, usvg, tiny-skia, fontdb. Bumps
+  # Cargo.toml/Cargo.lock; CI rebuilds the wasm from them and the golden-hash
+  # tests gate any rendering change.
+  - package-ecosystem: "cargo"
+    directory: "/internal/provider/image/resvg/rust"
     schedule:
       interval: "daily"
   - package-ecosystem: "github-actions"
