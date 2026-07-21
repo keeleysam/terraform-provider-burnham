@@ -7,6 +7,14 @@ on:
 permissions:
   contents: write
 
+# Serialize releases. Without this, two merges to main close together spawn two runs that both read
+# the same latest tag, compute the same next version, and race to push it (one fails, or a release is
+# skipped). cancel-in-progress: false queues instead of cancelling, so each run's checkout (fetch all
+# tags) sees the tag the previous run pushed and computes the next one correctly.
+concurrency:
+  group: auto-release
+  cancel-in-progress: false
+
 jobs:
   auto-release:
     runs-on: ubuntu-latest

@@ -20,14 +20,20 @@ jobs:
   bump:
     runs-on: ubuntu-latest
     steps:
+      # Check out and later push with a PAT, not the default GITHUB_TOKEN. A branch pushed and a PR
+      # opened by GITHUB_TOKEN do not trigger other workflows (GitHub's recursion guard), so test.yml
+      # would never run on the font-bump PR and the "CI catches a rendering change" safety net below
+      # would be a no-op. Using the PAT makes the push and PR trigger CI as a normal contributor would.
       - uses: actions/checkout@v7
+        with:
+          token: ${{ secrets.DEPENDABOT_PAT }}
       - uses: actions/setup-go@v7
         with:
           go-version-file: "go.mod"
           cache: true
       - name: Bump pinned font refs if newer releases exist
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.DEPENDABOT_PAT }}
         run: |
           set -euo pipefail
           file=internal/provider/image/genfonts.go

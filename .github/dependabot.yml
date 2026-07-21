@@ -1,10 +1,18 @@
 version: 2
+# Grouping: every merge to main auto-releases a new patch version, and dependabot PRs auto-merge once
+# CI is green, so ungrouped updates would produce a release per bump. Each ecosystem groups its
+# minor+patch updates into a single PR (so a day's routine bumps become one merge, one release), while
+# major updates stay as individual PRs since they are likelier to break and deserve their own review.
 updates:
   # Go modules: wazero, golang.org/x/image (Go text font), and everything else.
   - package-ecosystem: "gomod"
     directory: "/"
     schedule:
       interval: "daily"
+    groups:
+      go-minor-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
   # Rust crates behind every wasm engine: the SVG renderer (resvg, usvg, tiny-skia, fontdb), the
   # PCRE regex engine (fancy-regex, serde_json), and any future one. Each engine keeps its
   # Cargo.toml/Cargo.lock in a `rust/` subdirectory under its package, so this glob picks all of
@@ -16,6 +24,10 @@ updates:
       - "/internal/provider/**/rust"
     schedule:
       interval: "daily"
+    groups:
+      rust-minor-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
   # Actions, including the Rust toolchain and cache actions (dtolnay/rust-toolchain,
   # Swatinem/rust-cache) and goreleaser-action. The toolchain itself is pinned to
   # `@stable` in the workflows, which always resolves to the latest stable Rust, so
@@ -25,3 +37,7 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+    groups:
+      actions-minor-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
