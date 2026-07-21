@@ -2,6 +2,7 @@ package image
 
 import (
 	"context"
+	_ "embed"
 	"encoding/base64"
 	"fmt"
 
@@ -21,6 +22,9 @@ import (
 // permissive. resvg renders the COLRv1 build natively.
 var bundledFonts = [][]byte{goregular.TTF, notoColorEmoji}
 
+//go:embed descriptions/svg_render.md
+var svgRenderDescription string
+
 var _ function.Function = (*SVGRenderFunction)(nil)
 
 type SVGRenderFunction struct{}
@@ -34,7 +38,7 @@ func (f *SVGRenderFunction) Metadata(_ context.Context, _ function.MetadataReque
 func (f *SVGRenderFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary:             "Render an SVG document to a base64-encoded PNG",
-		MarkdownDescription: "Rasterizes an SVG document to a PNG, returned as a base64 string. Renders gradients, clipping, masks, filters, text, and native color emoji at near-browser fidelity via resvg (run as WebAssembly), fully deterministically and with no system-font access. Options: `width` / `height` (output pixels; supply one and the other follows the SVG aspect ratio, supply neither to use the SVG's intrinsic size), `scale` (multiplier over the intrinsic size), and `fonts` (a list of additional base64-encoded TTF/OTF fonts to load, for scripts or brand fonts beyond the bundled set).",
+		MarkdownDescription: svgRenderDescription,
 		Parameters: []function.Parameter{
 			function.StringParameter{Name: "svg", Description: "The SVG document to render."},
 		},

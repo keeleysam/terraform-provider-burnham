@@ -31,6 +31,7 @@ Burnham is organized into eleven families of functions:
 - **[Cryptography Functions](#cryptography-functions)**: HMAC (RFC 2104), HKDF (RFC 5869), PEM block decoding, X.509 / CSR inspection and fingerprinting, generic ASN.1 BER/DER decoding, deterministic ECDSA P-256 + Ed25519 key derivation, deterministic X.509 self-signing (RFC 5280) and CMS/PKCS#7 signing (RFC 5652), with ECDSA signing via RFC 6979 deterministic `k` and Ed25519 via naturally-deterministic PureEdDSA (RFC 8032 / RFC 8419), a deterministic JOSE stack (`jwt_sign` / `jwt_decode` / `jwt_verify` for compact JWS/JWT per RFC 7515/7519, `jwk_encode` / `jwk_decode` / `jwk_thumbprint` / `jwks` for JWK per RFC 7517/7638), plus RFC 1751 human-readable key encoding (`btoe` / `etob`).
 - **[Geographic Functions](#geographic-functions)**: geohash and Open Location Code (Plus codes), encode and decode.
 - **[Color Functions](#color-functions)**: parse and reformat CSS colors, WCAG contrast ratio and readable-text selection, N deterministic distinct colors, blend, ramp, OKLCh channel adjustment (lighten/darken/saturate/hue), harmony-scheme palettes, and snap-to-nearest-in-palette, all perceptually uniform.
+- **[Image Functions](#image-functions)**: render SVG to PNG at near-browser fidelity (gradients, filters, text, color emoji) via resvg-as-WebAssembly, deterministically and CGO-free.
 
 ## Expression Language Functions
 
@@ -397,6 +398,16 @@ Pure, deterministic color operations for the places infrastructure config actual
 Colors are accepted in any CSS notation (hex, `rgb()`, `hsl()`, `hwb()`, `lab()`, `oklch()`, named). `color_adjust` collapses lighten / darken / saturate / desaturate / rotate-hue / grayscale / fade into one function via OKLCh channel operations (`{ lightness = "*0.9" }`, `{ hue = "+30" }`). `color_scheme` rotates a base hue into a harmony palette (`complementary`, `analogous`, `triadic`, `split-complementary`, `tetradic`, `square`), and `color_nearest` snaps a color onto a fixed palette by perceptual distance, returning the matched entry verbatim.
 
 Per-function documentation lives under [`docs/functions/`](docs/functions/) and on [registry.terraform.io](https://registry.terraform.io/providers/keeleysam/burnham/latest/docs).
+
+## Image Functions
+
+Rasterize SVG to PNG at plan time, for the places Terraform config actually carries generated visuals: favicons and logos, data-URI-embeddable assets, badges, and dashboard tiles.
+
+| Function | Signature | Returns | Backed by |
+|---|---|---|---|
+| `svg_render` | `(svg string, [options])` | `string` (base64 PNG) | [`resvg`](https://github.com/linebender/resvg) as WebAssembly via [`wazero`](https://github.com/tetratelabs/wazero) |
+
+`svg_render` renders at near-browser fidelity (gradients, `clipPath`, masks, filters, text, and native color emoji) using resvg compiled to WebAssembly and run under the pure-Go wazero runtime, so the provider stays CGO-free and the output is byte-identical across operating systems and CPU architectures. Options: `width` / `height` (output pixels; supply one and the other follows the SVG's aspect ratio, or neither for the intrinsic size), `scale`, and `fonts` (base64 TTF/OTF to load alongside the bundled Go text font and Noto Color Emoji, for other scripts or brand fonts). No system fonts are consulted, so a plan on one machine and an apply on another produce the same bytes.
 
 ## Installation
 

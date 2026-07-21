@@ -97,6 +97,11 @@ jobs:
         with:
           terraform_wrapper: false # tfplugindocs parses raw `terraform version` output; the wrapper's prefixing would break that.
       - run: go mod download
+      # tfplugindocs (below) builds the provider to extract its schema, and the
+      # provider go:embeds the SVG renderer wasm + emoji font, so those must exist
+      # before the docs generation runs.
+      - name: Build render wasm + fetch emoji font (go generate)
+        run: go generate ./internal/provider/image/...
       # Guard: every example is the verbatim source for its doc's "Example Usage" block (tfplugindocs embeds it via `tffile`), so an unformatted example renders badly on the registry. This is the only thing enforcing canonical `terraform fmt` on the examples tree.
       - name: Verify examples are terraform fmt clean
         run: terraform fmt -check -recursive examples/

@@ -1,0 +1,49 @@
+name: Update emoji font
+
+# Dependabot has no ecosystem for a font pinned by URL/tag in a go:generate step,
+# so this fills that gap: weekly, check googlefonts/noto-emoji for a newer release
+# and open a PR bumping the pinned tag in internal/provider/image/fonts.go. CI on
+# the PR rebuilds the provider and runs the suite, so a rendering change is caught.
+on:
+  schedule:
+    - cron: "0 6 * * 1" # Mondays 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Bump Noto Color Emoji if a newer release exists
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          file=internal/provider/image/fonts.go
+          latest=$(gh api repos/googlefonts/noto-emoji/releases/latest --jq .tag_name)
+          current=$(grep -oE 'noto-emoji/raw/[^/]+/' "$file" | head -1 | sed -E 's#noto-emoji/raw/(.+)/#\1#')
+          echo "current=$current latest=$latest"
+          if [ "$latest" = "$current" ]; then echo "already up to date"; exit 0; fi
+          # Only bump if the COLRv1 build actually exists at the new tag.
+          if ! curl -fsSL -I "https://github.com/googlefonts/noto-emoji/raw/$latest/fonts/Noto-COLRv1.ttf" >/dev/null 2>&1; then
+            echo "Noto-COLRv1.ttf not present at $latest; skipping"; exit 0
+          fi
+          branch="chore/noto-emoji-$latest"
+          if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
+            echo "branch $branch already exists; skipping"; exit 0
+          fi
+          sed -i "s#noto-emoji/raw/$current/#noto-emoji/raw/$latest/#g" "$file"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git add "$file"
+          git commit -m "chore(image): bump Noto Color Emoji to $latest"
+          git push -u origin "$branch"
+          gh pr create \
+            --title "chore(image): bump Noto Color Emoji to $latest" \
+            --body "Automated bump of the pinned Noto Color Emoji (COLRv1) build from \`$current\` to \`$latest\`. CI regenerates the font and runs the suite, so any rendering change is caught before merge." \
+            --base main --head "$branch"
