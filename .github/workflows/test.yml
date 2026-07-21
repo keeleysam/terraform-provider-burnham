@@ -7,10 +7,11 @@ on:
 permissions:
   contents: read
 
-# Three parallel jobs:
-#   - build:    `go build ./...` + `go vet ./...`. Fast-fail for the common "I broke compilation" case so contributors don't wait the full ~3-5 min `test` cycle to see a missing-import error.
-#   - test:     build, vet, the full TF_ACC=1 acceptance suite, coverage. Repeats the build/vet for self-containment so this job is also runnable in isolation.
-#   - generate: regenerate docs/ and pi_packed.bin, fail if either drifts.
+# Four parallel jobs:
+#   - build:      `go build ./...` + `go vet ./...`. Fast-fail for the common "I broke compilation" case so contributors don't wait the full ~3-5 min `test` cycle to see a missing-import error.
+#   - test:       build, vet, the full TF_ACC=1 acceptance suite, coverage. Repeats the build/vet for self-containment so this job is also runnable in isolation.
+#   - generate:   regenerate docs/ and pi_packed.bin, fail if either drifts.
+#   - goreleaser: `goreleaser build --snapshot --single-target` to exercise the release path (config parse, the `before` hooks that build the wasm engines, the go:embed, the binary build) on every branch push. Release.yml only runs on a `v*` tag, so without this a release-only break (a bad .goreleaser.yml, a missing wasm toolchain step, an embed that isn't generated in time) stays invisible until you cut a tag. This surfaces it here instead. `--single-target` builds only the runner's platform: the binary is CGO-free pure Go so per-platform cross-compilation effectively never breaks on its own, and the full goos/goarch matrix is still validated at release time.
 # The Chudnovsky regen for pi_packed.bin takes ~80s on Actions runners — splitting it off keeps the generate-drift feedback loop separate from the acceptance pass.
 # `-race` is intentionally not enabled here. On `ubuntu-latest` (2-core) runners with the per-test Terraform-subprocess overhead, race-detector wall time blew through Go's default 10-minute per-binary `-timeout`. The provider's real concurrency surface is tiny (slugify's mutex around gosimple/slug's package globals is essentially the whole story) and is well-covered by local dev runs. Add a separate periodic race-detector job if regression risk becomes a concern.
 #
@@ -114,3 +115,25 @@ jobs:
             git diff -- docs/ internal/provider/numerics/pi_packed.bin
             exit 1
           fi
+
+  goreleaser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # goreleaser reads tags/history to compute the snapshot version.
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: "go.mod"
+          cache: true
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-wasip1
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: internal/provider/image/resvg/rust
+      # `build --snapshot` runs the real `before` hooks (go mod tidy, then `go generate ./internal/provider/...` which builds the wasm engines and fetches the fonts), then compiles the provider, so this is the same path a tagged release takes minus signing and publishing. `--single-target` limits the compile to the runner's platform to keep the job fast; the full matrix runs at release time. No GITHUB_TOKEN or GPG key: a snapshot build neither publishes a release nor signs artifacts.
+      - uses: goreleaser/goreleaser-action@v7
+        with:
+          args: build --snapshot --single-target --clean
