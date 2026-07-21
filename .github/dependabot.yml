@@ -5,18 +5,15 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
-  # Rust crates behind the SVG renderer: resvg, usvg, tiny-skia, fontdb. Bumps
-  # Cargo.toml/Cargo.lock; CI rebuilds the wasm from them and the golden-hash
-  # tests gate any rendering change.
+  # Rust crates behind every wasm engine: the SVG renderer (resvg, usvg, tiny-skia, fontdb), the
+  # PCRE regex engine (fancy-regex, serde_json), and any future one. Each engine keeps its
+  # Cargo.toml/Cargo.lock in a `rust/` subdirectory under its package, so this glob picks all of
+  # them up at any nesting depth (`image/resvg/rust`, `regex/rust`, ...) and the list never needs
+  # editing when a new wasm family lands. CI rebuilds the wasm from these with --locked, and each
+  # family's tests (the renderer's golden-hash tests, the regex unit tests) gate any behavior change.
   - package-ecosystem: "cargo"
-    directory: "/internal/provider/image/resvg/rust"
-    schedule:
-      interval: "daily"
-  # Rust crates behind the PCRE regex engine: fancy-regex, serde_json. Bumps
-  # Cargo.toml/Cargo.lock; CI rebuilds the wasm from them (with --locked) and the
-  # regex unit tests gate any behavior change.
-  - package-ecosystem: "cargo"
-    directory: "/internal/provider/regex/rust"
+    directories:
+      - "/internal/provider/**/rust"
     schedule:
       interval: "daily"
   # Actions, including the Rust toolchain and cache actions (dtolnay/rust-toolchain,
