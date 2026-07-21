@@ -1,9 +1,12 @@
-name: Update emoji font
+name: Update bundled fonts
 
-# Dependabot has no ecosystem for a font pinned by URL/tag in a go:generate step,
-# so this fills that gap: weekly, check googlefonts/noto-emoji for a newer release
-# and open a PR bumping the pinned tag in internal/provider/image/fonts.go. CI on
-# the PR rebuilds the provider and runs the suite, so a rendering change is caught.
+# Dependabot has no ecosystem for a font pinned by release tag in a go:generate
+# step, so this fills that gap: weekly, check the upstream Noto repos for newer
+# releases and open a PR bumping the pinned refs in genfonts.go (emoji from
+# googlefonts/noto-emoji, the text families from notofonts/latin-greek-cyrillic).
+# It bumps the ref, then lets genfonts recompute the new checksums (it reports
+# them on a mismatch), so it stays generic across all the fonts. CI on the PR
+# rebuilds the provider and runs the suite, so a rendering change is caught.
 on:
   schedule:
     - cron: "0 6 * * 1" # Mondays 06:00 UTC
@@ -18,36 +21,62 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - name: Bump Noto Color Emoji if a newer release exists
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: "go.mod"
+          cache: true
+      - name: Bump pinned font refs if newer releases exist
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           file=internal/provider/image/genfonts.go
-          latest=$(gh api repos/googlefonts/noto-emoji/releases/latest --jq .tag_name)
-          current=$(grep -oE 'emojiRef = "[^"]+"' "$file" | sed -E 's/emojiRef = "(.+)"/\1/')
-          echo "current=$current latest=$latest"
-          if [ "$latest" = "$current" ]; then echo "already up to date"; exit 0; fi
-          url="https://github.com/googlefonts/noto-emoji/raw/$latest/fonts/Noto-COLRv1.ttf"
-          if ! curl -fsSL -o /tmp/emoji.ttf "$url"; then
-            echo "Noto-COLRv1.ttf not present at $latest; skipping"; exit 0
-          fi
-          branch="chore/noto-emoji-$latest"
+
+          # Latest tag for each pinned ref const.
+          emoji_latest=$(gh api repos/googlefonts/noto-emoji/releases/latest --jq .tag_name)
+          lgc_latest() { gh api "repos/notofonts/latin-greek-cyrillic/releases?per_page=60" --jq "[.[] | select(.tag_name|startswith(\"$1-v\"))] | .[0].tag_name"; }
+          declare -A latest=(
+            [emojiRef]="$emoji_latest"
+            [notoSansRef]="$(lgc_latest NotoSans)"
+            [notoSerifRef]="$(lgc_latest NotoSerif)"
+            [notoSansMonoRef]="$(lgc_latest NotoSansMono)"
+          )
+
+          changed=false
+          bumps=""
+          for k in emojiRef notoSansRef notoSerifRef notoSansMonoRef; do
+            new="${latest[$k]}"
+            [ -n "$new" ] || { echo "no release found for $k; skipping it"; continue; }
+            cur=$(grep -oE "$k *= *\"[^\"]+\"" "$file" | sed -E "s/.*\"(.+)\"/\1/")
+            echo "$k: current=$cur latest=$new"
+            if [ "$cur" != "$new" ]; then
+              sed -i "s/$k = \"$cur\"/$k = \"$new\"/" "$file"
+              changed=true
+              bumps="$bumps- $k: $cur -> $new"$'\n'
+            fi
+          done
+          if [ "$changed" != "true" ]; then echo "all fonts up to date"; exit 0; fi
+
+          # Refresh checksums: genfonts fails on a mismatch reporting the new sha;
+          # apply it and retry until it verifies (bounded by the font count).
+          for _ in $(seq 1 10); do
+            if out=$(go generate ./internal/provider/image 2>&1); then break; fi
+            newsha=$(echo "$out" | grep -oE 'got [0-9a-f]{64}' | head -1 | cut -d' ' -f2)
+            oldsha=$(echo "$out" | grep -oE 'want [0-9a-f]{64}' | head -1 | cut -d' ' -f2)
+            if [ -z "$newsha" ] || [ -z "$oldsha" ]; then echo "$out"; exit 1; fi
+            sed -i "s/$oldsha/$newsha/" "$file"
+          done
+          go generate ./internal/provider/image >/dev/null
+
+          branch="chore/bump-fonts-$(date +%Y%m%d)"
           if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
             echo "branch $branch already exists; skipping"; exit 0
           fi
-          # Bump the ref and its pinned checksum together so genfonts verifies.
-          oldsha=$(grep -A2 'fonts/Noto-COLRv1.ttf' "$file" | grep -oE 'sha256: "[0-9a-f]{64}"' | sed -E 's/sha256: "(.+)"/\1/')
-          newsha=$(sha256sum /tmp/emoji.ttf | cut -d' ' -f1)
-          sed -i "s/emojiRef = \"$current\"/emojiRef = \"$latest\"/" "$file"
-          sed -i "s/$oldsha/$newsha/" "$file"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b "$branch"
           git add "$file"
-          git commit -m "chore(image): bump Noto Color Emoji to $latest"
+          git commit -m "chore(image): bump bundled Noto fonts"
           git push -u origin "$branch"
-          gh pr create \
-            --title "chore(image): bump Noto Color Emoji to $latest" \
-            --body "Automated bump of the pinned Noto Color Emoji (COLRv1) build from \`$current\` to \`$latest\`. CI regenerates the font and runs the suite, so any rendering change is caught before merge." \
-            --base main --head "$branch"
+          printf 'Automated bump of pinned Noto font refs:\n\n%s\nCI regenerates the fonts and runs the suite, so any rendering change is caught before merge.' "$bumps" | \
+            gh pr create --title "chore(image): bump bundled Noto fonts" --body-file - --base main --head "$branch"
