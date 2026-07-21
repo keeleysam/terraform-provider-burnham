@@ -20,10 +20,19 @@ jobs:
         with:
           go-version-file: "go.mod"
           cache: true
-      # The WASM function families (image/resvg, regex) go:embed a wasm blob that is gitignored and built from Rust by the goreleaser `before` hook (`go generate ./internal/provider/...`). goreleaser cannot build the provider until that blob exists, so the toolchain and the wasm32-wasip1 target have to be present before goreleaser runs. No rust-cache here: releases are infrequent tag pushes, so a cold cargo build is fine and we avoid coupling to per-family workspace paths.
+      # The WASM function families (regex, image/resvg, documents/typst) go:embed a wasm blob that is gitignored and built from Rust by the goreleaser `before` hook (`go generate ./internal/provider/...`). goreleaser cannot build the provider until that blob exists, so the toolchain and the wasm32-wasip1 target have to be present before goreleaser runs.
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: wasm32-wasip1
+      # A cold cargo build of the three wasm engines is the ~5min long pole of a release. test.yml builds the same three crates on every push to main with rust-cache under the shared-key "wasm", and GitHub makes default-branch caches readable from tag-triggered runs, so this restores those warm target/ dirs and the goreleaser `before` hook's `cargo build --locked` becomes a no-op fingerprint check whenever the Rust source has not changed. save-if is false because this workflow only runs on tags: tag-scoped caches are not readable by the next tag, so saving here would just churn the 10GB quota for no benefit. main is the sole writer, this is a pure consumer. The workspace list and shared-key MUST stay in sync with test.yml or the keys stop matching and every release falls back to a cold build.
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            internal/provider/regex/rust
+            internal/provider/image/resvg/rust
+            internal/provider/documents/typst/rust
+          shared-key: wasm
+          save-if: false
       - name: Import GPG key
         uses: crazy-max/ghaction-import-gpg@v7
         id: import_gpg
