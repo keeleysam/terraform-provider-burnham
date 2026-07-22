@@ -43,7 +43,7 @@ jobs:
             internal/provider/documents/typst/rust
           shared-key: wasm
           save-if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging' }}
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: internal/provider/image/fonts
           key: fonts-${{ runner.os }}-${{ hashFiles('internal/provider/image/genfonts.go') }}
@@ -74,7 +74,7 @@ jobs:
             internal/provider/documents/typst/rust
           shared-key: wasm
           save-if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging' }}
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: internal/provider/image/fonts
           key: fonts-${{ runner.os }}-${{ hashFiles('internal/provider/image/genfonts.go') }}
@@ -117,7 +117,7 @@ jobs:
             internal/provider/documents/typst/rust
           shared-key: wasm
           save-if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging' }}
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: internal/provider/image/fonts
           key: fonts-${{ runner.os }}-${{ hashFiles('internal/provider/image/genfonts.go') }}
@@ -168,7 +168,7 @@ jobs:
             internal/provider/documents/typst/rust
           shared-key: wasm
           save-if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging' }}
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: internal/provider/image/fonts
           key: fonts-${{ runner.os }}-${{ hashFiles('internal/provider/image/genfonts.go') }}
@@ -205,12 +205,12 @@ jobs:
             internal/provider/documents/typst/rust
           shared-key: wasm
           save-if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging' }}
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: internal/provider/image/fonts
           key: fonts-${{ runner.os }}-${{ hashFiles('internal/provider/image/genfonts.go') }}
       # Key includes the commit SHA so every push saves a fresh cache: actions/cache keys are immutable, so a go.sum-only key would freeze the GOCACHE at the first commit for that go.sum and let the provider's own packages go stale (deps would stay warm, but our code would recompile from scratch every release). restore-keys fall back to the most recent same-go.sum cache (then any), so each run restores incrementally rather than cold. release.yml restores by the same SHA (its tag points at this commit), so it gets this exact commit's cache.
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: |
             ~/.cache/go-build

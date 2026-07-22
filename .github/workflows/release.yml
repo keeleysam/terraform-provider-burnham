@@ -66,13 +66,13 @@ jobs:
           shared-key: wasm
           save-if: false
       # Cache the pinned Noto fonts (gitignored, downloaded by genfonts in the goreleaser before hook). genfonts is idempotent (skips the download when the on-disk files match the pinned sha256), so a cache hit avoids the network. Keyed on genfonts.go so a font bump re-downloads.
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: internal/provider/image/fonts
           key: fonts-${{ runner.os }}-${{ hashFiles('internal/provider/image/genfonts.go') }}
       # Restore the all-arch Go build cache that test.yml's warm-build-cache job populated on main (the await-cache job above ensured that warming for this commit has finished). With it, goreleaser's cross-compile is a link-only pass instead of a cold ~9min build, and the module cache rides along too. Restore-only: tag-scoped saves are unreadable by the next tag, so saving here would only churn the 10GB quota.
       # The primary key includes github.sha: this tag points at the main commit the warmer ran on, so this hits that exact commit's cache (including the provider's own freshly-compiled packages, not just deps). restore-keys fall back to the most recent same-go.sum cache, then any, so a gate timeout or a missing exact match still restores a warm-ish cache. Key and paths MUST match test.yml's warm-build-cache.
-      - uses: actions/cache/restore@v4
+      - uses: actions/cache/restore@v6
         with:
           path: |
             ~/.cache/go-build
