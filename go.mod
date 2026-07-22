@@ -50,7 +50,7 @@ require (
 	github.com/gowebpki/jcs v1.0.1
 	github.com/lucasb-eyer/go-colorful v1.4.0
 	github.com/mazznoer/csscolorparser v0.1.8
-	github.com/prometheus/common v0.70.0
+	github.com/prometheus/common v0.70.1
 	github.com/prometheus/prometheus v0.313.1
 	github.com/recolabs/gnata v0.2.2
 	github.com/tetratelabs/wazero v1.12.0
@@ -133,7 +133,7 @@ require (
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/exp v0.0.0-20260218203240-3dfff04db8fa // indirect
 	golang.org/x/mod v0.37.0 // indirect
-	golang.org/x/net v0.56.0 // indirect
+	golang.org/x/net v0.57.0 // indirect
 	golang.org/x/sync v0.22.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
 	golang.org/x/tools v0.47.0 // indirect
