@@ -10,10 +10,11 @@ project_name: terraform-provider-burnham
 before:
   hooks:
     - go mod tidy
-    # Generate only the embedded assets the binary needs: the WASM engines (resvg, fancy-regex), the bundled fonts, and the packed Pi table, all of which live under internal/provider.
-    # We deliberately do NOT run the root `go generate ./...` here: that also fires the tfplugindocs directive in main.go, which `go build`s the provider and would fail on the not-yet-generated `go:embed` targets (a chicken-and-egg), and the generated docs are committed to the tree already so a release does not need to regenerate them.
+    # Generate only the gitignored embedded assets the binary needs from source: the WASM engines (resvg, fancy-regex, typst) and the bundled fonts.
+    # We deliberately exclude numerics: pi_packed.bin is committed and verified by the pi-drift CI job, so regenerating it here would just burn ~80s recomputing Chudnovsky on the release critical path for a byte-identical result.
+    # We also do NOT run the root `go generate ./...`: that fires the tfplugindocs directive in main.go, which `go build`s the provider and would fail on the not-yet-generated `go:embed` targets (a chicken-and-egg), and the docs are committed already.
     # Building the WASM engines requires the Rust toolchain and the wasm32-wasip1 target, which the release workflow installs before this hook runs.
-    - go generate ./internal/provider/...
+    - go generate ./internal/provider/image/... ./internal/provider/regex/... ./internal/provider/documents/...
 builds:
   - env:
       - CGO_ENABLED=0

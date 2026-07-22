@@ -21,6 +21,7 @@ permissions:
 # will build until those exist, so every job installs the Rust toolchain and runs
 # the image generate step first. Swatinem/rust-cache keeps the cargo build warm across runs so this is cheap after the first build.
 # All three wasm crates (regex, image/resvg, documents/typst) are cached under the shared-key "wasm". release.yml consumes that same key, and GitHub exposes default-branch caches to tag-triggered runs, so a tagged release restores these warm target/ dirs instead of paying the ~5min cold cargo build that dominates a release. save-if scopes writes to main (the cache tagged releases read) and staging (so this can be iterated on without pushing to main); every other feature branch and PR restores those caches read-only rather than churning the 10GB quota with per-branch copies. The workspace list and shared-key MUST stay identical to release.yml or the keys stop matching and releases fall back to cold builds.
+# The pinned Noto fonts (gitignored) are cached separately, keyed on genfonts.go. genfonts is idempotent: it hashes each on-disk font against the pinned sha256 and skips the download when they match, so a cache hit avoids the network entirely. Bumping a font version in genfonts.go changes both the checksum and the cache key, forcing a fresh download.
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -42,6 +43,10 @@ jobs:
             internal/provider/documents/typst/rust
           shared-key: wasm
           save-if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging' }}
+      - uses: actions/cache@v4
+        with:
+          path: internal/provider/image/fonts
+          key: fonts-${{ runner.os }}-${{ hashFiles('internal/provider/image/genfonts.go') }}
       - run: go mod download
       - name: Build render wasm + fetch emoji font (go generate)
         run: go generate ./internal/provider/image/... ./internal/provider/regex/... ./internal/provider/documents/...
@@ -69,6 +74,10 @@ jobs:
             internal/provider/documents/typst/rust
           shared-key: wasm
           save-if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging' }}
+      - uses: actions/cache@v4
+        with:
+          path: internal/provider/image/fonts
+          key: fonts-${{ runner.os }}-${{ hashFiles('internal/provider/image/genfonts.go') }}
       # Pre-install the Terraform CLI so terraform-plugin-testing's plugintest helper doesn't have to. The runner has no terraform out of the box, so without this every test invocation routes through `hc-install` which writes the binary to a per-process tempdir and execs it. Under `t.Parallel()` in the acceptance suite, many goroutines hit that install path nearly simultaneously and race on the file-write→exec sequence — Linux returns ETXTBSY ("text file busy") because the writable fd hasn't been closed by the time a sibling tries to `fork/exec` the same path. Pre-installing avoids the write entirely; the `TF_ACC_TERRAFORM_PATH` env var below tells plugintest to use the installed binary directly.
       - uses: hashicorp/setup-terraform@v4
         id: setup-terraform
@@ -108,6 +117,10 @@ jobs:
             internal/provider/documents/typst/rust
           shared-key: wasm
           save-if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging' }}
+      - uses: actions/cache@v4
+        with:
+          path: internal/provider/image/fonts
+          key: fonts-${{ runner.os }}-${{ hashFiles('internal/provider/image/genfonts.go') }}
       # tfplugindocs (called from `go generate ./...` below) needs `terraform` on PATH to extract the provider schema via `terraform providers schema -json`. Without a pre-installed binary it falls back to `hc-install` and downloads the latest version every run — an extra ~5-10s of network work plus a possible flake source. Pre-installing pins the version and skips the download.
       - uses: hashicorp/setup-terraform@v4
         with:
@@ -121,13 +134,13 @@ jobs:
       # Guard: every example is the verbatim source for its doc's "Example Usage" block (tfplugindocs embeds it via `tffile`), so an unformatted example renders badly on the registry. This is the only thing enforcing canonical `terraform fmt` on the examples tree.
       - name: Verify examples are terraform fmt clean
         run: terraform fmt -check -recursive examples/
-      # Guard: generated artifacts must be up-to-date with their sources. `go generate ./...` regenerates docs/ (via tfplugindocs), pi_packed.bin (via cmd/genpi), and the SVG renderer wasm + emoji font (Rust build + pinned download). Only docs/ and pi_packed.bin are committed, so those are the drift check; the wasm and font are gitignored (built fresh here, never committed).
-      - name: Verify generated artifacts are up to date
+      # Guard: docs must be up-to-date with their sources. `go generate .` runs the root main.go directives (gendoctemplates, then tfplugindocs) which regenerate docs/ from the built provider. The provider builds against the committed pi_packed.bin and the wasm/fonts generated just above. pi_packed.bin drift is checked separately by the pi-drift job so its ~80s Chudnovsky recompute stays off this critical path; the wasm and fonts are gitignored (built fresh here, never committed) so they are not drift-checked.
+      - name: Verify docs are up to date
         run: |
-          go generate ./...
-          if ! git diff --quiet -- docs/ internal/provider/numerics/pi_packed.bin; then
-            echo "::error::Generated artifacts are out of sync with source. Run 'go generate ./...' and commit the result."
-            git diff -- docs/ internal/provider/numerics/pi_packed.bin
+          go generate .
+          if ! git diff --quiet -- docs/; then
+            echo "::error::Generated docs are out of sync with source. Run 'go generate .' and commit the result."
+            git diff -- docs/
             exit 1
           fi
 
@@ -153,6 +166,10 @@ jobs:
             internal/provider/documents/typst/rust
           shared-key: wasm
           save-if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging' }}
+      - uses: actions/cache@v4
+        with:
+          path: internal/provider/image/fonts
+          key: fonts-${{ runner.os }}-${{ hashFiles('internal/provider/image/genfonts.go') }}
       # `build --snapshot` runs the real `before` hooks (go mod tidy, then `go generate ./internal/provider/...` which builds the wasm engines and fetches the fonts), then compiles the provider, so this is the same path a tagged release takes minus signing and publishing. `--single-target` limits the compile to the runner's platform to keep the job fast; the full matrix runs at release time. No GITHUB_TOKEN or GPG key: a snapshot build neither publishes a release nor signs artifacts.
       - uses: goreleaser/goreleaser-action@v7
         with:
@@ -188,6 +205,10 @@ jobs:
           save-if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging' }}
       - uses: actions/cache@v4
         with:
+          path: internal/provider/image/fonts
+          key: fonts-${{ runner.os }}-${{ hashFiles('internal/provider/image/genfonts.go') }}
+      - uses: actions/cache@v4
+        with:
           path: |
             ~/.cache/go-build
             ~/go/pkg/mod
@@ -198,3 +219,22 @@ jobs:
         uses: goreleaser/goreleaser-action@v7
         with:
           args: build --snapshot --clean
+
+  # pi_packed.bin (embedded by the numerics package) is regenerated by cmd/genpi via the Chudnovsky algorithm, ~80s. The file is committed and the build/release path now uses it as-is instead of paying that ~80s on the critical path (see .goreleaser.yml and the docs job above). This job keeps the committed file honest by regenerating it and failing on drift, running in parallel with everything else so its cost is off the critical path. It needs only Go: genpi is a standalone program, no wasm/rust/terraform.
+  pi-drift:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: "go.mod"
+          cache: true
+      - name: Regenerate pi_packed.bin and fail on drift
+        run: |
+          go generate ./internal/provider/numerics/...
+          if ! git diff --quiet -- internal/provider/numerics/pi_packed.bin; then
+            echo "::error::pi_packed.bin is out of sync with cmd/genpi. Run 'go generate ./internal/provider/numerics/...' and commit the result."
+            git diff -- internal/provider/numerics/pi_packed.bin
+            exit 1
+          fi
