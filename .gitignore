@@ -81,4 +81,5 @@
 
 # resvg wasm build artifacts (built via go generate; see internal/provider/image/resvg)
 internal/provider/image/resvg/svg_render.wasm
-internal/provider/image/resvg/rust/target/
+# Cargo build dirs for every wasm crate (regex, resvg, typst, and any future one). The !/internal/**/ rule above re-includes all directories so git descends into target/, and the *.rs/*.txt/etc. allowlist then re-includes cargo-generated files inside it, dirtying the tree. That is fatal to `goreleaser release`, which refuses a dirty tree, once rust-cache restores these dirs before it runs. Excluding the target dirs outright (a parent-dir exclude the allowlist can't override) keeps them out of git entirely.
+internal/provider/**/rust/target/
