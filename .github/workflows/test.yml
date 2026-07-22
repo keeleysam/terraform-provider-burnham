@@ -283,3 +283,37 @@ jobs:
             git diff -- internal/provider/numerics/pi_packed.bin
             exit 1
           fi
+
+  # Auto-merge for Dependabot PRs ONLY -- the github.actor gate below means it never runs for human PRs.
+  # It sits downstream of every job that runs on a dependabot PR via `needs:`, so the job graph starts it only
+  # after all of them finish successfully. That is how we approve + enable auto-merge once all non-skipped checks
+  # are green, with no runner sitting in a poll loop. If any needed job fails, a failed `needs` cascades and this
+  # job is skipped, so a red PR is never approved.
+  #
+  # UPDATING `needs:` -- keep it equal to every OTHER job in this file that actually runs on a dependabot PR. Add
+  # a job here whenever you add a PR-running job. Do NOT list jobs that are skipped on PRs (warm-build-cache is
+  # gated to main/staging); a skipped job in `needs:` would skip this job too and nothing would auto-merge.
+  # CodeQL is a separate workflow (default setup) that skips on dependabot PRs, so it is not (and cannot be)
+  # listed here; `gh pr merge --auto` still gates the real merge on CodeQL and every branch-protection-required
+  # check regardless -- this job only decides when to approve and arm auto-merge, never how the merge is gated.
+  #
+  # Auth: dependabot-triggered runs get a read-only GITHUB_TOKEN, so the approve/merge use DEPENDABOT_PAT (a
+  # Dependabot secret, available because this runs in the dependabot pull_request context).
+  auto-merge:
+    needs: [build, test, generate, goreleaser, pi-drift]
+    if: github.event_name == 'pull_request' && github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Enable auto-merge, then approve
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.DEPENDABOT_PAT }}
+        run: |
+          # Order matters. This job is downstream of all checks, so they are already green by now, which means the
+          # ONLY unmet merge requirement is the approval. Auto-merge can only be enabled while something is still
+          # pending: if we approved first the PR would be immediately mergeable ("clean") and `gh pr merge --auto`
+          # would error ("Pull request is in clean status"). So arm auto-merge while the approval is still pending,
+          # then approve to satisfy the last requirement and let it merge.
+          gh pr merge --auto --squash "$PR_URL"
+          gh pr review --approve "$PR_URL"
