@@ -70,14 +70,16 @@ jobs:
         with:
           path: internal/provider/image/fonts
           key: fonts-${{ runner.os }}-${{ hashFiles('internal/provider/image/genfonts.go') }}
-      # Restore the all-arch Go build cache that test.yml's warm-build-cache job populated on main (the await-cache job above ensured that warming for this commit has finished). With it, goreleaser's cross-compile is a link-only pass instead of a cold ~9min build, and the module cache rides along too. Restore-only: tag-scoped saves are unreadable by the next tag, so saving here would only churn the 10GB quota. Key and paths MUST match test.yml's warm-build-cache or the restore misses and the release falls back to a cold build.
+      # Restore the all-arch Go build cache that test.yml's warm-build-cache job populated on main (the await-cache job above ensured that warming for this commit has finished). With it, goreleaser's cross-compile is a link-only pass instead of a cold ~9min build, and the module cache rides along too. Restore-only: tag-scoped saves are unreadable by the next tag, so saving here would only churn the 10GB quota.
+      # The primary key includes github.sha: this tag points at the main commit the warmer ran on, so this hits that exact commit's cache (including the provider's own freshly-compiled packages, not just deps). restore-keys fall back to the most recent same-go.sum cache, then any, so a gate timeout or a missing exact match still restores a warm-ish cache. Key and paths MUST match test.yml's warm-build-cache.
       - uses: actions/cache/restore@v4
         with:
           path: |
             ~/.cache/go-build
             ~/go/pkg/mod
-          key: go-allarch-${{ runner.os }}-${{ hashFiles('**/go.sum') }}
+          key: go-allarch-${{ runner.os }}-${{ hashFiles('**/go.sum') }}-${{ github.sha }}
           restore-keys: |
+            go-allarch-${{ runner.os }}-${{ hashFiles('**/go.sum') }}-
             go-allarch-${{ runner.os }}-
       - name: Import GPG key
         uses: crazy-max/ghaction-import-gpg@v7

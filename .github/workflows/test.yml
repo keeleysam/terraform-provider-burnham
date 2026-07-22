@@ -145,6 +145,8 @@ jobs:
           fi
 
   goreleaser:
+    # Skipped on main/staging: warm-build-cache already runs goreleaser with the full matrix there (which includes this single target), so this would be a redundant build. It still runs on PRs and other branches, where the warmer is gated off, to keep the release path smoke-tested.
+    if: github.ref != 'refs/heads/main' && github.ref != 'refs/heads/staging'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -207,13 +209,15 @@ jobs:
         with:
           path: internal/provider/image/fonts
           key: fonts-${{ runner.os }}-${{ hashFiles('internal/provider/image/genfonts.go') }}
+      # Key includes the commit SHA so every push saves a fresh cache: actions/cache keys are immutable, so a go.sum-only key would freeze the GOCACHE at the first commit for that go.sum and let the provider's own packages go stale (deps would stay warm, but our code would recompile from scratch every release). restore-keys fall back to the most recent same-go.sum cache (then any), so each run restores incrementally rather than cold. release.yml restores by the same SHA (its tag points at this commit), so it gets this exact commit's cache.
       - uses: actions/cache@v4
         with:
           path: |
             ~/.cache/go-build
             ~/go/pkg/mod
-          key: go-allarch-${{ runner.os }}-${{ hashFiles('**/go.sum') }}
+          key: go-allarch-${{ runner.os }}-${{ hashFiles('**/go.sum') }}-${{ github.sha }}
           restore-keys: |
+            go-allarch-${{ runner.os }}-${{ hashFiles('**/go.sum') }}-
             go-allarch-${{ runner.os }}-
       - name: Warm all-arch Go build cache (full matrix, no publish/sign)
         uses: goreleaser/goreleaser-action@v7
