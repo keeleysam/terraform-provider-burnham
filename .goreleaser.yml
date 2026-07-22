@@ -23,19 +23,45 @@ builds:
       - -trimpath
     ldflags:
       - "-s -w -X main.version={{.Version}} -X main.commit={{.Commit}}"
+    # We list the operating systems and architectures we want, then let goreleaser build the cross product.
+    # goreleaser silently drops combinations that are not valid Go targets (for example windows/arm,
+    # darwin/386, solaris/arm), so we do not need `ignore` entries to prune them. Every surviving
+    # combination has been confirmed to compile with `CGO_ENABLED=0 go build`.
+    #
+    # Architectures: the four mainstream ones everywhere, plus ppc64le (modern little-endian POWER: IBM
+    # POWER8+ and Raptor Talos/Blackbird workstations) and riscv64 (VisionFive, Milk-V, and other hobbyist
+    # boards). We skip loong64, mips*, and s390x, whose hardware (Loongson desktops, routers, mainframes)
+    # is not somewhere anyone runs this provider. We also skip big-endian ppc64: Go's minimum is GOPPC64
+    # power8, so it cannot target pre-POWER8 chips like the PowerPC 970 in a PowerMac G5, and modern POWER
+    # Linux is little-endian anyway. Dropping big-endian ppc64 also drops aix, whose only Go target is that.
+    #
+    # android and ios are omitted: they need cgo/external linking, which conflicts with CGO_ENABLED=0, and
+    # neither is a place Terraform runs. solaris is kept because, unlike the BSDs, it is an actual Terraform
+    # core release platform.
+    #
+    # plan9 is listed but commented out. hashicorp/go-plugin (the provider RPC layer) and
+    # prometheus/prometheus both call POSIX/Windows-only syscalls (mmap, syscall.Stat_t) that plan9 lacks,
+    # so the build fails today. Unblocking it would be a fun future project.
     goos:
-      - freebsd
-      - windows
-      - linux
       - darwin
+      - freebsd
+      - linux
+      - openbsd
+      - netbsd
+      - windows
+      - solaris
+      # - plan9
     goarch:
       - amd64
       - "386"
       - arm
       - arm64
-    ignore:
-      - goos: darwin
-        goarch: "386"
+      - ppc64le
+      - riscv64
+    # Build 32-bit arm as ARMv6 rather than Go's current default of GOARM=7, so the linux/arm and
+    # freebsd/arm artifacts run on the original Raspberry Pi (Pi 1, Pi Zero) and other ARMv6 boards.
+    goarm:
+      - "6"
     binary: "{{ .ProjectName }}_v{{ .Version }}"
 archives:
   - formats: [zip]
