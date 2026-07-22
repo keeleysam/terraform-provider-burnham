@@ -1,8 +1,16 @@
 name: Tests
 
+# Reusable test suite, invoked by ci.yml (the dispatcher). ci.yml decides whether to run -- on a push to a branch
+# that already has an open PR it skips this, so a branch push and its PR don't double-run the suite -- then calls
+# this via `uses:` with `secrets: inherit`. The github context here (event_name, event.pull_request, actor, ref) is
+# the caller's, so the job `if:` conditions below behave exactly as if this had run on push/pull_request directly.
+#
+# NOTE ON REQUIRED CHECKS: because this runs as a reusable workflow, its job checks are reported with the caller's
+# job name prefixed -- e.g. `tests / build`, `tests / test`, `tests / generate`, `tests / goreleaser` -- NOT the
+# bare `build`/`test`/... names. Branch protection's required status checks must be updated to those prefixed names
+# (CodeQL is separate and unchanged).
 on:
-  push:
-  pull_request:
+  workflow_call:
 
 permissions:
   contents: read

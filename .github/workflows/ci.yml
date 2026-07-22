@@ -1,0 +1,61 @@
+name: CI
+
+# Dispatcher for the reusable test suite (test.yml). It exists to solve one problem: `on: [push, pull_request]`
+# double-runs the suite for any branch that has an open PR (the push event AND the pull_request event both fire on
+# the same commit). We still want CI on feature branches that have NO PR yet, so we can't just drop the push
+# trigger. Instead, the `decide` job below runs on every push/PR but only lets the (expensive) suite run when it
+# isn't a redundant push:
+#   - pull_request event            -> run (this is the canonical run for a PR; the auto-merge job needs it)
+#   - push, branch has NO open PR   -> run (feature branch with no PR, main, staging)
+#   - push, branch HAS an open PR   -> skip (that PR's own run already covers this commit)
+# So a push to a PR'd branch costs only the ~5s `decide` job instead of a full duplicate suite -- which would
+# otherwise burn a second set of runners (and one of the account's 20 concurrent slots) redoing identical work,
+# the exact waste this dispatcher exists to prevent.
+#
+# Shape: this file is only the trigger + gate. The actual jobs live in test.yml as a reusable workflow that this
+# calls; keeping them there means the gate is a single decision here rather than an `if:` copied onto every job.
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: read # `decide` lists PRs to detect the duplicate-push case
+
+jobs:
+  # Gate job: emits run=true/false for this event per the matrix in the header, so the `tests` job below only
+  # invokes the suite when this event isn't a redundant push. Cheap (~5s) and runs on every push/PR.
+  decide:
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.decide.outputs.run }}
+    steps:
+      - id: decide
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          set -uo pipefail
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "pull_request event -> run the suite"
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # push event: run only if this branch has no open PR (an open PR's own run already covers this commit).
+          open=$(gh pr list --repo "$REPO" --head "$BRANCH" --state open --json number --jq 'length' 2>/dev/null || echo 0)
+          if [ "$open" = "0" ]; then
+            echo "push to '$BRANCH' with no open PR -> run the suite"
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "push to '$BRANCH' which has an open PR -> skip (the pull_request run covers this commit)"
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  # Runs the whole suite (build/test/generate/goreleaser/pi-drift/warm-build-cache/auto-merge) only when `decide`
+  # says so. The caller job name here ("tests") is what prefixes the reusable's check names: `tests / build`, etc.
+  tests:
+    needs: decide
+    if: needs.decide.outputs.run == 'true'
+    uses: ./.github/workflows/test.yml
+    secrets: inherit

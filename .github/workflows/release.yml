@@ -11,7 +11,7 @@ permissions:
   actions: read
 
 jobs:
-  # Block the release until the cache-warming job for this commit has finished, so goreleaser restores a fresh all-arch cache instead of racing it. auto-release tags every push to main, so test.yml's warm-build-cache job is running on that same commit; we wait for it. Bounded: on timeout we proceed anyway rather than ever block a release (worst case the build is colder). A cold warm job can make this slower than building cold, but steady-state the warm job is incremental and finishes well before a cold cross-compile would.
+  # Block the release until the cache-warming job for this commit has finished, so goreleaser restores a fresh all-arch cache instead of racing it. auto-release tags every push to main, so the CI run for that commit is running the warm-build-cache job (test.yml is a reusable workflow invoked by ci.yml, so we look at ci.yml's run and the prefixed job name "tests / warm-build-cache"); we wait for it. Bounded: on timeout we proceed anyway rather than ever block a release (worst case the build is colder). A cold warm job can make this slower than building cold, but steady-state the warm job is incremental and finishes well before a cold cross-compile would.
   await-cache:
     runs-on: ubuntu-latest
     timeout-minutes: 25
@@ -25,9 +25,10 @@ jobs:
           echo "Waiting for the main Tests run's warm-build-cache job on ${sha}"
           deadline=$(( $(date +%s) + 20*60 ))
           while [ "$(date +%s)" -lt "${deadline}" ]; do
-            run_id=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/test.yml/runs?head_sha=${sha}&branch=main&per_page=1" --jq '.workflow_runs[0].id // empty' 2>/dev/null || true)
+            run_id=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/ci.yml/runs?head_sha=${sha}&branch=main&per_page=1" --jq '.workflow_runs[0].id // empty' 2>/dev/null || true)
             if [ -n "${run_id}" ]; then
-              job_status=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/jobs" --jq '.jobs[] | select(.name=="warm-build-cache") | .status' 2>/dev/null || true)
+              # Reusable-workflow job names are prefixed with the caller job ("tests"), so it is "tests / warm-build-cache".
+              job_status=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/jobs" --jq '.jobs[] | select(.name=="tests / warm-build-cache") | .status' 2>/dev/null || true)
               if [ "${job_status}" = "completed" ]; then
                 echo "warm-build-cache completed; proceeding with a warm cache"
                 exit 0
