@@ -157,3 +157,44 @@ jobs:
       - uses: goreleaser/goreleaser-action@v7
         with:
           args: build --snapshot --single-target --clean
+
+  # Best-effort warmer for the release build cache. A tagged release only recompiles what changed if the Go build cache is already warm for every target architecture, so the ~9min cold cross-compile at release time collapses to a link-only pass. GitHub exposes default-branch caches to tag-triggered runs, so warming here on each push to main leaves an all-architecture GOCACHE ready for the next release to restore.
+  # This job is purely additive and must never hurt: continue-on-error means a warm failure can never fail CI, it runs only on main (warming a PR/branch would churn the 10GB cache quota without helping any release), and it runs in parallel with the real test jobs so it adds nothing to wall-clock.
+  # Rust ordering (no chicken-and-egg): the all-arch Go build needs the wasm blobs the provider go:embeds, and those come from cargo. Using `goreleaser build --snapshot` guarantees the order for free, its `before` hooks build the wasm engines (via the shared "wasm" rust-cache) before it compiles any Go, and it uses the exact release build flags so the cache it warms is actually hit at release time. The wasm itself is cached by the rust-cache above; this job persists the Go build cache.
+  # setup-go's cache is disabled here on purpose: its key is go.sum-based and shared with the single-target jobs, so whichever finishes first would clobber this job's full-matrix GOCACHE. A dedicated actions/cache key keeps the all-arch cache intact. Consuming it in release.yml is a separate follow-up.
+  warm-build-cache:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # goreleaser reads tags/history to compute the snapshot version.
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: "go.mod"
+          cache: false
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-wasip1
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            internal/provider/regex/rust
+            internal/provider/image/resvg/rust
+            internal/provider/documents/typst/rust
+          shared-key: wasm
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: go-allarch-${{ runner.os }}-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            go-allarch-${{ runner.os }}-
+      - name: Warm all-arch Go build cache (full matrix, no publish/sign)
+        uses: goreleaser/goreleaser-action@v7
+        with:
+          args: build --snapshot --clean
