@@ -22,6 +22,7 @@ permissions:
 # the image generate step first. Swatinem/rust-cache keeps the cargo build warm across runs so this is cheap after the first build.
 # All three wasm crates (regex, image/resvg, documents/typst) are cached under the shared-key "wasm". release.yml consumes that same key, and GitHub exposes default-branch caches to tag-triggered runs, so a tagged release restores these warm target/ dirs instead of paying the ~5min cold cargo build that dominates a release. save-if scopes writes to main (the cache tagged releases read) and staging (so this can be iterated on without pushing to main); every other feature branch and PR restores those caches read-only rather than churning the 10GB quota with per-branch copies. The workspace list and shared-key MUST stay identical to release.yml or the keys stop matching and releases fall back to cold builds.
 # The pinned Noto fonts (gitignored) are cached separately, keyed on genfonts.go. genfonts is idempotent: it hashes each on-disk font against the pinned sha256 and skips the download when they match, so a cache hit avoids the network entirely. Bumping a font version in genfonts.go changes both the checksum and the cache key, forcing a fresh download.
+# Go build cache: every job that compiles Go restores the all-arch cache (go-allarch) read-only from main, the same cache warm-build-cache produces and release consumes. setup-go's built-in cache is turned off so go-allarch is the single source: its per-commit key (with restore-keys fallback to the most recent same-go.sum, then any) stays fresh, whereas setup-go's go.sum-keyed cache is immutable and freezes the provider's own packages until a dependency bump. Single-arch jobs only use the host slice of the ~1.9GB cache, but the restore is fast and they get warm deps + own packages from main. Only warm-build-cache writes go-allarch; everyone else restores. pi-drift is the exception (it caches nothing): its cost is the ~80s Chudnovsky pi computation, not compilation.
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -31,7 +32,7 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version-file: "go.mod"
-          cache: true
+          cache: false
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: wasm32-wasip1
@@ -47,6 +48,16 @@ jobs:
         with:
           path: internal/provider/image/fonts
           key: fonts-${{ runner.os }}-${{ hashFiles('internal/provider/image/genfonts.go') }}
+      # Leverage main's all-arch Go build cache read-only (see header note). restore-keys pick the best available: this commit's exact cache, else the most recent same-go.sum, else any go-allarch. This job only compiles the host arch, but it gets warm deps + own packages from main. Only warm-build-cache writes go-allarch.
+      - uses: actions/cache/restore@v6
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: go-allarch-${{ runner.os }}-${{ hashFiles('**/go.sum') }}-${{ github.sha }}
+          restore-keys: |
+            go-allarch-${{ runner.os }}-${{ hashFiles('**/go.sum') }}-
+            go-allarch-${{ runner.os }}-
       - run: go mod download
       - name: Build render wasm + fetch emoji font (go generate)
         run: go generate ./internal/provider/image/... ./internal/provider/regex/... ./internal/provider/documents/...
@@ -62,7 +73,7 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version-file: "go.mod"
-          cache: true
+          cache: false
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: wasm32-wasip1
@@ -78,6 +89,16 @@ jobs:
         with:
           path: internal/provider/image/fonts
           key: fonts-${{ runner.os }}-${{ hashFiles('internal/provider/image/genfonts.go') }}
+      # Leverage main's all-arch Go build cache read-only (see header note). restore-keys pick the best available: this commit's exact cache, else the most recent same-go.sum, else any go-allarch. This job only compiles the host arch, but it gets warm deps + own packages from main. Only warm-build-cache writes go-allarch.
+      - uses: actions/cache/restore@v6
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: go-allarch-${{ runner.os }}-${{ hashFiles('**/go.sum') }}-${{ github.sha }}
+          restore-keys: |
+            go-allarch-${{ runner.os }}-${{ hashFiles('**/go.sum') }}-
+            go-allarch-${{ runner.os }}-
       # Pre-install the Terraform CLI so terraform-plugin-testing's plugintest helper doesn't have to. The runner has no terraform out of the box, so without this every test invocation routes through `hc-install` which writes the binary to a per-process tempdir and execs it. Under `t.Parallel()` in the acceptance suite, many goroutines hit that install path nearly simultaneously and race on the file-write→exec sequence — Linux returns ETXTBSY ("text file busy") because the writable fd hasn't been closed by the time a sibling tries to `fork/exec` the same path. Pre-installing avoids the write entirely; the `TF_ACC_TERRAFORM_PATH` env var below tells plugintest to use the installed binary directly.
       - uses: hashicorp/setup-terraform@v4
         id: setup-terraform
@@ -105,7 +126,7 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version-file: "go.mod"
-          cache: true
+          cache: false
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: wasm32-wasip1
@@ -121,6 +142,16 @@ jobs:
         with:
           path: internal/provider/image/fonts
           key: fonts-${{ runner.os }}-${{ hashFiles('internal/provider/image/genfonts.go') }}
+      # Leverage main's all-arch Go build cache read-only (see header note). restore-keys pick the best available: this commit's exact cache, else the most recent same-go.sum, else any go-allarch. This job only compiles the host arch, but it gets warm deps + own packages from main. Only warm-build-cache writes go-allarch.
+      - uses: actions/cache/restore@v6
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: go-allarch-${{ runner.os }}-${{ hashFiles('**/go.sum') }}-${{ github.sha }}
+          restore-keys: |
+            go-allarch-${{ runner.os }}-${{ hashFiles('**/go.sum') }}-
+            go-allarch-${{ runner.os }}-
       # tfplugindocs (called from `go generate ./...` below) needs `terraform` on PATH to extract the provider schema via `terraform providers schema -json`. Without a pre-installed binary it falls back to `hc-install` and downloads the latest version every run — an extra ~5-10s of network work plus a possible flake source. Pre-installing pins the version and skips the download.
       - uses: hashicorp/setup-terraform@v4
         with:
@@ -156,7 +187,7 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version-file: "go.mod"
-          cache: true
+          cache: false
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: wasm32-wasip1
@@ -172,6 +203,16 @@ jobs:
         with:
           path: internal/provider/image/fonts
           key: fonts-${{ runner.os }}-${{ hashFiles('internal/provider/image/genfonts.go') }}
+      # Leverage main's all-arch Go build cache read-only (see header note). restore-keys pick the best available: this commit's exact cache, else the most recent same-go.sum, else any go-allarch. This single-target snapshot only compiles the host arch, but it gets warm deps + own packages from main. Only warm-build-cache writes go-allarch.
+      - uses: actions/cache/restore@v6
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: go-allarch-${{ runner.os }}-${{ hashFiles('**/go.sum') }}-${{ github.sha }}
+          restore-keys: |
+            go-allarch-${{ runner.os }}-${{ hashFiles('**/go.sum') }}-
+            go-allarch-${{ runner.os }}-
       # `build --snapshot` runs the real `before` hooks (go mod tidy, then `go generate ./internal/provider/...` which builds the wasm engines and fetches the fonts), then compiles the provider, so this is the same path a tagged release takes minus signing and publishing. `--single-target` limits the compile to the runner's platform to keep the job fast; the full matrix runs at release time. No GITHUB_TOKEN or GPG key: a snapshot build neither publishes a release nor signs artifacts.
       - uses: goreleaser/goreleaser-action@v7
         with:
@@ -233,7 +274,7 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version-file: "go.mod"
-          cache: true
+          cache: false
       - name: Regenerate pi_packed.bin and fail on drift
         run: |
           go generate ./internal/provider/numerics/...
