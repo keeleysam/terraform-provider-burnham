@@ -5,22 +5,54 @@ on:
     tags:
       - "v*"
 
-# Goreleaser requires contents:write to create GitHub releases.
+# Goreleaser requires contents:write to create GitHub releases. actions:read lets the await-cache gate poll the warming run.
 permissions:
   contents: write
+  actions: read
 
 jobs:
+  # Block the release until the cache-warming job for this commit has finished, so goreleaser restores a fresh all-arch cache instead of racing it. auto-release tags every push to main, so test.yml's warm-build-cache job is running on that same commit; we wait for it. Bounded: on timeout we proceed anyway rather than ever block a release (worst case the build is colder). A cold warm job can make this slower than building cold, but steady-state the warm job is incremental and finishes well before a cold cross-compile would.
+  await-cache:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Wait for warm-build-cache on this commit
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -uo pipefail
+          sha="${GITHUB_SHA}"
+          echo "Waiting for the main Tests run's warm-build-cache job on ${sha}"
+          deadline=$(( $(date +%s) + 20*60 ))
+          while [ "$(date +%s)" -lt "${deadline}" ]; do
+            run_id=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/test.yml/runs?head_sha=${sha}&branch=main&per_page=1" --jq '.workflow_runs[0].id // empty' 2>/dev/null || true)
+            if [ -n "${run_id}" ]; then
+              job_status=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/jobs" --jq '.jobs[] | select(.name=="warm-build-cache") | .status' 2>/dev/null || true)
+              if [ "${job_status}" = "completed" ]; then
+                echo "warm-build-cache completed; proceeding with a warm cache"
+                exit 0
+              fi
+              echo "warm-build-cache status=${job_status:-<pending>}; waiting 20s"
+            else
+              echo "no main Tests run found yet for ${sha}; waiting 20s"
+            fi
+            sleep 20
+          done
+          echo "::warning::Timed out waiting for warm-build-cache; proceeding (release may build with a colder cache)."
+
   goreleaser:
+    needs: await-cache
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+      # setup-go's cache is disabled here on purpose: the all-arch GOCACHE and the module cache both come from the go-allarch cache restored below (warmed on main). Letting setup-go also manage GOCACHE would fight that restore and churn a useless tag-scoped save.
       - uses: actions/setup-go@v7
         with:
           go-version-file: "go.mod"
-          cache: true
-      # The WASM function families (regex, image/resvg, documents/typst) go:embed a wasm blob that is gitignored and built from Rust by the goreleaser `before` hook (`go generate ./internal/provider/...`). goreleaser cannot build the provider until that blob exists, so the toolchain and the wasm32-wasip1 target have to be present before goreleaser runs.
+          cache: false
+      # The WASM function families (regex, image/resvg, documents/typst) go:embed a wasm blob that is gitignored and built from Rust by the goreleaser `before` hook. goreleaser cannot build the provider until that blob exists, so the toolchain and the wasm32-wasip1 target have to be present before goreleaser runs.
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: wasm32-wasip1
@@ -38,6 +70,15 @@ jobs:
         with:
           path: internal/provider/image/fonts
           key: fonts-${{ runner.os }}-${{ hashFiles('internal/provider/image/genfonts.go') }}
+      # Restore the all-arch Go build cache that test.yml's warm-build-cache job populated on main (the await-cache job above ensured that warming for this commit has finished). With it, goreleaser's cross-compile is a link-only pass instead of a cold ~9min build, and the module cache rides along too. Restore-only: tag-scoped saves are unreadable by the next tag, so saving here would only churn the 10GB quota. Key and paths MUST match test.yml's warm-build-cache or the restore misses and the release falls back to a cold build.
+      - uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: go-allarch-${{ runner.os }}-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            go-allarch-${{ runner.os }}-
       - name: Import GPG key
         uses: crazy-max/ghaction-import-gpg@v7
         id: import_gpg
