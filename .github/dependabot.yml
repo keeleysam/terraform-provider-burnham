@@ -5,10 +5,16 @@ version: 2
 # major updates stay as individual PRs since they are likelier to break and deserve their own review.
 updates:
   # Go modules: wazero, golang.org/x/image (Go text font), and everything else.
+  # allow dependency-type "all" so indirect (`// indirect`) deps are eligible too.
+  # Dependabot version updates default to direct-only, which left ~86 indirect
+  # modules (golang.org/x/net, x/tools, google.golang.org/grpc, prometheus/client_golang, ...)
+  # never bumped on their own; with "all" they flow into the group below like any direct bump.
   - package-ecosystem: "gomod"
     directory: "/"
     schedule:
       interval: "daily"
+    allow:
+      - dependency-type: "all"
     groups:
       go-minor-patch:
         patterns: ["*"]
@@ -24,6 +30,10 @@ updates:
       - "/internal/provider/**/rust"
     schedule:
       interval: "daily"
+    # allow "all" here too: cargo defaults to direct-only, so transitive crates in
+    # each Cargo.lock (the deps of resvg/usvg/fancy-regex/... ) would otherwise never bump.
+    allow:
+      - dependency-type: "all"
     groups:
       rust-minor-patch:
         patterns: ["*"]
