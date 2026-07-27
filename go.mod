@@ -25,7 +25,7 @@ require (
 	github.com/jmespath-community/go-jmespath v1.1.1
 	github.com/joho/godotenv v1.5.1
 	github.com/keeleysam/okta-expression-parser v0.0.0-20260715042254-5083b8d7e333 // fork of stevenewson/okta-expression-parser (branch provider-fork) that extends the parser to the full documented Okta EL grammar; pinned until the grammar is contributed upstream
-	github.com/magiconair/properties v1.8.10
+	github.com/magiconair/properties v1.18.11
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/mmcloughlin/geohash v0.10.0
 	github.com/molecule-man/go-brrr v1.0.1
@@ -52,7 +52,7 @@ require (
 	github.com/mazznoer/csscolorparser v0.1.8
 	github.com/prometheus/common v0.70.1
 	github.com/prometheus/prometheus v0.313.1
-	github.com/recolabs/gnata v0.2.2
+	github.com/recolabs/gnata v0.2.3
 	github.com/tetratelabs/wazero v1.12.0
 )
 
@@ -105,8 +105,8 @@ require (
 	github.com/huandu/xstrings v1.5.0 // indirect
 	github.com/itchyny/timefmt-go v0.1.8 // indirect
 	github.com/mattn/go-colorable v0.1.15 // indirect
-	github.com/mattn/go-isatty v0.0.23 // indirect
-	github.com/mattn/go-runewidth v0.0.24 // indirect
+	github.com/mattn/go-isatty v0.0.24 // indirect
+	github.com/mattn/go-runewidth v0.0.27 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/go-testing-interface v1.14.1 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
@@ -114,7 +114,7 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/oklog/run v1.2.0 // indirect
 	github.com/posener/complete v1.2.3 // indirect
-	github.com/prometheus/client_golang v1.24.0 // indirect
+	github.com/prometheus/client_golang v1.24.1 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/procfs v0.21.1 // indirect
 	github.com/shopspring/decimal v1.4.0 // indirect
