@@ -13,7 +13,7 @@ permissions:
 jobs:
   # Block the release until the cache-warming job for this commit has finished, so goreleaser restores a fresh all-arch cache instead of racing it. auto-release tags every push to main, so test.yml's warm-build-cache job is running on that same commit; we wait for it. Bounded: on timeout we proceed anyway rather than ever block a release (worst case the build is colder). A cold warm job can make this slower than building cold, but steady-state the warm job is incremental and finishes well before a cold cross-compile would.
   await-cache:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04-arm
     timeout-minutes: 25
     steps:
       - name: Wait for warm-build-cache on this commit
@@ -42,7 +42,7 @@ jobs:
 
   goreleaser:
     needs: await-cache
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04-arm
     steps:
       - uses: actions/checkout@v7
         with:
