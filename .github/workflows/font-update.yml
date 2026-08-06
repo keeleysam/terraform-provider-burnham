@@ -18,7 +18,7 @@ permissions:
 
 jobs:
   bump:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       # Check out and later push with a PAT, not the default GITHUB_TOKEN. A branch pushed and a PR
       # opened by GITHUB_TOKEN do not trigger other workflows (GitHub's recursion guard), so test.yml
