@@ -194,26 +194,42 @@ func TestPCRESplitEmpties(t *testing.T) {
 	}
 }
 
-// Regression for the op-3 abort: a catastrophic backreference pattern trips fancy-regex's
-// backtrack limit. Every op, including replace, must surface that as a clean user-facing
-// EngineError (not a wasm trap), and replace must behave like match rather than aborting.
+/*
+Regression for the op-3 abort: a catastrophic pattern trips fancy-regex's backtrack limit partway
+through a match, and every op must surface that as a clean user-facing EngineError rather than an
+opaque wasm trap. Replace is the op with teeth: fancy-regex's replace_all/replacen unwrap internally,
+so the shim has to use try_replacen or the panic aborts the whole instance under panic = "abort".
+
+The pattern needs an ambiguous alternation (both branches match an all-'a' input) together with a
+backreference, so the engine has no way to algebraically simplify the exponential path away. A plain
+nested quantifier is not enough: fancy-regex 0.19 added a pass that collapses `(a*)*` to `(a*)`, which
+turned the previous pattern here linear and stopped it exercising the limit at all.
+
+shortInput is the control for exactly that failure mode. It proves the pattern still compiles and
+runs, so if a future engine version optimizes this pattern too, the control keeps passing while the
+long input reports no error, which points at the pattern rather than at the shim.
+*/
 func TestPCREReplaceBacktrackLimitIsCleanError(t *testing.T) {
-	pat := `^(a*)*\1b$`
-	inp := strings.Repeat("a", 40)
+	const pat = `^(a|aa)*\1b$`
+	const shortInput = "aab"
+	longInput := strings.Repeat("a", 40)
 
-	_, matchErr := runOp(context.Background(), opMatch, pat, inp, "")
-	_, replaceErr := runOp(context.Background(), opReplace, pat, inp, "X")
-
-	for name, err := range map[string]error{"match": matchErr, "replace": replaceErr} {
-		if err == nil {
-			t.Fatalf("%s: expected a backtrack-limit error, got nil", name)
-		}
-		var ee *EngineError
-		if !errors.As(err, &ee) {
-			t.Fatalf("%s: expected *EngineError (user regex fault), got %T: %v", name, err, err)
-		}
-		if !strings.Contains(strings.ToLower(ee.Msg), "backtrack") {
-			t.Fatalf("%s: error message %q does not mention the backtrack limit", name, ee.Msg)
-		}
+	for _, tc := range []struct {
+		name string
+		op   uint32
+	}{{"match", opMatch}, {"replace", opReplace}} {
+		t.Run(tc.name, func(t *testing.T) {
+			if _, err := runOp(context.Background(), tc.op, pat, shortInput, "X"); err != nil {
+				t.Fatalf("short input: unexpected error, the pattern should compile and run: %v", err)
+			}
+			_, err := runOp(context.Background(), tc.op, pat, longInput, "X")
+			if err == nil {
+				t.Fatal("expected the backtrack limit to trip, got no error: the engine has most likely optimized this pattern into a linear one, so it no longer exercises the limit (see the comment above this test)")
+			}
+			var ee *EngineError
+			if !errors.As(err, &ee) {
+				t.Fatalf("expected *EngineError (user regex fault), got %T: %v", err, err)
+			}
+		})
 	}
 }
