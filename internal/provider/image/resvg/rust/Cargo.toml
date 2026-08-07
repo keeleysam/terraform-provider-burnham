@@ -8,8 +8,8 @@ license = "Apache-2.0 OR MIT"
 crate-type = ["cdylib"]
 
 [dependencies]
-resvg     = { version = "0.47", default-features = false, features = ["text", "raster-images"] }
-usvg      = { version = "0.47", default-features = false, features = ["text"] }
+resvg     = { version = "0.48", default-features = false, features = ["text", "raster-images"] }
+usvg      = { version = "0.48", default-features = false, features = ["text"] }
 tiny-skia = { version = "0.12" }
 
 [profile.release]
