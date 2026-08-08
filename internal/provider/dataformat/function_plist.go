@@ -161,6 +161,11 @@ func (f *PlistEncodeFunction) Run(ctx context.Context, req function.RunRequest, 
 		}
 		attrs := obj.Attributes()
 
+		if err := validateOptionKeys(attrs, "format", "comments"); err != nil {
+			resp.Error = function.ConcatFuncErrors(resp.Error, function.NewArgumentFuncError(1, err.Error()))
+			return
+		}
+
 		parsed, err := getStringOption(attrs, "format")
 		if err != nil {
 			resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError(err.Error()))

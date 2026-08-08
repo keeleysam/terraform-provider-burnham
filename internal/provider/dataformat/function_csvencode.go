@@ -157,6 +157,10 @@ func parseCSVEncodeOptions(opts types.Dynamic) ([]string, bool, error) {
 
 	attrs := obj.Attributes()
 
+	if err := validateOptionKeys(attrs, "columns", "no_header"); err != nil {
+		return nil, false, err
+	}
+
 	var columns []string
 	var noHeader bool
 

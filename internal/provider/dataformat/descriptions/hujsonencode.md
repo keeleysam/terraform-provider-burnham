@@ -4,9 +4,36 @@ Encodes a Terraform value as a HuJSON string with trailing commas and pretty-pri
 
 Pass an optional `options` object with these keys:
 
-- `indent` (string): override the default tab indentation.
-- `compact` (bool): opt in to hujson.Format's "fit on one line if it can" packing instead of the default always-expanded layout.
+- `indent` (string): override the default tab indentation. Currently ignored when set to the empty string, which falls back to a tab. Under `compact = true` it only affects lines that the packer chose to expand, so it has no visible effect on documents that fit on one line.
+- `width` (number, default `0`): when greater than zero, pack an array of scalars onto a single line if it fits within this many columns. Objects are never packed, so every object stays alone on its line and you never see `}, {`, `[{` or `}]`. `0` keeps the default of one member or element per line.
+- `compact` (bool): opt in to hujson.Format's "fit on one line if it can" packing instead. Mutually exclusive with `width`, and note that "compact" means this packing rather than minification: a large document still spans many lines, and unlike `width` it can produce `}, {`.
 - `escape_html` (bool, default `false`): when `false`, `<`, `>` and `&` are written literally, matching `jsonencode`. Set to `true` to escape them to `\u003c` / `\u003e` / `\u0026` (the form Go's encoder produces), e.g. when embedding output in an HTML `<script>` context.
 - `comments` (object): mirror the data structure with string values that become comments placed before the matching key. Single-line strings render as `//` comments; strings containing `\n` render as `/* */` block comments. Array elements are addressed by stringified index (`"0"`, `"1"`, …).
+
+Unknown keys are rejected. A misspelled option is an error rather than a silent no-op.
+
+## This function always emits trailing commas
+
+Trailing commas are the point of HuJSON, so `hujsonencode` always emits them and there is no option to turn them off. If you want standard JSON, use `jsonencode`.
+
+That choice has one consequence worth understanding. Terraform's plan renderer tries to parse every string attribute as JSON; when it parses you get a compact structural diff, and when it does not and the string contains newlines Terraform instead runs a line-by-line diff whose cost is quadratic in the line count and prints the entire document into the plan.
+
+Trailing commas mean this function's output never parses as JSON, so it is always on that slow path. Measured on a 372 KB, 16,376-line policy, adding one key costs about 9 s, 4.9 GB of peak memory, and 16,400 lines of plan output. Comments have exactly the same effect on their own.
+
+For a large generated document that you need to review in plans, encode it with `jsonencode` instead. Where you genuinely want HuJSON in the artifact, keep it and move the review surface elsewhere:
+
+```terraform
+resource "tailscale_acl" "this" {
+  acl = sensitive(provider::burnham::hujsonencode(local.policy, {
+    comments = { ipsets = "managed by terraform" }
+  }))
+}
+
+output "policy_review" {
+  value = provider::burnham::jsonencode(local.policy)
+}
+```
+
+`sensitive()` makes Terraform render `(sensitive value)` without walking the string at all, which skips the quadratic entirely rather than merely hiding its output. The output gives you a structural diff of the same data. Use a root output rather than a `terraform_data` resource: `terraform_data.output` mirrors its input and goes unknown on change, so Terraform dumps the whole previous value and you are back to a 16,000-line plan.
 
 **Common uses:** generating Tailscale ACL files, writing human-editable config snapshots, or producing JSON-like documents where reviewers benefit from inline annotations.

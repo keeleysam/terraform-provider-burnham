@@ -294,6 +294,10 @@ func (f *RegEncodeFunction) Run(ctx context.Context, req function.RunRequest, re
 			resp.Error = function.NewArgumentFuncError(1, fmt.Sprintf("options must be an object, got %T", optsArgs[0].UnderlyingValue()))
 			return
 		}
+		if err := validateOptionKeys(obj.Attributes(), "comments"); err != nil {
+			resp.Error = function.ConcatFuncErrors(resp.Error, function.NewArgumentFuncError(1, err.Error()))
+			return
+		}
 		if c, ok := obj.Attributes()["comments"]; ok {
 			comments = c
 		}

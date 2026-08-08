@@ -143,6 +143,10 @@ func parseYAMLEncodeOpts(optsArg types.Dynamic) (yamlEncodeOpts, error) {
 
 	attrs := obj.Attributes()
 
+	if err := validateOptionKeys(attrs, "indent", "sort_keys", "flow_level", "quote_style", "null_value", "multiline", "dedupe", "comments"); err != nil {
+		return opts, err
+	}
+
 	if v, ok := attrs["indent"]; ok {
 		nv, ok := v.(basetypes.NumberValue)
 		if !ok {

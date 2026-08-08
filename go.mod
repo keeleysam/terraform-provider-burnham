@@ -54,6 +54,7 @@ require (
 	github.com/prometheus/prometheus v0.313.2
 	github.com/recolabs/gnata v0.2.3
 	github.com/tetratelabs/wazero v1.12.0
+	github.com/tidwall/pretty v1.2.1
 )
 
 require (
@@ -121,7 +122,6 @@ require (
 	github.com/spf13/cast v1.10.0 // indirect
 	github.com/tidwall/gjson v1.19.0 // indirect
 	github.com/tidwall/match v1.2.0 // indirect
-	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect

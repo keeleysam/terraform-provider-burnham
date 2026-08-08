@@ -8,8 +8,10 @@ import (
 	"fmt"
 	"math"
 	"math/big"
+	"slices"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -590,6 +592,46 @@ func marshalNoEscapeHTML(v interface{}) ([]byte, error) {
 	return bytes.TrimRight(b.Bytes(), "\n"), nil
 }
 
+// validateOptionKeys rejects any key in an options object that the calling function does not support.
+//
+// This family historically ignored unknown keys, which made a typo indistinguishable from an option that simply had no effect: `jsonencode(v, { indnt = "  " })` returned default-formatted output with no complaint. Erroring is a deliberate break with that contract.
+func validateOptionKeys(attrs map[string]attr.Value, allowed ...string) error {
+	var unknown []string
+	for k := range attrs {
+		if !slices.Contains(allowed, k) {
+			unknown = append(unknown, k)
+		}
+	}
+	if len(unknown) == 0 {
+		return nil
+	}
+	sort.Strings(unknown)
+
+	supported := slices.Clone(allowed)
+	sort.Strings(supported)
+
+	return fmt.Errorf("unsupported %s %s; supported options are %s",
+		pluralize(len(unknown), "option", "options"),
+		quoteJoin(unknown),
+		quoteJoin(supported))
+}
+
+func pluralize(n int, singular, plural string) string {
+	if n == 1 {
+		return singular
+	}
+	return plural
+}
+
+// quoteJoin renders a list of option names as `"a", "b", "c"` for use in error messages.
+func quoteJoin(items []string) string {
+	quoted := make([]string, len(items))
+	for i, s := range items {
+		quoted[i] = strconv.Quote(s)
+	}
+	return strings.Join(quoted, ", ")
+}
+
 // getStringOption extracts an optional string value from an attributes map.
 // Returns "" if the key is not present.
 func getStringOption(attrs map[string]attr.Value, key string) (string, error) {
@@ -602,6 +644,28 @@ func getStringOption(attrs map[string]attr.Value, key string) (string, error) {
 		return "", fmt.Errorf("%q must be a string, got %T", key, v)
 	}
 	return sv.ValueString(), nil
+}
+
+// getIntOption extracts an optional whole-number value from an attributes map.
+// Returns (0, false, nil) if the key is not present.
+func getIntOption(attrs map[string]attr.Value, key string) (value int, present bool, err error) {
+	v, ok := attrs[key]
+	if !ok {
+		return 0, false, nil
+	}
+	nv, ok := v.(basetypes.NumberValue)
+	if !ok {
+		return 0, false, fmt.Errorf("%q must be a number, got %T", key, v)
+	}
+	f := nv.ValueBigFloat()
+	if f == nil {
+		return 0, false, fmt.Errorf("%q must be a number", key)
+	}
+	i, acc := f.Int64()
+	if acc != big.Exact {
+		return 0, false, fmt.Errorf("%q must be a whole number, got %s", key, f.Text('f', -1))
+	}
+	return int(i), true, nil
 }
 
 // getBoolOption extracts an optional bool value from an attributes map.

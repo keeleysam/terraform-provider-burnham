@@ -197,7 +197,8 @@ func TestHuJSONEncode_SmallObject_Compact(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if result != "{\"a\": 1}\n" {
+	// No trailing newline: hujson.Pack() adds one, but every other path here and in jsonencode returns an unterminated string, so the compact path trims it.
+	if result != "{\"a\": 1}" {
 		t.Errorf("expected compact single-line output, got:\n%q", result)
 	}
 }

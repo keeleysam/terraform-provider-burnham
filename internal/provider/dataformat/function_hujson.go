@@ -15,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/tailscale/hujson"
+	"github.com/tidwall/pretty"
 )
 
 var _ function.Function = (*HuJSONDecodeFunction)(nil)
@@ -110,7 +111,7 @@ func (f *HuJSONEncodeFunction) Definition(_ context.Context, _ function.Definiti
 		},
 		VariadicParameter: function.DynamicParameter{
 			Name:        "options",
-			Description: "An optional options object. Supported keys: \"indent\" (string): indentation string, default \"\\t\"; \"compact\" (bool): when true, use hujson.Format's \"fit on one line if it can\" packing instead of the default always-expanded layout; \"escape_html\" (bool, default false): when true, escape \"<\", \">\" and \"&\" to \\u003c / \\u003e / \\u0026; \"comments\" (object): a mirrored structure where string values become comments placed before the matching key. Pass at most one.",
+			Description: "An optional options object. Supported keys: \"indent\" (string): indentation string, default \"\\t\"; \"width\" (number, default 0 = one member or element per line): pack arrays of scalars onto one line when they fit within this many columns; \"compact\" (bool): use hujson.Format's \"fit on one line if it can\" packing instead, mutually exclusive with \"width\"; \"escape_html\" (bool, default false): when true, escape \"<\", \">\" and \"&\" to \\u003c / \\u003e / \\u0026; \"comments\" (object): a mirrored structure where string values become comments placed before the matching key. Pass at most one.",
 		},
 		Return: function.StringReturn{},
 	}
@@ -131,6 +132,7 @@ func (f *HuJSONEncodeFunction) Run(ctx context.Context, req function.RunRequest,
 	indent := "\t"
 	compact := false
 	escapeHTML := false
+	width := 0
 	var comments attr.Value
 
 	if len(optsArgs) == 1 {
@@ -140,6 +142,11 @@ func (f *HuJSONEncodeFunction) Run(ctx context.Context, req function.RunRequest,
 			return
 		}
 		attrs := obj.Attributes()
+
+		if err := validateOptionKeys(attrs, "indent", "compact", "escape_html", "comments", "width"); err != nil {
+			resp.Error = function.ConcatFuncErrors(resp.Error, function.NewArgumentFuncError(1, err.Error()))
+			return
+		}
 
 		parsed, err := getStringOption(attrs, "indent")
 		if err != nil {
@@ -164,6 +171,23 @@ func (f *HuJSONEncodeFunction) Run(ctx context.Context, req function.RunRequest,
 			escapeHTML = ev
 		}
 
+		w, wPresent, err := getIntOption(attrs, "width")
+		if err != nil {
+			resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError(err.Error()))
+			return
+		}
+		if wPresent {
+			if w < 0 {
+				resp.Error = function.ConcatFuncErrors(resp.Error, function.NewArgumentFuncError(1, "\"width\" must not be negative"))
+				return
+			}
+			if compact {
+				resp.Error = function.ConcatFuncErrors(resp.Error, function.NewArgumentFuncError(1, "\"width\" and \"compact\" are mutually exclusive: \"compact\" defers all line breaking to hujson.Format, \"width\" decides it up front"))
+				return
+			}
+			width = w
+		}
+
 		if c, ok := attrs["comments"]; ok {
 			comments = c
 		}
@@ -186,7 +210,7 @@ func (f *HuJSONEncodeFunction) Run(ctx context.Context, req function.RunRequest,
 		return
 	}
 
-	if !compact {
+	if width == 0 && !compact {
 		// Default: always-expanded layout. Round-trip the JSON through a
 		// UseNumber decoder so the pretty encoder sees a uniform
 		// map[string]any / []any / json.Number tree and doesn't have to
@@ -203,12 +227,18 @@ func (f *HuJSONEncodeFunction) Run(ctx context.Context, req function.RunRequest,
 		return
 	}
 
-	// compact = true: defer to hujson.Format's "fit on one line if it can"
-	// packing. Make the JSON non-standard so Format() will add trailing
-	// commas.
-	hujsonBytes := append([]byte("//\n"), jsonBytes...)
+	// Everything from here is the hujson-backed path, shared by "width" and "compact".
+	//
+	// Line breaking is decided first: "width" hands the job to tidwall/pretty, whose Width applies to arrays of scalars only and never to objects, so an object is always alone on its line and the "}, {" and "[{" shapes cannot occur. "compact" instead leaves it to hujson.Format's own "fit on one line if it can" packing. hujson.Format preserves line breaks it is given, so whichever decision was made survives.
+	//
+	// Layout always uses tabs, because hujson.Format re-indents with tabs regardless; a requested indent is applied to the finished output further down.
+	laid := jsonBytes
+	if width > 0 {
+		laid = bytes.TrimRight(pretty.PrettyOptions(jsonBytes, &pretty.Options{Width: width, Indent: "\t"}), "\n")
+	}
 
-	ast, err := hujson.Parse(hujsonBytes)
+	// hujson.Format only emits trailing commas for a document it already considers non-standard, so the leading comment is what opts into them. hujsonencode always emits trailing commas: a caller who wants standard JSON wants jsonencode.
+	ast, err := hujson.Parse(append([]byte("//\n"), laid...))
 	if err != nil {
 		resp.Error = function.NewArgumentFuncError(0, "failed to parse as HuJSON: "+err.Error())
 		return
@@ -229,7 +259,8 @@ func (f *HuJSONEncodeFunction) Run(ctx context.Context, req function.RunRequest,
 		ast.Format()
 	}
 
-	result := string(ast.Pack())
+	// hujson.Pack() terminates the document with a newline. Every other path in this file and in jsonencode returns an unterminated string, so trim it rather than leaving compact as the odd one out.
+	result := strings.TrimRight(string(ast.Pack()), "\n")
 
 	// hujson.Format() always uses tabs. If a different indent was requested,
 	// replace the leading tabs on each line.
