@@ -35,8 +35,8 @@ require (
 	github.com/vmihailenco/msgpack/v5 v5.4.1
 	github.com/zclconf/go-cty v1.19.0
 	go4.org/netipx v0.0.0-20231129151722-fdeea329fbba
-	golang.org/x/crypto v0.54.0
-	golang.org/x/text v0.40.0
+	golang.org/x/crypto v0.55.0
+	golang.org/x/text v0.41.0
 	gopkg.in/ini.v1 v1.67.3
 	gopkg.in/yaml.v3 v3.0.1
 	howett.net/plist v1.0.1
@@ -57,7 +57,7 @@ require (
 )
 
 require (
-	cel.dev/expr v0.25.2 // indirect
+	cel.dev/expr v0.25.3 // indirect
 	dario.cat/mergo v1.0.2 // indirect
 	github.com/BurntSushi/toml v1.6.0 // indirect
 	github.com/Kunde21/markdownfmt/v3 v3.1.0 // indirect
