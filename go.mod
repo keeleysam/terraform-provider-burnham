@@ -10,7 +10,7 @@ require (
 	github.com/elastic/celfmt v0.0.0-20260629214325-90a10701aea9
 	github.com/evanphx/json-patch/v5 v5.9.11
 	github.com/foobaz/go-zopfli v0.0.0-20260611111302-2b73a4c8c2e9
-	github.com/fxamacker/cbor/v2 v2.9.2
+	github.com/fxamacker/cbor/v2 v2.9.3
 	github.com/gersonkurz/go-regis3 v0.0.0-20260204141052-9cc701fe149b
 	github.com/google/cel-go v0.31.0
 	github.com/google/open-location-code/go v0.0.0-20250620134813-83986da0156b
@@ -106,7 +106,7 @@ require (
 	github.com/itchyny/timefmt-go v0.1.8 // indirect
 	github.com/mattn/go-colorable v0.1.15 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect
-	github.com/mattn/go-runewidth v0.0.27 // indirect
+	github.com/mattn/go-runewidth v0.0.28 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/go-testing-interface v1.14.1 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
