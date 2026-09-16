@@ -23,6 +23,14 @@ updates:
     patterns: ["*"]
     allow:
       - dependency-type: "all"
+    ignore:
+      # cel-go renamed its module path from github.com/google/cel-go to cel.dev/cel-go in v0.32.0, and the tag still lives in the old repo, so the proxy keeps advertising it under the old path.
+      # Every bump attempt therefore downloads the zip, finds a go.mod declaring the new path, and dies with go_module_path_mismatch, which fails the whole multi-ecosystem run even when the group PR for everything else was created fine.
+      # Dependabot cannot follow module path renames, so this does not self-heal.
+      # We cannot migrate yet either: celfmt.Format takes a github.com/google/cel-go/common/ast.AST, so internal/provider/cel/format.go has to stay on the old path until elastic/celfmt moves.
+      # Drop this entry once celfmt migrates, and switch our imports in the same change.
+      - dependency-name: "github.com/google/cel-go"
+        versions: [">= 0.32.0"]
     cooldown:
       default-days: 3
       semver-major-days: 7
