@@ -235,8 +235,8 @@ github.com/hashicorp/terraform-svchost v0.2.1 h1:ubvrTFw3Q7CsoEaX7V06PtCTKG3wu7G
 github.com/hashicorp/terraform-svchost v0.2.1/go.mod h1:zDMheBLvNzu7Q6o9TBvPqiZToJcSuCLXjAXxBslSky4=
 github.com/hashicorp/yamux v0.1.2 h1:XtB8kyFOyHXYVFnwT5C3+Bdo8gArse7j2AQ0DA0Uey8=
 github.com/hashicorp/yamux v0.1.2/go.mod h1:C+zze2n6e/7wshOZep2A70/aQU6QBRWJO/G6FT1wIns=
-github.com/huandu/xstrings v1.5.0 h1:2ag3IFq9ZDANvthTwTiqSSZLjDc+BedvHPAp5tJy2TI=
-github.com/huandu/xstrings v1.5.0/go.mod h1:y5/lhBue+AyNmUVz9RLU9xbLR0o4KIIExikq4ovT0aE=
+github.com/huandu/xstrings v1.6.0 h1:BT/qU6CSmHLURXT1B95n8Boz80RDSwhzjdun89UGJRI=
+github.com/huandu/xstrings v1.6.0/go.mod h1:y5/lhBue+AyNmUVz9RLU9xbLR0o4KIIExikq4ovT0aE=
 github.com/itchyny/gojq v0.12.19 h1:ttXA0XCLEMoaLOz5lSeFOZ6u6Q3QxmG46vfgI4O0DEs=
 github.com/itchyny/gojq v0.12.19/go.mod h1:5galtVPDywX8SPSOrqjGxkBeDhSxEW1gSxoy7tn1iZY=
 github.com/itchyny/timefmt-go v0.1.8 h1:1YEo1JvfXeAHKdjelbYr/uCuhkybaHCeTkH8Bo791OI=

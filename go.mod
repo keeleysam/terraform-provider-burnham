@@ -102,7 +102,7 @@ require (
 	github.com/hashicorp/terraform-registry-address v0.5.0 // indirect
 	github.com/hashicorp/terraform-svchost v0.2.1 // indirect
 	github.com/hashicorp/yamux v0.1.2 // indirect
-	github.com/huandu/xstrings v1.5.0 // indirect
+	github.com/huandu/xstrings v1.6.0 // indirect
 	github.com/itchyny/timefmt-go v0.1.8 // indirect
 	github.com/mattn/go-colorable v0.1.15 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect
