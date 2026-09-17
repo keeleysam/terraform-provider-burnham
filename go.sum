@@ -126,8 +126,8 @@ github.com/foobaz/go-zopfli v0.0.0-20260611111302-2b73a4c8c2e9 h1:V8QXqDJYcuOjIT
 github.com/foobaz/go-zopfli v0.0.0-20260611111302-2b73a4c8c2e9/go.mod h1:Yi95+RbwKz7uGndSuUhoq7LJKh8qH8DT9fnL4ewU30k=
 github.com/frankban/quicktest v1.14.6 h1:7Xjx+VpznH+oBnejlPUj8oUpdxnVs4f8XU8WnHkI4W8=
 github.com/frankban/quicktest v1.14.6/go.mod h1:4ptaffx2x8+WTWXmUCuVU6aPUX1/Mz7zb5vbUoiM6w0=
-github.com/fxamacker/cbor/v2 v2.9.3 h1:oQBnFATpNdY8gJHTndDDv5Xl4QqNaz51G5LLEPhng3Q=
-github.com/fxamacker/cbor/v2 v2.9.3/go.mod h1:vM4b+DJCtHn+zz7h3FFp/hDAI9WNWCsZj23V5ytsSxQ=
+github.com/fxamacker/cbor/v2 v2.9.4 h1:xwjVlxEMR3S605oUlgBjKLTTeGFciYPGYCtF/35LKGo=
+github.com/fxamacker/cbor/v2 v2.9.4/go.mod h1:vM4b+DJCtHn+zz7h3FFp/hDAI9WNWCsZj23V5ytsSxQ=
 github.com/gersonkurz/go-regis3 v0.0.0-20260204141052-9cc701fe149b h1:/bmcyvvvvfOgRGbXnq2xFkayFAlkRHz3ikblL16tvik=
 github.com/gersonkurz/go-regis3 v0.0.0-20260204141052-9cc701fe149b/go.mod h1:B3lrdIphv32ct0QsgjWe0uxvJFkLOJF8G2VJnqpGT1k=
 github.com/go-fonts/liberation v0.3.3 h1:tM/T2vEOhjia6v5krQu8SDDegfH1SfXVRUNNKpq0Usk=
