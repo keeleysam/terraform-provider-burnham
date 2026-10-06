@@ -3,7 +3,7 @@ module github.com/keeleysam/terraform-burnham
 go 1.26.1
 
 require (
-	github.com/andybalholm/brotli v1.2.5
+	github.com/andybalholm/brotli v1.2.6
 	github.com/andygrunwald/vdf v1.1.0
 	github.com/calico32/kdl-go v0.16.0
 	github.com/digitorus/pkcs7 v0.0.0-20250730155240-ffadbf3f398c
@@ -28,7 +28,7 @@ require (
 	github.com/magiconair/properties v1.18.12
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/mmcloughlin/geohash v0.10.0
-	github.com/molecule-man/go-brrr v1.1.1
+	github.com/molecule-man/go-brrr v1.2.0
 	github.com/nspcc-dev/rfc6979 v0.2.4
 	github.com/tailscale/hujson v0.0.0-20260302212456-ecc657c15afd
 	github.com/theory/jsonpath v0.12.1
@@ -93,7 +93,7 @@ require (
 	github.com/hashicorp/go-retryablehttp v0.7.8 // indirect
 	github.com/hashicorp/go-uuid v1.0.4 // indirect
 	github.com/hashicorp/go-version v1.9.0 // indirect
-	github.com/hashicorp/hc-install v0.9.5 // indirect
+	github.com/hashicorp/hc-install v0.10.0 // indirect
 	github.com/hashicorp/logutils v1.0.0 // indirect
 	github.com/hashicorp/terraform-exec v0.25.3 // indirect
 	github.com/hashicorp/terraform-json v0.28.0 // indirect
@@ -102,8 +102,8 @@ require (
 	github.com/hashicorp/terraform-registry-address v0.5.0 // indirect
 	github.com/hashicorp/terraform-svchost v0.2.1 // indirect
 	github.com/hashicorp/yamux v0.1.2 // indirect
-	github.com/huandu/xstrings v1.6.1 // indirect
-	github.com/itchyny/timefmt-go v0.1.8 // indirect
+	github.com/huandu/xstrings v1.6.2 // indirect
+	github.com/itchyny/timefmt-go v0.1.9 // indirect
 	github.com/mattn/go-colorable v0.1.15 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect
 	github.com/mattn/go-runewidth v0.0.30 // indirect
@@ -119,7 +119,7 @@ require (
 	github.com/prometheus/procfs v0.22.0 // indirect
 	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/spf13/cast v1.10.0 // indirect
-	github.com/tidwall/gjson v1.19.0 // indirect
+	github.com/tidwall/gjson v1.19.1 // indirect
 	github.com/tidwall/match v1.2.0 // indirect
 	github.com/tidwall/pretty v1.2.2 // indirect
 	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
@@ -135,7 +135,7 @@ require (
 	golang.org/x/net v0.59.0 // indirect
 	golang.org/x/sync v0.23.0 // indirect
 	golang.org/x/sys v0.48.0 // indirect
-	golang.org/x/tools v0.50.0 // indirect
+	golang.org/x/tools v0.51.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260904194346-d0f1323225a4 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260825221802-da73d73af1c5 // indirect
