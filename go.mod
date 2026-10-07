@@ -52,7 +52,7 @@ require (
 	github.com/mazznoer/csscolorparser v0.1.8
 	github.com/prometheus/common v0.72.0
 	github.com/prometheus/prometheus v0.315.0
-	github.com/recolabs/gnata v0.5.0
+	github.com/recolabs/gnata v0.5.1
 	github.com/tetratelabs/wazero v1.12.0
 )
 
