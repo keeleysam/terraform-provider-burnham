@@ -52,7 +52,7 @@ require (
 	github.com/mazznoer/csscolorparser v0.1.8
 	github.com/prometheus/common v0.72.0
 	github.com/prometheus/prometheus v0.315.0
-	github.com/recolabs/gnata v0.5.1
+	github.com/recolabs/gnata v0.5.2
 	github.com/tetratelabs/wazero v1.12.0
 )
 
@@ -117,9 +117,9 @@ require (
 	github.com/prometheus/client_golang v1.24.1 // indirect
 	github.com/prometheus/client_model v0.6.3 // indirect
 	github.com/prometheus/procfs v0.22.0 // indirect
-	github.com/shopspring/decimal v1.4.0 // indirect
+	github.com/shopspring/decimal v1.5.0 // indirect
 	github.com/spf13/cast v1.10.0 // indirect
-	github.com/tidwall/gjson v1.19.1 // indirect
+	github.com/tidwall/gjson v1.20.0 // indirect
 	github.com/tidwall/match v1.2.0 // indirect
 	github.com/tidwall/pretty v1.2.2 // indirect
 	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
