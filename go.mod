@@ -10,7 +10,7 @@ require (
 	github.com/elastic/celfmt v0.0.0-20260629214325-90a10701aea9
 	github.com/evanphx/json-patch/v5 v5.9.11
 	github.com/foobaz/go-zopfli v0.0.0-20260611111302-2b73a4c8c2e9
-	github.com/fxamacker/cbor/v2 v2.9.4
+	github.com/fxamacker/cbor/v2 v2.9.6
 	github.com/gersonkurz/go-regis3 v0.0.0-20260204141052-9cc701fe149b
 	github.com/google/cel-go v0.31.0
 	github.com/google/open-location-code/go v0.0.0-20250620134813-83986da0156b
@@ -52,7 +52,7 @@ require (
 	github.com/mazznoer/csscolorparser v0.1.8
 	github.com/prometheus/common v0.72.0
 	github.com/prometheus/prometheus v0.315.0
-	github.com/recolabs/gnata v0.5.2
+	github.com/recolabs/gnata v0.5.3
 	github.com/tetratelabs/wazero v1.12.0
 )
 
@@ -96,7 +96,7 @@ require (
 	github.com/hashicorp/hc-install v0.10.0 // indirect
 	github.com/hashicorp/logutils v1.0.0 // indirect
 	github.com/hashicorp/terraform-exec v0.25.3 // indirect
-	github.com/hashicorp/terraform-json v0.28.0 // indirect
+	github.com/hashicorp/terraform-json v0.29.0 // indirect
 	github.com/hashicorp/terraform-plugin-log v0.11.0 // indirect
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.40.1 // indirect
 	github.com/hashicorp/terraform-registry-address v0.5.0 // indirect
@@ -104,7 +104,7 @@ require (
 	github.com/hashicorp/yamux v0.1.2 // indirect
 	github.com/huandu/xstrings v1.6.2 // indirect
 	github.com/itchyny/timefmt-go v0.1.9 // indirect
-	github.com/mattn/go-colorable v0.1.15 // indirect
+	github.com/mattn/go-colorable v0.1.16 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect
 	github.com/mattn/go-runewidth v0.0.30 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
@@ -133,8 +133,8 @@ require (
 	golang.org/x/exp v0.0.0-20260709172345-9ea1abe57597 // indirect
 	golang.org/x/mod v0.41.0 // indirect
 	golang.org/x/net v0.59.0 // indirect
-	golang.org/x/sync v0.23.0 // indirect
-	golang.org/x/sys v0.48.0 // indirect
+	golang.org/x/sync v0.24.0 // indirect
+	golang.org/x/sys v0.49.0 // indirect
 	golang.org/x/tools v0.51.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260904194346-d0f1323225a4 // indirect
