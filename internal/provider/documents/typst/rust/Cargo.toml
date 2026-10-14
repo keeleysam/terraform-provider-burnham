@@ -12,7 +12,7 @@ typst-utils = "0.15"
 typst-layout = "0.15"
 # The typst-html feature makes typst-as-lib build the library with Typst's
 # experimental Feature::Html enabled, which the html op requires.
-typst-as-lib = { version = "0.16", features = ["typst-html"] }
+typst-as-lib = { version = "0.17", features = ["typst-html"] }
 typst-pdf = "0.15"
 typst-render = "0.15"
 typst-svg = "0.15"
