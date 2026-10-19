@@ -46,7 +46,7 @@ require (
 require (
 	github.com/cedar-policy/cedar-go v1.8.0
 	github.com/go-fonts/liberation v0.3.3
-	github.com/go-jose/go-jose/v4 v4.1.5
+	github.com/go-jose/go-jose/v4 v4.1.6
 	github.com/gowebpki/jcs v1.0.2
 	github.com/lucasb-eyer/go-colorful v1.4.1
 	github.com/mazznoer/csscolorparser v0.1.8
