@@ -49,7 +49,7 @@ require (
 	github.com/go-jose/go-jose/v4 v4.1.6
 	github.com/gowebpki/jcs v1.0.2
 	github.com/lucasb-eyer/go-colorful v1.4.1
-	github.com/mazznoer/csscolorparser v0.1.8
+	github.com/mazznoer/csscolorparser v0.2.0
 	github.com/prometheus/common v0.72.1
 	github.com/prometheus/prometheus v0.315.0
 	github.com/recolabs/gnata v0.6.1
