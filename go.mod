@@ -3,7 +3,7 @@ module github.com/keeleysam/terraform-burnham
 go 1.26.1
 
 require (
-	github.com/andybalholm/brotli v1.2.6
+	github.com/andybalholm/brotli v1.2.7
 	github.com/andygrunwald/vdf v1.1.0
 	github.com/calico32/kdl-go v0.16.0
 	github.com/digitorus/pkcs7 v0.0.0-20250730155240-ffadbf3f398c
@@ -51,7 +51,7 @@ require (
 	github.com/lucasb-eyer/go-colorful v1.4.1
 	github.com/mazznoer/csscolorparser v0.2.0
 	github.com/prometheus/common v0.72.1
-	github.com/prometheus/prometheus v0.315.0
+	github.com/prometheus/prometheus v0.315.1
 	github.com/recolabs/gnata v0.6.2
 	github.com/tetratelabs/wazero v1.12.0
 )
@@ -116,7 +116,7 @@ require (
 	github.com/posener/complete v1.2.3 // indirect
 	github.com/prometheus/client_golang v1.25.0 // indirect
 	github.com/prometheus/client_model v0.6.3 // indirect
-	github.com/prometheus/procfs v0.22.0 // indirect
+	github.com/prometheus/procfs v0.23.0 // indirect
 	github.com/shopspring/decimal v1.6.0 // indirect
 	github.com/spf13/cast v1.10.0 // indirect
 	github.com/tidwall/gjson v1.20.0 // indirect
