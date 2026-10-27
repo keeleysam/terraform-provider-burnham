@@ -28,7 +28,7 @@ require (
 	github.com/magiconair/properties v1.18.12
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/mmcloughlin/geohash v0.10.0
-	github.com/molecule-man/go-brrr v1.3.0
+	github.com/molecule-man/go-brrr v1.3.1
 	github.com/nspcc-dev/rfc6979 v0.2.4
 	github.com/tailscale/hujson v0.0.0-20260302212456-ecc657c15afd
 	github.com/theory/jsonpath v0.12.2
@@ -72,7 +72,7 @@ require (
 	github.com/armon/go-radix v1.0.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bgentry/speakeasy v0.2.0 // indirect
-	github.com/bmatcuk/doublestar/v4 v4.10.3 // indirect
+	github.com/bmatcuk/doublestar/v4 v4.10.4 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
 	github.com/cloudflare/circl v1.6.5 // indirect
