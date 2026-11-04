@@ -21,7 +21,7 @@ require (
 	github.com/hashicorp/terraform-plugin-framework v1.19.0
 	github.com/hashicorp/terraform-plugin-go v0.31.0
 	github.com/hashicorp/terraform-plugin-testing v1.16.0
-	github.com/itchyny/gojq v0.12.19
+	github.com/itchyny/gojq v0.12.20
 	github.com/jmespath-community/go-jmespath v1.1.1
 	github.com/joho/godotenv v1.5.1
 	github.com/keeleysam/okta-expression-parser v0.0.0-20260715042254-5083b8d7e333 // fork of stevenewson/okta-expression-parser (branch provider-fork) that extends the parser to the full documented Okta EL grammar; pinned until the grammar is contributed upstream
