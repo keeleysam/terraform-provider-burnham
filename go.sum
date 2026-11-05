@@ -138,8 +138,8 @@ github.com/go-git/go-billy/v5 v5.9.0 h1:jItGXszUDRtR/AlferWPTMN4j38BQ88XnXKbilmm
 github.com/go-git/go-billy/v5 v5.9.0/go.mod h1:jCnQMLj9eUgGU7+ludSTYoZL/GGmii14RxKFj7ROgHw=
 github.com/go-git/go-git/v5 v5.19.2 h1:wkfn7vOlUBu8ivAWKBWisTiwJK4jYHzTF8Ndv1LyGqY=
 github.com/go-git/go-git/v5 v5.19.2/go.mod h1:QqCBE1EFN5ddFmrliLQ3/ntRCUjZU3EJuwuB/jWEHjk=
-github.com/go-jose/go-jose/v4 v4.1.7 h1:Nac/98uT5LPkfbiFuYa8ktf62a2VxwQ4xbq1GK8pV5E=
-github.com/go-jose/go-jose/v4 v4.1.7/go.mod h1:x4oUasVrzR7071A4TnHLGSPpNOm2a21K9Kf04k1rs08=
+github.com/go-jose/go-jose/v4 v4.1.8 h1:k38WifTutpGuqt6Imq9xW1OgCvnWFri0Nz7FnfiACM8=
+github.com/go-jose/go-jose/v4 v4.1.8/go.mod h1:x4oUasVrzR7071A4TnHLGSPpNOm2a21K9Kf04k1rs08=
 github.com/go-json-experiment/json v0.0.0-20260820222146-c27c302e5fc3 h1:UADEEmDKgfXbtnGJZ97beY5XLo9ZechG1nlU4KnRrkE=
 github.com/go-json-experiment/json v0.0.0-20260820222146-c27c302e5fc3/go.mod h1:tphK2c80bpPhMOI4v6bIc2xWywPfbqi1Z06+RcrMkDg=
 github.com/go-logr/logr v1.4.4 h1:tG4xh9yMsRCAiodLVTxyrkzSZ9+o0L1Kg/+cPVcbP/8=
@@ -231,8 +231,8 @@ github.com/hashicorp/terraform-plugin-sdk/v2 v2.40.1 h1:2yPUd7esMOpuTaG3y1iEla1i
 github.com/hashicorp/terraform-plugin-sdk/v2 v2.40.1/go.mod h1:sq8qsxh+PwdvTQFcd17kfCoBgQo46ADNMvCpKE7t/gY=
 github.com/hashicorp/terraform-plugin-testing v1.16.0 h1:GB97nGnJ1hESpDrCjqZig38RodSF0gdRzxlDupLXP38=
 github.com/hashicorp/terraform-plugin-testing v1.16.0/go.mod h1:eQPYAy9xFMV7xtIFX8Y+wJGtUB++HBl329zCF6PBMZk=
-github.com/hashicorp/terraform-registry-address v0.5.0 h1:FAlhWOLFgMvo/4f5DPhCTwRYfHYdF1DjiOtgxfGr4p0=
-github.com/hashicorp/terraform-registry-address v0.5.0/go.mod h1:wOJYCN60i/gSQGPCcGdamatjxn65EZBMFVt7c/Suzis=
+github.com/hashicorp/terraform-registry-address v0.5.1 h1:iu5PKHfVUnNacU3Hx6J3FgNYD9L5n/GUiXz3h3W/KoA=
+github.com/hashicorp/terraform-registry-address v0.5.1/go.mod h1:1Te2wx3IFUPJ5hdKT6LdN/S/WoXy5sV07KqTt8n/0HQ=
 github.com/hashicorp/terraform-svchost v0.2.1 h1:ubvrTFw3Q7CsoEaX7V06PtCTKG3wu7GyyobAoN4eF3Q=
 github.com/hashicorp/terraform-svchost v0.2.1/go.mod h1:zDMheBLvNzu7Q6o9TBvPqiZToJcSuCLXjAXxBslSky4=
 github.com/hashicorp/yamux v0.1.2 h1:XtB8kyFOyHXYVFnwT5C3+Bdo8gArse7j2AQ0DA0Uey8=

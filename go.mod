@@ -46,7 +46,7 @@ require (
 require (
 	github.com/cedar-policy/cedar-go v1.9.0
 	github.com/go-fonts/liberation v0.3.3
-	github.com/go-jose/go-jose/v4 v4.1.7
+	github.com/go-jose/go-jose/v4 v4.1.8
 	github.com/gowebpki/jcs v1.0.2
 	github.com/lucasb-eyer/go-colorful v1.4.1
 	github.com/mazznoer/csscolorparser v0.2.0
@@ -100,7 +100,7 @@ require (
 	github.com/hashicorp/terraform-json v0.29.0 // indirect
 	github.com/hashicorp/terraform-plugin-log v0.11.0 // indirect
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.40.1 // indirect
-	github.com/hashicorp/terraform-registry-address v0.5.0 // indirect
+	github.com/hashicorp/terraform-registry-address v0.5.1 // indirect
 	github.com/hashicorp/terraform-svchost v0.2.1 // indirect
 	github.com/hashicorp/yamux v0.1.2 // indirect
 	github.com/huandu/xstrings v1.6.3 // indirect
