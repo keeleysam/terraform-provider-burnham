@@ -78,7 +78,7 @@ require (
 	github.com/cloudflare/circl v1.6.5 // indirect
 	github.com/dennwc/varint v1.0.0 // indirect
 	github.com/fatih/color v1.19.0 // indirect
-	github.com/go-json-experiment/json v1.27.0 // indirect
+	github.com/go-json-experiment/json v1.27.2 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/gosimple/unidecode v1.0.1 // indirect
