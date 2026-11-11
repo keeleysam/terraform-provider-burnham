@@ -31,7 +31,7 @@ require (
 	github.com/molecule-man/go-brrr v1.3.1
 	github.com/nspcc-dev/rfc6979 v0.2.4
 	github.com/tailscale/hujson v0.0.0-20260302212456-ecc657c15afd
-	github.com/theory/jsonpath v0.12.2
+	github.com/theory/jsonpath v0.12.3
 	github.com/vmihailenco/msgpack/v5 v5.4.1
 	github.com/zclconf/go-cty v1.20.0
 	go4.org/netipx v0.0.0-20231129151722-fdeea329fbba
@@ -121,9 +121,9 @@ require (
 	github.com/prometheus/procfs v0.23.0 // indirect
 	github.com/shopspring/decimal v1.6.0 // indirect
 	github.com/spf13/cast v1.10.0 // indirect
-	github.com/tidwall/gjson v1.20.1 // indirect
+	github.com/tidwall/gjson v1.20.2 // indirect
 	github.com/tidwall/match v1.2.0 // indirect
-	github.com/tidwall/pretty v1.2.2 // indirect
+	github.com/tidwall/pretty v1.3.0 // indirect
 	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
