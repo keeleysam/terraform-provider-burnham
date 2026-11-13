@@ -3,7 +3,7 @@ module github.com/keeleysam/terraform-burnham
 go 1.26.7
 
 require (
-	github.com/andybalholm/brotli v1.2.8
+	github.com/andybalholm/brotli v1.3.0
 	github.com/andygrunwald/vdf v1.1.0
 	github.com/calico32/kdl-go v0.16.0
 	github.com/digitorus/pkcs7 v0.0.0-20250730155240-ffadbf3f398c
@@ -44,7 +44,7 @@ require (
 )
 
 require (
-	github.com/cedar-policy/cedar-go v1.9.0
+	github.com/cedar-policy/cedar-go v1.9.1
 	github.com/go-fonts/liberation v0.3.3
 	github.com/go-jose/go-jose/v4 v4.1.9
 	github.com/gowebpki/jcs v1.0.2
