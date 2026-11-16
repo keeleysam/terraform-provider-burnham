@@ -25,7 +25,7 @@ require (
 	github.com/jmespath-community/go-jmespath v1.1.1
 	github.com/joho/godotenv v1.5.1
 	github.com/keeleysam/okta-expression-parser v0.0.0-20260715042254-5083b8d7e333 // fork of stevenewson/okta-expression-parser (branch provider-fork) that extends the parser to the full documented Okta EL grammar; pinned until the grammar is contributed upstream
-	github.com/magiconair/properties v1.18.12
+	github.com/magiconair/properties v1.18.13
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/mmcloughlin/geohash v0.10.0
 	github.com/molecule-man/go-brrr v1.3.1
@@ -35,22 +35,22 @@ require (
 	github.com/vmihailenco/msgpack/v5 v5.4.1
 	github.com/zclconf/go-cty v1.20.0
 	go4.org/netipx v0.0.0-20231129151722-fdeea329fbba
-	golang.org/x/crypto v0.58.0
+	golang.org/x/crypto v0.59.0
 	golang.org/x/text v0.44.0
-	gopkg.in/ini.v1 v1.67.3
+	gopkg.in/ini.v1 v1.68.0
 	gopkg.in/yaml.v3 v3.0.1
 	howett.net/plist v1.0.1
 	rsc.io/qr v0.2.0
 )
 
 require (
-	github.com/cedar-policy/cedar-go v1.9.1
+	github.com/cedar-policy/cedar-go v1.9.2
 	github.com/go-fonts/liberation v0.3.3
 	github.com/go-jose/go-jose/v4 v4.1.9
 	github.com/gowebpki/jcs v1.0.2
 	github.com/lucasb-eyer/go-colorful v1.4.1
 	github.com/mazznoer/csscolorparser v0.2.0
-	github.com/prometheus/common v0.73.1
+	github.com/prometheus/common v0.74.0
 	github.com/prometheus/prometheus v0.316.0
 	github.com/recolabs/gnata v0.6.2
 	github.com/tetratelabs/wazero v1.12.0
