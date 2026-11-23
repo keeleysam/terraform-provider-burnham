@@ -44,7 +44,7 @@ require (
 )
 
 require (
-	github.com/cedar-policy/cedar-go v1.9.2
+	github.com/cedar-policy/cedar-go v1.9.3
 	github.com/go-fonts/liberation v0.3.3
 	github.com/go-jose/go-jose/v4 v4.1.9
 	github.com/gowebpki/jcs v1.0.2
@@ -99,11 +99,11 @@ require (
 	github.com/hashicorp/terraform-exec v0.26.0 // indirect
 	github.com/hashicorp/terraform-json v0.29.0 // indirect
 	github.com/hashicorp/terraform-plugin-log v0.11.0 // indirect
-	github.com/hashicorp/terraform-plugin-sdk/v2 v2.40.1 // indirect
+	github.com/hashicorp/terraform-plugin-sdk/v2 v2.41.1 // indirect
 	github.com/hashicorp/terraform-registry-address v0.5.1 // indirect
 	github.com/hashicorp/terraform-svchost v0.2.1 // indirect
 	github.com/hashicorp/yamux v0.1.2 // indirect
-	github.com/huandu/xstrings v1.6.3 // indirect
+	github.com/huandu/xstrings v1.6.4 // indirect
 	github.com/itchyny/timefmt-go v0.1.9 // indirect
 	github.com/mattn/go-colorable v0.1.16 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect
@@ -121,7 +121,7 @@ require (
 	github.com/prometheus/procfs v0.23.0 // indirect
 	github.com/shopspring/decimal v1.6.0 // indirect
 	github.com/spf13/cast v1.10.0 // indirect
-	github.com/tidwall/gjson v1.20.4 // indirect
+	github.com/tidwall/gjson v1.20.5 // indirect
 	github.com/tidwall/match v1.2.0 // indirect
 	github.com/tidwall/pretty v1.3.0 // indirect
 	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
