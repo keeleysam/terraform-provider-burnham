@@ -72,7 +72,7 @@ require (
 	github.com/armon/go-radix v1.0.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bgentry/speakeasy v0.2.0 // indirect
-	github.com/bmatcuk/doublestar/v4 v4.10.4 // indirect
+	github.com/bmatcuk/doublestar/v4 v4.10.7 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
 	github.com/cloudflare/circl v1.6.5 // indirect
@@ -121,7 +121,7 @@ require (
 	github.com/prometheus/procfs v0.23.0 // indirect
 	github.com/shopspring/decimal v1.6.0 // indirect
 	github.com/spf13/cast v1.10.0 // indirect
-	github.com/tidwall/gjson v1.20.5 // indirect
+	github.com/tidwall/gjson v1.20.6 // indirect
 	github.com/tidwall/match v1.2.0 // indirect
 	github.com/tidwall/pretty v1.3.0 // indirect
 	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
