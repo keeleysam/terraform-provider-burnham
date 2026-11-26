@@ -44,7 +44,7 @@ require (
 )
 
 require (
-	github.com/cedar-policy/cedar-go v1.9.3
+	github.com/cedar-policy/cedar-go v1.9.4
 	github.com/go-fonts/liberation v0.3.3
 	github.com/go-jose/go-jose/v4 v4.1.9
 	github.com/gowebpki/jcs v1.0.2
@@ -123,7 +123,7 @@ require (
 	github.com/spf13/cast v1.10.0 // indirect
 	github.com/tidwall/gjson v1.20.6 // indirect
 	github.com/tidwall/match v1.2.0 // indirect
-	github.com/tidwall/pretty v1.3.0 // indirect
+	github.com/tidwall/pretty v1.3.1 // indirect
 	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
